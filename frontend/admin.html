@@ -13,7 +13,7 @@
 <!-- LOGIN SCREEN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo"><img src="images/logo.png" alt="VBS" style="height:80px;width:auto;object-fit:contain"/></div>
+    <div class="login-logo"><img src="images/VBS_logo.png" alt="VBS" style="height:80px;width:auto;object-fit:contain"/></div>
     <h1>VBS Enterprises</h1>
     <p>Admin Panel</p>
     <div class="login-form">
@@ -31,11 +31,8 @@
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <img src="images/logo.png" alt="VBS" style="height:45px;width:auto;object-fit:contain"/>
-      <div>
-        <h2>VBS Enterprises</h2>
-        <span>Admin Panel</span>
-      </div>
+      <img src="images/VBS_logo.png" alt="VBS" style="height:40px;width:auto;object-fit:contain"/>
+      <div><h2>VBS Enterprises</h2><span>Admin Panel</span></div>
     </div>
     <nav class="sidebar-nav">
       <button class="sn-btn active" data-tab="dashboard">📊 Dashboard</button>
@@ -82,7 +79,9 @@
             <label>Category *</label>
             <select id="p-cat">
               <option value="oil">🫙 Oil</option>
-              <option value="saree">👘 Saree</option>
+              <option value="clothes">👗 Clothes</option>
+              <option value="rice">🌾 Rice</option>
+              <option value="other">📦 Other</option>
             </select>
           </div>
           <div class="field">
@@ -182,94 +181,5 @@
 </div>
 
 <script src="js/admin.js"></script>
-</body>
-</html>
-    catch(err){showToast('❌',err.message);}
-  });
-}
-
-function clearProductForm() {
-  ['p-name','p-price','p-unit','p-stock','p-desc'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('p-cat').value='oil';
-  document.getElementById('p-image').value='';
-  document.getElementById('p-image').onchange=null;
-  document.getElementById('img-preview-wrap').style.display='none';
-  document.getElementById('form-heading').textContent='➕ Add New Product';
-  editingProductId=null;
-}
-
-// ── ORDERS ────────────────────────────────────────────────
-async function loadOrders() {
-  const status=document.getElementById('order-status-filter')?.value||'';
-  try {
-    const res=await fetch(`${API}/orders?${status?'status='+status:''}`,{headers:{Authorization:`Bearer ${token}`}});
-    const data=await res.json();
-    if(!data.success) throw new Error(data.message);
-    const div=document.getElementById('orders-list');
-    div.innerHTML=data.orders.length
-      ?`<div class="orders-list">${data.orders.map(o=>orderCardHTML(o,true)).join('')}</div>`
-      :`<div class="empty-state"><div class="big-icon">📋</div><h3>No orders found</h3></div>`;
-  } catch(err){showToast('❌',err.message);}
-}
-
-function orderCardHTML(o,isAdmin=false) {
-  return `
-  <div class="order-card">
-    <div class="order-card-top">
-      <div><div class="order-id-lbl">${o.orderId}</div><div class="order-date-lbl">📅 ${new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}</div></div>
-      <span class="status-pill ${o.status}">${o.status}</span>
-    </div>
-    <div class="order-customer-row">
-      <span>👤 <strong>${o.customer.name}</strong></span>
-      <span>📞 <strong>${o.customer.phone}</strong></span>
-      <span>💳 <strong>${o.paymentMethod==='cod'?'Cash on Delivery':o.paymentMethod.toUpperCase()}</strong></span>
-    </div>
-    <div style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem">📍 ${o.customer.address}</div>
-    <div class="order-items-wrap">${o.items.map(i=>`<span class="order-item-chip">${i.category==='oil'?'🫙':i.category==='rice'?'🌾':'👗'} ${i.name} ×${i.quantity}</span>`).join('')}</div>
-    ${o.customer.notes?`<div style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem">📝 ${o.customer.notes}</div>`:''}
-    <div class="order-card-foot">
-      <div class="order-total-lbl">₹${o.totalAmount.toLocaleString('en-IN')}</div>
-      ${isAdmin?`
-      <select class="status-select-admin" onchange="updateOrderStatus('${o._id}',this.value)">
-        <option value="new"        ${o.status==='new'?'selected':''}>🆕 New</option>
-        <option value="confirmed"  ${o.status==='confirmed'?'selected':''}>✅ Confirmed</option>
-        <option value="processing" ${o.status==='processing'?'selected':''}>⚙️ Processing</option>
-        <option value="ready"      ${o.status==='ready'?'selected':''}>📦 Ready</option>
-        <option value="delivered"  ${o.status==='delivered'?'selected':''}>🚚 Delivered</option>
-        <option value="cancelled"  ${o.status==='cancelled'?'selected':''}>❌ Cancelled</option>
-      </select>`:''}
-    </div>
-  </div>`;
-}
-
-async function updateOrderStatus(id,status) {
-  try {
-    const res=await fetch(`${API}/orders/${id}/status`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({status})});
-    const data=await res.json();
-    if(!data.success) throw new Error(data.message);
-    showToast('✅',`Status → ${status}`);
-  } catch(err){showToast('❌',err.message);}
-}
-
-// ── CONFIRM MODAL ─────────────────────────────────────────
-function showConfirm(title,msg,onOk) {
-  document.getElementById('confirm-title').textContent=title;
-  document.getElementById('confirm-msg').textContent=msg;
-  document.getElementById('confirm-ok').onclick=()=>{onOk();closeConfirm();};
-  document.getElementById('confirm-overlay').classList.add('open');
-}
-function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('open'); }
-
-// ── TOAST ─────────────────────────────────────────────────
-let toastTimer;
-function showToast(icon,msg) {
-  document.getElementById('toast-icon').textContent=icon;
-  document.getElementById('toast-msg').textContent=msg;
-  const t=document.getElementById('toast');
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
-}
-</script>
 </body>
 </html>
