@@ -168,7 +168,7 @@ function renderProds() {
     const inCart = cart.find(c => c._id === p._id);
     const stkCls = p.stock === 0 ? 'out' : p.stock < 10 ? 'low' : 'in';
     const stkLbl = p.stock === 0 ? 'Out of Stock' : p.stock < 10 ? `Only ${p.stock} left` : 'In Stock';
-    const img = p.image ? (p.image.startsWith('http') ? p.image : `/uploads/${p.image}`) : null;
+    const img = p.image ? (p.image.startsWith("http") ? p.image : `/uploads/${p.image}`) : null;
     return `
     <div class="prod-card">
       <div class="prod-img">
@@ -197,7 +197,7 @@ function quickView(id) {
   const p = products.find(x => x._id === id);
   if (!p) return;
   const inCart = cart.find(c => c._id === id);
-  const img = p.image ? (p.image.startsWith('http') ? p.image : `/uploads/${p.image}`) : null;
+  const img = p.image ? (p.image.startsWith("http") ? p.image : `/uploads/${p.image}`) : null;
   const stkCls = p.stock === 0 ? 'out' : p.stock < 10 ? 'low' : 'in';
   const stkLbl = p.stock === 0 ? 'Out of Stock' : p.stock < 10 ? `Only ${p.stock} left` : `In Stock (${p.stock})`;
   document.getElementById('success-box').innerHTML = `
@@ -263,7 +263,7 @@ function renderCart() {
       ${cart.map(item => `
       <div class="cart-item">
         <div class="ci-img">
-          ${item.image ? `<img src="/uploads/${item.image}" alt="${item.name}"/>` : (catIcon[item.category] || '📦')}
+          ${item.image ? `<img src="${item.image.startsWith("http") ? item.image : "/uploads/" + item.image}" alt="${item.name}"/>` : (catIcon[item.category] || '📦')}
         </div>
         <div class="ci-info">
           <h4>${item.name}</h4>
