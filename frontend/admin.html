@@ -513,7 +513,7 @@ function orderCard(o,isAdmin){
     </div>
     <div style="font-size:.8rem;color:var(--muted);margin-bottom:.65rem">📍 ${o.customer.address}</div>
     <div class="oc-items">${o.items.map(i=>`<span class="ichip">${catIcon(i.category)} ${i.name} ×${i.quantity}</span>`).join('')}</div>
-    ${o.customer.notes?`<div style="font-size:.78rem;color:var(--muted);margin-bottom:.65rem">📝 ${o.customer.notes}</div>`:''}
+    ${o.notes?`<div style="font-size:.78rem;color:var(--muted);margin-bottom:.65rem">📝 ${o.notes}</div>`:''}
     <div class="oc-foot">
       <div class="oc-total">₹${o.totalAmount.toLocaleString('en-IN')}</div>
       ${isAdmin?`<select class="ssel" onchange="updateStatus('${o._id}',this.value)">
