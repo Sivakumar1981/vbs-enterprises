@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VBS Enterprises – Cloths · Oil · Rice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg"></span></div>
+
+<!-- AUTH MODALS -->
+<div class="overlay" id="auth-overlay">
+  <div class="auth-card" id="auth-card">
+    <!-- Login Form -->
+    <div id="form-login">
+      <div class="auth-logo"><img src="VBS_logo.png" alt="VBS"/></div>
+      <h2>Welcome Back</h2>
+      <p class="auth-sub">Login to your VBS account</p>
+      <div class="auth-fields">
+        <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="yourmail@gmail.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="li-pass" placeholder="Your password"/></div>
+      </div>
+      <div class="auth-err" id="li-err"></div>
+      <button class="btn-auth" id="li-btn" onclick="doLogin()">Login to Shop</button>
+      <p class="auth-switch">New customer? <a href="#" onclick="switchAuth('register')">Create Account</a></p>
+    </div>
+    <!-- Register Form -->
+    <div id="form-register" style="display:none">
+      <div class="auth-logo"><img src="VBS_logo.png" alt="VBS"/></div>
+      <h2>Create Account</h2>
+      <p class="auth-sub">Join VBS Enterprises</p>
+      <div class="auth-fields">
+        <div class="field"><label>Full Name *</label><input type="text" id="rg-name" placeholder="Your full name"/></div>
+        <div class="field"><label>Phone Number *</label><input type="tel" id="rg-phone" placeholder="+91 9876543210"/></div>
+        <div class="field"><label>Email *</label><input type="email" id="rg-email" placeholder="yourmail@gmail.com"/></div>
+        <div class="field"><label>Password *</label><input type="password" id="rg-pass" placeholder="Min 6 characters"/></div>
+        <div class="field full"><label>Address</label><input type="text" id="rg-addr" placeholder="Your delivery address"/></div>
+      </div>
+      <div class="auth-err" id="rg-err"></div>
+      <button class="btn-auth" id="rg-btn" onclick="doRegister()">Create My Account</button>
+      <p class="auth-switch">Already have account? <a href="#" onclick="switchAuth('login')">Login</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo" onclick="showPage('shop')">
+      <img src="VBS_logo.png" alt="VBS Enterprises" class="logo-img"/>
+    </div>
+    <nav id="main-nav">
+      <button class="nb active" data-page="shop">🏪 Shop</button>
+      <button class="nb" data-page="orders">📦 My Orders</button>
+      <button class="nb cart-nb" data-page="cart">🛒 Cart <span class="cbadge" id="cbadge">0</span></button>
+      <div class="user-pill" id="user-pill"></div>
+    </nav>
+    <button class="ham" id="ham">☰</button>
+  </div>
+  <div class="mob-nav" id="mob-nav">
+    <button data-page="shop">🏪 Shop</button>
+    <button data-page="orders">📦 My Orders</button>
+    <button data-page="cart">🛒 Cart (<span id="cbadge-m">0</span>)</button>
+    <button onclick="handleUserBtn()">👤 Account</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<div id="hero-wrap">
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-body">
+      <img src="VBS_logo.png" alt="VBS Enterprises" class="hero-logo"/>
+      <p class="hero-tag">✨ Quality You Can Trust</p>
+      <h1>Groundnut Oil · Sarees · Chudidhars<br/>Nighties · Blouse Material · Rice Bag</h1>
+      <p class="hero-desc">Premium quality products delivered to your doorstep. Fresh, pure and affordable.</p>
+      <div class="hero-cats">
+        <button onclick="filterCat('')"    class="hcat-btn active-cat">All Products</button>
+        <button onclick="filterCat('clothes')" class="hcat-btn">👗 Clothes</button>
+        <button onclick="filterCat('oil')"     class="hcat-btn">🫙 Oil</button>
+        <button onclick="filterCat('rice')"    class="hcat-btn">🌾 Rice</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<main>
+
+  <!-- SHOP PAGE -->
+  <section class="page active" id="page-shop">
+    <div class="page-top">
+      <h2 class="page-title">Our <span>Products</span></h2>
+      <div class="filters">
+        <input id="srch" type="text" placeholder="🔍 Search products..." oninput="loadProducts()"/>
+        <select id="cat-sel" onchange="loadProducts()">
+          <option value="">All Categories</option>
+          <option value="clothes">👗 Clothes</option>
+          <option value="oil">🫙 Oil</option>
+          <option value="rice">🌾 Rice</option>
+          <option value="other">📦 Other</option>
+        </select>
+        <select id="sort-sel" onchange="loadProducts()">
+          <option value="">Sort By</option>
+          <option value="asc">Price ↑</option>
+          <option value="desc">Price ↓</option>
+        </select>
+      </div>
+    </div>
+    <div class="prod-grid" id="prod-grid">
+      <div class="loading"><div class="spin"></div><p>Loading products...</p></div>
+    </div>
+  </section>
+
+  <!-- CART PAGE -->
+  <section class="page" id="page-cart">
+    <h2 class="page-title">Your <span>Cart</span></h2>
+    <div id="cart-wrap"></div>
+  </section>
+
+  <!-- ORDERS PAGE -->
+  <section class="page" id="page-orders">
+    <h2 class="page-title">My <span>Orders</span></h2>
+    <div id="orders-wrap"></div>
+  </section>
+
+</main>
+
+<!-- SUCCESS MODAL -->
+<div class="overlay" id="success-overlay">
+  <div class="modal" id="success-box"></div>
+</div>
+
+<footer>
+  <img src="VBS_logo.png" alt="VBS" style="height:50px;opacity:.7;margin-bottom:.5rem"/>
+  <p>© 2024 <strong>VBS Enterprises</strong></p>
+  <p>Groundnut Oil · Sarees · Chudidhars · Nighties · Blouse Material · Rice Bag</p>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
