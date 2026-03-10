@@ -72,7 +72,11 @@ async function sendOwnerNotification(order) {
 // ── PUBLIC: Place new order ────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { customer, items, paymentMethod, notes } = req.body;
+    const { customer: rawCustomer, items, paymentMethod, notes, deliveryAddress } = req.body;
+
+    // Build customer object — support flat format from frontend
+    const customer = rawCustomer || {};
+    if (deliveryAddress && !customer.address) customer.address = deliveryAddress;
 
     if (!customer?.name || !customer?.phone || !customer?.address) {
       return res.status(400).json({ success: false, message: 'Customer name, phone, and address required' });
