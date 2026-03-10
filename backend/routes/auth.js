@@ -1,7 +1,6 @@
 const express  = require('express');
 const router   = express.Router();
 const jwt      = require('jsonwebtoken');
-const bcrypt   = require('bcryptjs');
 const auth     = require('../middleware/auth');
 const Customer = require('../models/Customer');
 
@@ -12,13 +11,11 @@ router.post('/login', async (req, res) => {
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Username and password required' });
     }
-    const validUser = username === process.env.ADMIN_USERNAME;
-    const validPass = password === process.env.ADMIN_PASSWORD;
-    if (!validUser || !validPass) {
+    if (username !== process.env.ADMIN_USERNAME || password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
     const token = jwt.sign({ username, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    res.json({ success: true, message: 'Login successful', token, expiresIn: '24h' });
+    res.json({ success: true, token });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -45,7 +42,6 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign({ id: customer._id, role: 'customer' }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
       success: true,
-      message: 'Account created successfully',
       token,
       customer: { _id: customer._id, name: customer.name, phone: customer.phone, email: customer.email, address: customer.address }
     });
@@ -54,25 +50,26 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ── Customer Login ─────────────────────────────────────────────
+// ── Customer Login (phone OR email) ───────────────────────────
 router.post('/customer/login', async (req, res) => {
   try {
-    const { phone, password } = req.body;
-    if (!phone || !password) {
-      return res.status(400).json({ success: false, message: 'Phone and password required' });
+    const { phone, email, password } = req.body;
+    if ((!phone && !email) || !password) {
+      return res.status(400).json({ success: false, message: 'Phone/email and password required' });
     }
-    const customer = await Customer.findOne({ phone });
+    // Find by phone or email
+    const query = phone ? { phone } : { email };
+    const customer = await Customer.findOne(query);
     if (!customer) {
-      return res.status(401).json({ success: false, message: 'Invalid phone or password' });
+      return res.status(401).json({ success: false, message: 'Account not found. Please register first.' });
     }
     const match = await customer.matchPassword(password);
     if (!match) {
-      return res.status(401).json({ success: false, message: 'Invalid phone or password' });
+      return res.status(401).json({ success: false, message: 'Wrong password' });
     }
     const token = jwt.sign({ id: customer._id, role: 'customer' }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({
       success: true,
-      message: 'Login successful',
       token,
       customer: { _id: customer._id, name: customer.name, phone: customer.phone, email: customer.email, address: customer.address }
     });
