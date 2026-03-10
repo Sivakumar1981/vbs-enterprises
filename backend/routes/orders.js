@@ -147,6 +147,18 @@ router.get('/track/:orderId', async (req, res) => {
   }
 });
 
+// ── CUSTOMER: Get my orders by phone (no auth needed, use phone) ──
+router.get('/my', async (req, res) => {
+  try {
+    const { phone } = req.query;
+    if (!phone) return res.status(400).json({ success: false, message: 'Phone required' });
+    const orders = await Order.find({ 'customer.phone': phone }).sort({ createdAt: -1 });
+    res.json({ success: true, orders });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── ADMIN: Get all orders ──────────────────────────────────────
 router.get('/', auth, async (req, res) => {
   try {
