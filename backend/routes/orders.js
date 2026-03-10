@@ -217,4 +217,43 @@ router.put('/:id/status', auth, async (req, res) => {
   }
 });
 
+// ── ADMIN: Get all customers (unique from orders) ──────────────
+router.get('/customers', auth, async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    const customerMap = {};
+    for (const o of orders) {
+      const phone = o.customer?.phone;
+      if (!phone) continue;
+      if (!customerMap[phone]) {
+        customerMap[phone] = {
+          name: o.customer.name,
+          phone: o.customer.phone,
+          address: o.customer.address,
+          orders: 0,
+          totalSpent: 0,
+          lastOrder: o.createdAt
+        };
+      }
+      customerMap[phone].orders += 1;
+      if (o.status !== 'cancelled') customerMap[phone].totalSpent += o.totalAmount;
+      if (o.createdAt > customerMap[phone].lastOrder) customerMap[phone].lastOrder = o.createdAt;
+    }
+    const customers = Object.values(customerMap);
+    res.json({ success: true, customers });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── ADMIN: Get orders by customer phone ────────────────────────
+router.get('/customers/:phone', auth, async (req, res) => {
+  try {
+    const orders = await Order.find({ 'customer.phone': req.params.phone }).sort({ createdAt: -1 });
+    res.json({ success: true, orders });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
