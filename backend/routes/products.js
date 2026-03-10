@@ -36,8 +36,8 @@ const upload = multer({
 router.get('/', async (req, res) => {
   try {
     const { category, search } = req.query;
-    const filter = { isActive: true };
-    if (category && ['oil', 'saree'].includes(category)) filter.category = category;
+    const filter = { isActive: { $ne: false } };
+    if (category) filter.category = category;
     if (search) filter.name = { $regex: search, $options: 'i' };
 
     const products = await Product.find(filter).sort({ createdAt: -1 });
