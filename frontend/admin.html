@@ -549,17 +549,17 @@ async function updateStatus(id,status){
 /* ── CUSTOMERS ── */
 async function loadCustomers(){
   try{
-    const res=await fetch(`${API}/orders/customers/all`,{headers:{Authorization:`Bearer ${token}`}});
+    const res=await fetch(`${API}/orders/customers`,{headers:{Authorization:`Bearer ${token}`}});
     const d=await res.json();
     if(!d.success)throw new Error(d.message);
     const tb=document.getElementById('c-tbody');
-    if(!d.customers.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No customers yet</td></tr>`;return;}
+    if(!d.customers||!d.customers.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No customers yet</td></tr>`;return;}
     tb.innerHTML=d.customers.map((c,i)=>`<tr>
       <td>${i+1}</td>
       <td><strong>${c.name}</strong></td>
       <td>${c.phone}</td>
       <td style="font-size:.78rem;color:var(--muted);max-width:160px">${c.address||'-'}</td>
-      <td style="text-align:center"><strong>${c.orderCount}</strong></td>
+      <td style="text-align:center"><strong>${c.orders}</strong></td>
       <td><strong>₹${c.totalSpent.toLocaleString('en-IN')}</strong></td>
       <td style="font-size:.78rem">${new Date(c.lastOrder).toLocaleDateString('en-IN',{dateStyle:'medium'})}</td>
       <td><button class="abtn edit" onclick="loadCustHistory('${c.phone}','${c.name.replace(/'/g,"\\'")}')">📋 View</button></td>
