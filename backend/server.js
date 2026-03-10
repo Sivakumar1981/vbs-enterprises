@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── Serve frontend static files ────────────────────────────────
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // ── API Routes ─────────────────────────────────────────────────
 app.use('/api/auth',     require('./routes/auth'));
@@ -24,7 +24,7 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/orders',   require('./routes/orders'));
 
 // ── Serve frontend pages ───────────────────────────────────────
-const frontend = path.join(__dirname, '../frontend/public');
+const frontend = path.join(__dirname, '../frontend');
 
 app.get('/',        (req, res) => res.sendFile(path.join(frontend, 'index.html')));
 app.get('/admin',   (req, res) => res.sendFile(path.join(frontend, 'admin.html')));
