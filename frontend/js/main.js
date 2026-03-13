@@ -34,7 +34,10 @@ async function doLogin() {
   if (!email || !pass) { showAuthErr(err, 'Enter email and password'); return; }
   btn.textContent = 'Logging in...'; btn.disabled = true;
   try {
-    const res  = await fetch(`${API}/auth/customer/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ phone: email, email, password: pass }) });
+    // Detect if user typed phone number or email
+    const isPhone = /^[0-9+\s-]{7,15}$/.test(email);
+    const loginBody = isPhone ? { phone: email, password: pass } : { email, password: pass };
+    const res  = await fetch(`${API}/auth/customer/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(loginBody) });
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
     saveSession(data.token, data.customer);
