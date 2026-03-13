@@ -147,12 +147,25 @@ router.get('/track/:orderId', async (req, res) => {
   }
 });
 
-// ── CUSTOMER: Get my orders by phone (no auth needed, use phone) ──
+// ── CUSTOMER: Get my orders (JWT auth) ──
 router.get('/my', async (req, res) => {
   try {
+    // Support both JWT token and phone query param
     const { phone } = req.query;
-    if (!phone) return res.status(400).json({ success: false, message: 'Phone required' });
-    const orders = await Order.find({ 'customer.phone': phone }).sort({ createdAt: -1 });
+    let orders;
+    if (phone) {
+      orders = await Order.find({ 'customer.phone': phone }).sort({ createdAt: -1 });
+    } else {
+      // Try JWT auth
+      const authHeader = req.headers.authorization;
+      if (!authHeader) return res.status(400).json({ success: false, message: 'Phone required' });
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(authHeader.replace('Bearer ', ''), process.env.JWT_SECRET);
+      const Customer = require('../models/Customer');
+      const customer = await Customer.findById(decoded.id);
+      if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+      orders = await Order.find({ 'customer.phone': customer.phone }).sort({ createdAt: -1 });
+    }
     res.json({ success: true, orders });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
