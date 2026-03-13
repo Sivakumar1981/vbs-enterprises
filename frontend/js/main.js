@@ -316,7 +316,17 @@ async function placeOrder() {
     const res  = await fetch(`${API}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${customerToken}` },
-      body: JSON.stringify({ items: cart.map(i => ({ productId: i._id, quantity: i.qty })), paymentMethod: pay, notes, deliveryAddress: addr })
+      body: JSON.stringify({
+        items: cart.map(i => ({ productId: i._id, quantity: i.qty })),
+        paymentMethod: pay,
+        notes,
+        deliveryAddress: addr,
+        customer: {
+          name:    customerData?.name    || '',
+          phone:   customerData?.phone   || '',
+          address: addr
+        }
+      })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
