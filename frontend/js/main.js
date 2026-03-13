@@ -34,7 +34,7 @@ async function doLogin() {
   if (!email || !pass) { showAuthErr(err, 'Enter email and password'); return; }
   btn.textContent = 'Logging in...'; btn.disabled = true;
   try {
-    const res  = await fetch(`${API}/auth/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, password: pass }) });
+    const res  = await fetch(`${API}/auth/customer/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ phone: email, email, password: pass }) });
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
     saveSession(data.token, data.customer);
