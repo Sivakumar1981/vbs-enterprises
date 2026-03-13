@@ -4,7 +4,6 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const auth = require('../middleware/auth');
 const jwt  = require('jsonwebtoken');
-const Customer = require('../models/Customer');
 const nodemailer = require('nodemailer');
 
 // ── Email Notification Helper ──────────────────────────────────
@@ -149,19 +148,21 @@ router.get('/track/:orderId', async (req, res) => {
   }
 });
 
-// ── CUSTOMER: Get my orders (JWT auth) ──
+// ── CUSTOMER: Get my orders (JWT auth or phone query) ──
 router.get('/my', async (req, res) => {
   try {
-    // Support both JWT token and phone query param
     const { phone } = req.query;
     let orders;
     if (phone) {
+      // Old method: phone in query
       orders = await Order.find({ 'customer.phone': phone }).sort({ createdAt: -1 });
     } else {
-      // Try JWT auth
+      // New method: JWT token → get customer from DB
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(400).json({ success: false, message: 'Phone required' });
       const decoded = jwt.verify(authHeader.replace('Bearer ', ''), process.env.JWT_SECRET);
+      // Load Customer model only when needed
+      const Customer = require('../models/Customer');
       const customer = await Customer.findById(decoded.id);
       if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
       orders = await Order.find({ 'customer.phone': customer.phone }).sort({ createdAt: -1 });
