@@ -22,8 +22,16 @@ router.post('/login', async (req, res) => {
 });
 
 // ── Verify admin token ─────────────────────────────────────────
-router.get('/verify', auth, (req, res) => {
-  res.json({ success: true, admin: req.admin });
+router.get('/verify', auth, async (req, res) => {
+  try {
+    if (req.user?.role === 'customer') {
+      const customer = await Customer.findById(req.user.id).select('-password');
+      return res.json({ success: true, customer: customer || null });
+    }
+    res.json({ success: true, admin: req.admin });
+  } catch (err) {
+    res.json({ success: true, admin: req.admin });
+  }
 });
 
 // ── Customer Register ──────────────────────────────────────────
