@@ -27,14 +27,14 @@ document.getElementById('auth-overlay').addEventListener('click', e => {
 });
 
 async function doLogin() {
-    const phoneOrEmail = document.getElementById('li-email').value.trim();
+  const email = document.getElementById('li-email').value.trim();
   const pass  = document.getElementById('li-pass').value;
   const err   = document.getElementById('li-err');
   const btn   = document.getElementById('li-btn');
-  if (!phoneOrEmail || !pass) { showAuthErr(err, 'Enter phone/email and password'); return; }
+  if (!email || !pass) { showAuthErr(err, 'Enter email and password'); return; }
   btn.textContent = 'Logging in...'; btn.disabled = true;
   try {
-    const res  = await fetch(`${API}/auth/customer/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ phone: phoneOrEmail.includes('@') ? undefined : phoneOrEmail, email: phoneOrEmail.includes('@') ? phoneOrEmail : undefined, password: pass }) });
+    const res  = await fetch(`${API}/auth/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, password: pass }) });
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
     saveSession(data.token, data.customer);
@@ -54,7 +54,7 @@ async function doRegister() {
   const addr  = document.getElementById('rg-addr').value.trim();
   const err   = document.getElementById('rg-err');
   const btn   = document.getElementById('rg-btn');
-  if (!name || !phone || !pass) { showAuthErr(err, 'Name, phone and password are required'); return; }
+  if (!name || !phone || !email || !pass) { showAuthErr(err, 'All fields marked * are required'); return; }
   if (pass.length < 6) { showAuthErr(err, 'Password must be at least 6 characters'); return; }
   btn.textContent = 'Creating account...'; btn.disabled = true;
   try {
@@ -126,6 +126,12 @@ document.getElementById('ham').addEventListener('click', () => {
 });
 
 /* ══════════════ PRODUCTS ══════════════════════════════════ */
+// Supports Cloudinary URLs and local uploads
+function imgUrl(image) {
+  if (!image) return null;
+  if (image.startsWith('http')) return image;
+  return '/uploads/' + image;
+}
 async function loadProducts() {
   const search = document.getElementById('srch')?.value || '';
   const cat    = document.getElementById('cat-sel')?.value || '';
@@ -155,14 +161,8 @@ function filterCat(cat) {
   loadProducts();
 }
 
-const catIcon  = { clothes: '👗', oil: '🫙', rice: '🌾', other: '📦' };
-const catLabel = { clothes: 'Clothes', oil: 'Oil', rice: 'Rice', other: 'Other' };
-
-function imgUrl(image) {
-  if (!image) return null;
-  if (image.startsWith('http')) return image;
-  return '/uploads/' + image;
-}
+const catIcon  = { saree: '👘', nighty: '🌙', chudidhar: '👗', blouse: '🪡', oil: '🫙', rice: '🌾', other: '📦' };
+const catLabel = { saree: 'Saree', nighty: 'Nighty', chudidhar: 'Chudidhar', blouse: 'Blouse', oil: 'Oil', rice: 'Rice', other: 'Other' };
 
 function renderProds() {
   const grid = document.getElementById('prod-grid');
@@ -174,11 +174,11 @@ function renderProds() {
     const inCart = cart.find(c => c._id === p._id);
     const stkCls = p.stock === 0 ? 'out' : p.stock < 10 ? 'low' : 'in';
     const stkLbl = p.stock === 0 ? 'Out of Stock' : p.stock < 10 ? `Only ${p.stock} left` : 'In Stock';
-    const url    = imgUrl(p.image);
+    const img    = imgUrl(p.image);
     return `
     <div class="prod-card">
       <div class="prod-img">
-        ${url ? `<img src="${url}" alt="${p.name}" loading="lazy"/>` : `<div class="no-img">${catIcon[p.category] || '📦'}</div>`}
+        ${img ? `<img src="${img}" alt="${p.name}" loading="lazy"/>` : `<div class="no-img">${catIcon[p.category] || '📦'}</div>`}
         <span class="cat-tag ${p.category}">${catIcon[p.category] || '📦'} ${catLabel[p.category] || 'Other'}</span>
         <span class="stk-tag ${stkCls}">${stkLbl}</span>
       </div>
@@ -203,13 +203,13 @@ function quickView(id) {
   const p = products.find(x => x._id === id);
   if (!p) return;
   const inCart = cart.find(c => c._id === id);
-  const url    = imgUrl(p.image);
+  const img    = imgUrl(p.image);
   const stkCls = p.stock === 0 ? 'out' : p.stock < 10 ? 'low' : 'in';
   const stkLbl = p.stock === 0 ? 'Out of Stock' : p.stock < 10 ? `Only ${p.stock} left` : `In Stock (${p.stock})`;
   document.getElementById('success-box').innerHTML = `
     <button class="modal-close" onclick="closeSuccess()">✕</button>
     <div style="border-radius:12px;overflow:hidden;height:200px;background:var(--warm);display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
-      ${url ? `<img src="${url}" style="width:100%;height:100%;object-fit:cover"/>` : `<div style="font-size:5rem">${catIcon[p.category]||'📦'}</div>`}
+      ${img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover"/>` : `<div style="font-size:5rem">${catIcon[p.category]||'📦'}</div>`}
     </div>
     <span class="cat-tag ${p.category}" style="position:static;display:inline-block;margin-bottom:.75rem">${catLabel[p.category]||'Other'}</span>
     <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--deep);margin-bottom:.5rem">${p.name}</h3>
@@ -266,12 +266,10 @@ function renderCart() {
   div.innerHTML = `
   <div class="cart-grid">
     <div class="cart-col">
-      ${cart.map(item => {
-        const url = imgUrl(item.image);
-        return `
+      ${cart.map(item => `
       <div class="cart-item">
         <div class="ci-img">
-          ${url ? `<img src="${url}" alt="${item.name}"/>` : (catIcon[item.category] || '📦')}
+          ${item.image ? `<img src="${imgUrl(item.image)}" alt="${item.name}"/>` : (catIcon[item.category] || '📦')}
         </div>
         <div class="ci-info">
           <h4>${item.name}</h4>
@@ -286,7 +284,7 @@ function renderCart() {
           <div class="ci-price">₹${(item.price*item.qty).toLocaleString('en-IN')}</div>
           <button class="btn-rm" onclick="removeItem('${item._id}')">🗑</button>
         </div>
-      </div>`;}).join('')}
+      </div>`).join('')}
     </div>
     <div class="o-summary">
       <h3>Order Summary</h3>
@@ -313,23 +311,13 @@ async function placeOrder() {
   const pay   = document.getElementById('c-pay')?.value;
   const notes = document.getElementById('c-notes')?.value.trim();
   if (!addr) { showToast('⚠️', 'Please enter delivery address'); return; }
-  if (!customerData?.name || !customerData?.phone) { showToast('⚠️', 'Please login again'); return; }
   const btn = document.getElementById('place-btn');
   btn.disabled = true; btn.textContent = 'Placing order...';
   try {
-    const res = await fetch(`${API}/orders`, {
+    const res  = await fetch(`${API}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${customerToken}` },
-      body: JSON.stringify({
-        customer: {
-          name:    customerData.name,
-          phone:   customerData.phone,
-          address: addr
-        },
-        items: cart.map(i => ({ productId: i._id, quantity: i.qty })),
-        paymentMethod: pay,
-        notes
-      })
+      body: JSON.stringify({ items: cart.map(i => ({ productId: i._id, quantity: i.qty })), paymentMethod: pay, notes, deliveryAddress: addr })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
@@ -348,13 +336,13 @@ function showOrderSuccess(data) {
     <div class="success-box">
       <div class="success-icon">🎉</div>
       <h3>Order Placed!</h3>
-      <p>Thank you <strong>${o.customer.name}</strong>! Your order is confirmed and we will contact you soon.</p>
+      <p>Thank you <strong>${o.customerSnapshot.name}</strong>! Your order is confirmed and we will contact you soon.</p>
       <div class="o-box">
         <p><strong>Order ID:</strong> ${o.orderId}</p>
         ${o.items.map(i => `<p>• ${i.name} ×${i.quantity} — ₹${(i.price*i.quantity).toLocaleString('en-IN')}</p>`).join('')}
         <p style="margin-top:.5rem"><strong>Total: ₹${o.totalAmount.toLocaleString('en-IN')}</strong></p>
         <p><strong>Payment:</strong> ${o.paymentMethod === 'cod' ? 'Cash on Delivery' : o.paymentMethod.toUpperCase()}</p>
-        <p><strong>Address:</strong> ${o.customer.address}</p>
+        <p><strong>Address:</strong> ${o.customerSnapshot.address}</p>
       </div>
       <p style="font-size:.8rem;color:var(--muted)">Save your Order ID: <strong>${o.orderId}</strong></p>
       <div style="display:flex;gap:.75rem;justify-content:center;margin-top:1.25rem;flex-wrap:wrap">
@@ -369,7 +357,7 @@ function showOrderSuccess(data) {
 async function loadMyOrders() {
   if (!customerToken) { document.getElementById('orders-wrap').innerHTML = `<div class="empty"><div class="ei">🔒</div><h3>Login to view orders</h3><br/><button class="btn-gold" onclick="openAuth('login')">Login</button></div>`; return; }
   try {
-    const res  = await fetch(`${API}/orders/my?phone=${encodeURIComponent(customerData?.phone||'')}`, { headers: { Authorization: `Bearer ${customerToken}` } });
+    const res  = await fetch(`${API}/orders/my`, { headers: { Authorization: `Bearer ${customerToken}` } });
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
     const div = document.getElementById('orders-wrap');
