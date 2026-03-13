@@ -297,7 +297,7 @@ function renderCart() {
           <select id="c-pay"><option value="cod">Cash on Delivery</option><option value="upi">UPI</option><option value="bank">Bank Transfer</option></select>
         </div>
         <div><label>Notes (optional)</label><textarea id="c-notes" placeholder="Any special requests..."></textarea></div>
-        <button class="btn-place" id="place-btn" onclick="placeOrder()">🛍️ Place Order — ₹${cartTotal().toLocaleString('en-IN')}</button>
+        <button class="btn-place" id="place-btn" onclick="placeOrder()">🛍️ Place Order — ₹${cart.reduce((s,i)=>s+(i.price*i.qty),0).toLocaleString('en-IN')}</button>
       </div>
     </div>
   </div>`;
@@ -310,6 +310,16 @@ async function placeOrder() {
   const pay   = document.getElementById('c-pay')?.value;
   const notes = document.getElementById('c-notes')?.value.trim();
   if (!addr) { showToast('⚠️', 'Please enter delivery address'); return; }
+
+  // If customerData missing, fetch it from server using token
+  if (!customerData || !customerData.name) {
+    try {
+      const vr = await fetch(`${API}/auth/verify`, { headers: { Authorization: `Bearer ${customerToken}` } });
+      const vd = await vr.json();
+      if (vd.success && vd.customer) { customerData = vd.customer; localStorage.setItem('vbs_cdata', JSON.stringify(vd.customer)); }
+    } catch(e) {}
+  }
+
   const btn = document.getElementById('place-btn');
   btn.disabled = true; btn.textContent = 'Placing order...';
   try {
@@ -322,8 +332,8 @@ async function placeOrder() {
         notes,
         deliveryAddress: addr,
         customer: {
-          name:    customerData?.name    || '',
-          phone:   customerData?.phone   || '',
+          name:    customerData?.name    || 'Customer',
+          phone:   customerData?.phone   || customerData?.email || '',
           address: addr
         }
       })
@@ -345,13 +355,13 @@ function showOrderSuccess(data) {
     <div class="success-box">
       <div class="success-icon">🎉</div>
       <h3>Order Placed!</h3>
-      <p>Thank you <strong>${o.customerSnapshot.name}</strong>! Your order is confirmed and we will contact you soon.</p>
+      <p>Thank you <strong>${o.customer?.name || customerData?.name}</strong>! Your order is confirmed and we will contact you soon.</p>
       <div class="o-box">
         <p><strong>Order ID:</strong> ${o.orderId}</p>
         ${o.items.map(i => `<p>• ${i.name} ×${i.quantity} — ₹${(i.price*i.quantity).toLocaleString('en-IN')}</p>`).join('')}
         <p style="margin-top:.5rem"><strong>Total: ₹${o.totalAmount.toLocaleString('en-IN')}</strong></p>
         <p><strong>Payment:</strong> ${o.paymentMethod === 'cod' ? 'Cash on Delivery' : o.paymentMethod.toUpperCase()}</p>
-        <p><strong>Address:</strong> ${o.customerSnapshot.address}</p>
+        <p><strong>Address:</strong> ${o.customer?.address || ''}</p>
       </div>
       <p style="font-size:.8rem;color:var(--muted)">Save your Order ID: <strong>${o.orderId}</strong></p>
       <div style="display:flex;gap:.75rem;justify-content:center;margin-top:1.25rem;flex-wrap:wrap">
