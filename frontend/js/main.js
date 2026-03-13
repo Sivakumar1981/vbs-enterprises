@@ -415,6 +415,12 @@ function showToast(icon, msg) {
 }
 
 /* ══════════════ INIT ══════════════════════════════════════ */
-renderHeader();
-updateBadge();
-loadProducts();
+try {
+  renderHeader();
+  updateBadge();
+  loadProducts();
+} catch(e) {
+  console.error('INIT ERROR:', e);
+  document.getElementById('prod-grid').innerHTML =
+    `<div style="padding:2rem;color:red">Error: ${e.message}</div>`;
+}
