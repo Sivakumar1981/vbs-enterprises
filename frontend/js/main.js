@@ -126,11 +126,10 @@ document.getElementById('ham').addEventListener('click', () => {
 });
 
 /* ══════════════ PRODUCTS ══════════════════════════════════ */
-// Supports Cloudinary URLs and local uploads
 function imgUrl(image) {
   if (!image) return null;
-  if (image.startsWith('http')) return image;
-  return '/uploads/' + image;
+  if (image.startsWith('http')) return image;  // Cloudinary URL - permanent
+  return '/uploads/' + image;                   // local file
 }
 async function loadProducts() {
   const search = document.getElementById('srch')?.value || '';
@@ -161,8 +160,8 @@ function filterCat(cat) {
   loadProducts();
 }
 
-const catIcon  = { saree: '👘', nighty: '🌙', chudidhar: '👗', blouse: '🪡', oil: '🫙', rice: '🌾', other: '📦' };
-const catLabel = { saree: 'Saree', nighty: 'Nighty', chudidhar: 'Chudidhar', blouse: 'Blouse', oil: 'Oil', rice: 'Rice', other: 'Other' };
+const catIcon  = { saree: '👘', nighty: '🌙', chudidhar: '👗', blouse: '🪡', oil: '🫙', rice: '🌾', clothes: '👗', other: '📦' };
+const catLabel = { saree: 'Saree', nighty: 'Nighty', chudidhar: 'Chudidhar', blouse: 'Blouse', oil: 'Oil', rice: 'Rice', clothes: 'Clothes', other: 'Other' };
 
 function renderProds() {
   const grid = document.getElementById('prod-grid');
