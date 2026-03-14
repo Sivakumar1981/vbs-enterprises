@@ -580,93 +580,57 @@ function downloadInvoice(orderId) {
 }
 
 function generateInvoiceHTML(o) {
-  const date = new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'long',timeStyle:'short'});
-  const itemsRows = o.items.map((i,idx)=>`
-    <tr style="background:${idx%2===0?'#fff8f0':'#fff'}">
-      <td style="padding:10px 12px;border-bottom:1px solid #e8d5b8">${idx+1}</td>
-      <td style="padding:10px 12px;border-bottom:1px solid #e8d5b8">${i.name}</td>
-      <td style="padding:10px 12px;border-bottom:1px solid #e8d5b8;text-align:center">${i.category||'-'}</td>
-      <td style="padding:10px 12px;border-bottom:1px solid #e8d5b8;text-align:center">${i.quantity}</td>
-      <td style="padding:10px 12px;border-bottom:1px solid #e8d5b8;text-align:right">₹${i.price.toLocaleString('en-IN')}</td>
-      <td style="padding:10px 12px;border-bottom:1px solid #e8d5b8;text-align:right;font-weight:600">₹${(i.price*i.quantity).toLocaleString('en-IN')}</td>
-    </tr>`).join('');
+  const date = new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+  const items = o.items.map(i=>
+    `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #ccc;font-size:11px">
+      <div style="flex:1;padding-right:4px">${i.name}<br/><span style="color:#666;font-size:10px">x${i.quantity} @ ₹${i.price}</span></div>
+      <div style="font-weight:700;white-space:nowrap">₹${(i.price*i.quantity).toLocaleString('en-IN')}</div>
+    </div>`
+  ).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-  <title>Invoice ${o.orderId}</title>
+  <title>Receipt ${o.orderId}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial,sans-serif;color:#2d1a00;background:#fff;padding:2rem}
-    .inv-header{background:linear-gradient(135deg,#1a0f00,#3d2000);color:#fff;padding:1.5rem 2rem;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center}
-    .inv-title{font-size:1.8rem;color:#e8c068;font-weight:700}
-    .inv-sub{font-size:.8rem;color:#b0a090;margin-top:.2rem}
-    .inv-id{text-align:right}
-    .inv-id .big{font-size:1.1rem;font-weight:700;color:#e8c068}
-    .inv-id .small{font-size:.75rem;color:#b0a090;margin-top:.25rem}
-    .inv-body{border:1.5px solid #e8d5b8;border-top:none;border-radius:0 0 12px 12px;padding:1.5rem 2rem}
-    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;margin-top:1rem}
-    .info-box{background:#fff8f0;border:1px solid #e8d5b8;border-radius:8px;padding:1rem}
-    .info-box h4{font-size:.75rem;color:#8a7060;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem}
-    .info-box p{font-size:.85rem;line-height:1.7;color:#2d1a00}
-    .info-box strong{color:#1a0f00}
-    table{width:100%;border-collapse:collapse;margin-bottom:1rem}
-    th{background:#1a0f00;color:#e8c068;padding:10px 12px;text-align:left;font-size:.78rem;letter-spacing:.05em}
-    th:last-child,th:nth-child(4),th:nth-child(5){text-align:right}
-    th:nth-child(3){text-align:center}
-    .total-row{background:#1a0f00;color:#fff}
-    .total-row td{padding:12px;font-size:1rem;font-weight:700;color:#e8c068;border:none}
-    .footer-note{text-align:center;font-size:.75rem;color:#8a7060;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e8d5b8}
-    .status-badge{display:inline-block;padding:.3rem .9rem;border-radius:20px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#d4edda;color:#155724}
-    @media print{body{padding:.5rem}.inv-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    body{font-family:'Courier New',monospace;width:80mm;max-width:80mm;margin:0 auto;padding:6px;font-size:11px;color:#000;background:#fff}
+    .center{text-align:center}
+    .bold{font-weight:700}
+    .divider{border:none;border-top:1px dashed #000;margin:5px 0}
+    .row{display:flex;justify-content:space-between;padding:2px 0;font-size:11px}
+    .shop-name{font-size:15px;font-weight:700;text-align:center;letter-spacing:.05em}
+    .total-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:4px 0;border-top:2px solid #000;border-bottom:2px solid #000;margin:4px 0}
+    .thank{text-align:center;font-size:10px;margin-top:6px;padding-top:4px;border-top:1px dashed #000}
+    @media print{
+      @page{margin:0;size:80mm auto}
+      body{padding:4px}
+      .no-print{display:none}
+    }
   </style></head><body>
-  <div class="inv-header">
-    <div>
-      <div class="inv-title">VBS Enterprises</div>
-      <div class="inv-sub">Groundnut Oil · Sarees · Chudidhars · Nighties · Blouse Material · Rice Bag</div>
-      <div class="inv-sub" style="margin-top:.2rem">📞 +91 9840042290 & +91 9840357267 | sivaskr81@gmail.com</div>
-      <div class="inv-sub">📍 108/7C, 5th Cross St, Rajiv Nagar, Pallikuppam, Vanagaram, Chennai – 600077</div>
-    </div>
-    <div class="inv-id">
-      <div class="big">INVOICE</div>
-      <div class="small">${o.orderId}</div>
-      <div class="small">${date}</div>
-      <div style="margin-top:.4rem"><span class="status-badge">${o.status}</span></div>
-    </div>
+  <div class="shop-name">VBS ENTERPRISES</div>
+  <div class="center" style="font-size:9px;margin-top:2px">108/7C, 5th Cross St, Rajiv Nagar</div>
+  <div class="center" style="font-size:9px">Pallikuppam, Vanagaram, Chennai-600077</div>
+  <div class="center" style="font-size:9px">Ph: 9840042290 / 9840357267</div>
+  <hr class="divider"/>
+  <div class="row"><span class="bold">Order:</span><span>${o.orderId}</span></div>
+  <div class="row"><span class="bold">Date:</span><span>${date}</span></div>
+  <div class="row"><span class="bold">Status:</span><span>${o.status.toUpperCase()}</span></div>
+  <hr class="divider"/>
+  <div class="bold" style="font-size:10px;margin-bottom:3px">CUSTOMER</div>
+  <div style="font-size:11px">${o.customer.name}</div>
+  <div style="font-size:10px;color:#333">${o.customer.phone}</div>
+  <div style="font-size:10px;color:#333">${o.customer.address}</div>
+  <hr class="divider"/>
+  <div class="bold" style="font-size:10px;margin-bottom:3px">ITEMS</div>
+  ${items}
+  <div class="total-row"><span>TOTAL</span><span>₹${o.totalAmount.toLocaleString('en-IN')}</span></div>
+  <div class="row"><span>Payment:</span><span>${o.paymentMethod==='cod'?'Cash on Delivery':o.paymentMethod.toUpperCase()}</span></div>
+  ${o.notes?`<div class="row"><span>Notes:</span><span style="text-align:right;flex:1;padding-left:4px">${o.notes}</span></div>`:''}
+  <div class="thank">
+    Thank you for shopping!<br/>
+    Quality You Can Trust<br/>
+    <button onclick="window.print()" class="no-print" style="margin-top:6px;background:#000;color:#fff;border:none;padding:5px 20px;border-radius:4px;cursor:pointer;font-size:11px">🖨️ Print</button>
   </div>
-  <div class="inv-body">
-    <div class="two-col">
-      <div class="info-box">
-        <h4>Bill To</h4>
-        <p><strong>${o.customer.name}</strong><br/>
-        📞 ${o.customer.phone}<br/>
-        ${o.customer.email?'✉️ '+o.customer.email+'<br/>':''}
-        📍 ${o.customer.address}</p>
-      </div>
-      <div class="info-box">
-        <h4>Payment Details</h4>
-        <p><strong>Method:</strong> ${o.paymentMethod==='cod'?'Cash on Delivery':o.paymentMethod.toUpperCase()}<br/>
-        <strong>Status:</strong> ${o.paymentMethod==='cod'?'Pay on Delivery':'Prepaid'}<br/>
-        ${o.notes?'<strong>Notes:</strong> '+o.notes:''}
-        </p>
-      </div>
-    </div>
-    <table>
-      <thead><tr>
-        <th>#</th><th>Product</th><th>Category</th><th style="text-align:center">Qty</th>
-        <th style="text-align:right">Price</th><th style="text-align:right">Total</th>
-      </tr></thead>
-      <tbody>${itemsRows}</tbody>
-      <tfoot><tr class="total-row">
-        <td colspan="5" style="text-align:right;color:#e8c068">Grand Total</td>
-        <td style="text-align:right;color:#e8c068">₹${o.totalAmount.toLocaleString('en-IN')}</td>
-      </tr></tfoot>
-    </table>
-    <div class="footer-note">
-      Thank you for shopping with VBS Enterprises! · This is a computer generated invoice.
-    </div>
-  </div>
-
   </body></html>`;
-
   return html;
 }
 
