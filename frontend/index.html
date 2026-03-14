@@ -2,149 +2,292 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>VBS Enterprises – Cloths · Oil · Rice</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/style.css"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VBS Enterprises – Sarees, Chudidhars & More</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --deep:   #1a0f00;
+  --dark:   #2d1a00;
+  --gold:   #c8902a;
+  --gold-l: #e8c068;
+  --warm:   #fdf6ec;
+  --cream:  #f5e6cc;
+  --muted:  #7a6652;
+  --text:   #2d1a00;
+  --white:  #ffffff;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(26,15,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--text);min-height:100vh}
+
+/* ── OVERLAY AUTH ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.open{opacity:1;pointer-events:all}
+.auth-box{background:var(--white);border-radius:var(--radius);padding:2rem;width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.auth-box h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--deep);margin-bottom:1.25rem;text-align:center}
+.auth-box input,.auth-box textarea,.auth-box select{width:100%;padding:.7rem .9rem;border:1.5px solid #e0d4c0;border-radius:8px;font-size:.9rem;font-family:inherit;margin-bottom:.75rem;background:#fdfaf5;outline:none;transition:border-color .2s}
+.auth-box input:focus{border-color:var(--gold)}
+.auth-box .err{color:#c0392b;font-size:.83rem;margin-bottom:.6rem;display:none}
+.auth-box .err.show{display:block}
+.btn-gold{background:var(--gold);color:#fff;border:none;padding:.75rem 1.5rem;border-radius:8px;font-size:.95rem;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;width:100%;transition:background .2s}
+.btn-gold:hover{background:var(--dark)}
+.auth-switch{text-align:center;margin-top:.75rem;font-size:.85rem;color:var(--muted)}
+.auth-switch a{color:var(--gold);cursor:pointer;text-decoration:underline}
+.modal-close{position:absolute;top:.75rem;right:.75rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)}
+
+/* ── NAVBAR ── */
+nav{background:var(--deep);padding:.75rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.logo img{height:52px;width:auto;display:block}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.nb{background:none;border:none;color:#ccc;cursor:pointer;font-size:.9rem;font-family:'DM Sans',sans-serif;padding:.45rem .9rem;border-radius:6px;transition:all .2s;display:flex;align-items:center;gap:.35rem}
+.nb:hover,.nb.active{color:var(--gold-l);background:rgba(200,144,42,.12)}
+.cart-nb{background:rgba(200,144,42,.15);color:var(--gold-l)}
+.cbadge{background:var(--gold);color:#fff;border-radius:50%;padding:.1rem .45rem;font-size:.75rem;margin-left:.2rem}
+#user-pill button{background:var(--gold);color:#fff;border:none;padding:.4rem .85rem;border-radius:6px;cursor:pointer;font-size:.82rem;font-family:'DM Sans',sans-serif}
+.user-name{color:var(--gold-l);font-size:.85rem;margin-right:.4rem}
+.ham{display:none;background:none;border:none;color:#ccc;font-size:1.4rem;cursor:pointer}
+.mob-nav{display:none;flex-direction:column;gap:.5rem;background:var(--dark);padding:1rem 2rem}
+.mob-nav.open{display:flex}
+@media(max-width:640px){.nav-right{display:none}.ham{display:block}}
+
+/* ── HERO ── */
+#hero-wrap{background:linear-gradient(135deg,var(--deep) 0%,var(--dark) 60%,#3d2500 100%);padding:3.5rem 2rem 2.5rem;text-align:center}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.2rem);color:var(--gold-l);margin-bottom:.5rem}
+.hero-sub{color:#b0a090;font-size:.95rem;margin-bottom:1.5rem}
+.hcat-bar{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
+.hcat-btn{background:rgba(255,255,255,.07);border:1.5px solid rgba(200,144,42,.3);color:#ccc;padding:.45rem 1.1rem;border-radius:20px;cursor:pointer;font-size:.85rem;font-family:'DM Sans',sans-serif;transition:all .2s}
+.hcat-btn:hover,.hcat-btn.active-cat{background:var(--gold);border-color:var(--gold);color:#fff}
+
+/* ── PAGES ── */
+.page{display:none}.page.active{display:block}
+
+/* ── SHOP ── */
+#page-shop{padding:2rem}
+.shop-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+.shop-title{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--deep)}
+.shop-title span{color:var(--gold)}
+.shop-controls{display:flex;gap:.6rem;flex-wrap:wrap}
+.shop-controls input,.shop-controls select{border:1.5px solid #e0d4c0;background:var(--white);border-radius:8px;padding:.5rem .85rem;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;color:var(--text)}
+.shop-controls input:focus{border-color:var(--gold)}
+
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.25rem}
+.prod-card{background:var(--white);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+.prod-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(26,15,0,.18)}
+.prod-img{position:relative;height:190px;background:var(--cream);overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.prod-card:hover .prod-img img{transform:scale(1.05)}
+.no-img{height:100%;display:flex;align-items:center;justify-content:center;font-size:3.5rem}
+.cat-tag{position:absolute;top:.5rem;left:.5rem;background:rgba(26,15,0,.7);color:var(--gold-l);font-size:.7rem;padding:.2rem .55rem;border-radius:4px}
+.stk-tag{position:absolute;bottom:.5rem;right:.5rem;font-size:.68rem;padding:.2rem .55rem;border-radius:4px}
+.stk-tag.in{background:#d4edda;color:#155724}
+.stk-tag.low{background:#fff3cd;color:#856404}
+.stk-tag.out{background:#f8d7da;color:#721c24}
+.prod-body{padding:.9rem}
+.prod-name{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--deep);margin-bottom:.25rem}
+.prod-desc{font-size:.78rem;color:var(--muted);line-height:1.4;margin-bottom:.6rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prod-price{font-weight:600;color:var(--gold);font-size:1.05rem}
+.prod-unit{font-size:.75rem;color:var(--muted);font-weight:400}
+.prod-actions{display:flex;gap:.5rem;margin-top:.65rem}
+.btn-add{flex:1;background:var(--deep);color:#fff;border:none;padding:.55rem;border-radius:7px;cursor:pointer;font-size:.82rem;font-family:'DM Sans',sans-serif;transition:background .2s}
+.btn-add:hover:not(:disabled){background:var(--gold)}
+.btn-add:disabled{background:#ccc;cursor:not-allowed}
+.btn-eye{background:var(--cream);border:none;padding:.55rem .75rem;border-radius:7px;cursor:pointer;font-size:.9rem;transition:background .2s}
+.btn-eye:hover{background:var(--cream)}
+.empty{text-align:center;padding:4rem 1rem;color:var(--muted)}
+.empty .ei{font-size:3rem;margin-bottom:1rem}
+
+/* ── CART ── */
+#page-cart{padding:2rem}
+.cart-grid{display:grid;grid-template-columns:1fr min(380px,100%);gap:1.5rem;align-items:start}
+@media(max-width:768px){.cart-grid{grid-template-columns:1fr}}
+.cart-item{background:var(--white);border-radius:var(--radius);padding:1rem;display:flex;gap:1rem;align-items:center;margin-bottom:.75rem;box-shadow:var(--shadow)}
+.ci-img{width:70px;height:70px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:2rem}
+.ci-img img{width:100%;height:100%;object-fit:cover}
+.ci-info{flex:1}
+.ci-info h4{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--deep)}
+.ci-cat{font-size:.75rem;color:var(--muted);margin:.15rem 0 .4rem}
+.qty-row{display:flex;align-items:center;gap:.5rem}
+.qbtn{background:var(--cream);border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:.9rem}
+.qnum{font-weight:600;font-size:.9rem;min-width:20px;text-align:center}
+.ci-right{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
+.ci-price{font-weight:600;color:var(--gold)}
+.btn-rm{background:none;border:none;cursor:pointer;font-size:1rem;opacity:.6;transition:opacity .2s}
+.btn-rm:hover{opacity:1}
+.o-summary{background:var(--white);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow)}
+.o-summary h3{font-family:'Cormorant Garamond',serif;color:var(--deep);font-size:1.2rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--cream)}
+.sum-row{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:.4rem}
+.sum-row.tot{font-weight:700;font-size:1rem;color:var(--deep);padding-top:.5rem;border-top:1px solid var(--cream);margin-top:.4rem}
+.chk-form{margin-top:1rem}
+.chk-form label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:.25rem;margin-top:.6rem}
+.chk-form textarea,.chk-form select{width:100%;padding:.6rem .8rem;border:1.5px solid #e0d4c0;border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;background:#fdfaf5;resize:vertical}
+.chk-form textarea:focus{border-color:var(--gold)}
+.btn-place{width:100%;margin-top:1rem;background:var(--gold);color:#fff;border:none;padding:.85rem;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-place:hover:not(:disabled){background:var(--dark)}
+.btn-place:disabled{background:#ccc;cursor:not-allowed}
+
+/* ── ORDERS ── */
+#page-orders{padding:2rem}
+.orders-list{display:flex;flex-direction:column;gap:1rem;max-width:700px}
+.ord-card{background:var(--white);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow)}
+.ord-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem}
+.ord-id{font-weight:700;color:var(--deep);font-family:'Cormorant Garamond',serif;font-size:1.05rem}
+.ord-date{font-size:.75rem;color:var(--muted);margin-top:.1rem}
+.spill{padding:.25rem .75rem;border-radius:20px;font-size:.75rem;font-weight:600;text-transform:capitalize}
+.spill.new{background:#cce5ff;color:#004085}
+.spill.confirmed{background:#d4edda;color:#155724}
+.spill.processing{background:#fff3cd;color:#856404}
+.spill.ready{background:#e2d9f3;color:#4a235a}
+.spill.delivered{background:#d4edda;color:#155724}
+.spill.cancelled{background:#f8d7da;color:#721c24}
+.ord-items{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem}
+.ord-chip{background:var(--cream);border-radius:4px;padding:.2rem .6rem;font-size:.75rem;color:var(--text)}
+.ord-foot{display:flex;justify-content:space-between;align-items:center}
+.ord-total{font-weight:700;color:var(--gold)}
+
+/* ── SUCCESS MODAL ── */
+#success-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:900;opacity:0;pointer-events:none;transition:opacity .25s;padding:1rem}
+#success-overlay.open{opacity:1;pointer-events:all}
+#success-box{background:var(--white);border-radius:var(--radius);padding:2rem;width:min(500px,92vw);max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.success-icon{font-size:3rem;text-align:center;margin-bottom:.75rem}
+#success-box h3{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--deep);text-align:center;margin-bottom:.5rem}
+#success-box p{font-size:.88rem;color:var(--muted);text-align:center;margin-bottom:.75rem}
+.o-box{background:var(--warm);border-radius:8px;padding:1rem;font-size:.83rem;color:var(--text);line-height:1.7}
+.btn-outline{background:none;border:1.5px solid var(--gold);color:var(--gold);padding:.6rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.88rem;font-family:'DM Sans',sans-serif;transition:all .2s}
+.btn-outline:hover{background:var(--gold);color:#fff}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--deep);color:#fff;padding:.75rem 1.5rem;border-radius:8px;display:flex;align-items:center;gap:.6rem;font-size:.88rem;z-index:2000;transition:transform .3s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── PAGE TITLE ── */
+.page-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--deep);margin-bottom:1.25rem}
+.page-title span{color:var(--gold)}
+</style>
 </head>
 <body>
 
-<!-- TOAST -->
-<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg"></span></div>
-
-<!-- AUTH MODALS -->
+<!-- AUTH OVERLAY -->
 <div class="overlay" id="auth-overlay">
-  <div class="auth-card" id="auth-card">
-    <!-- Login Form -->
+  <div class="auth-box" style="position:relative">
+    <button class="modal-close" onclick="closeAuth()">✕</button>
     <div id="form-login">
-      <div class="auth-logo"><img src="images/VBS_logo.png" alt="VBS"/></div>
       <h2>Welcome Back</h2>
-      <p class="auth-sub">Login to your VBS account</p>
-      <div class="auth-fields">
-        <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="yourmail@gmail.com"/></div>
-        <div class="field"><label>Password</label><input type="password" id="li-pass" placeholder="Your password"/></div>
-      </div>
-      <div class="auth-err" id="li-err"></div>
-      <button class="btn-auth" id="li-btn" onclick="doLogin()">Login to Shop</button>
-      <p class="auth-switch">New customer? <a href="#" onclick="switchAuth('register')">Create Account</a></p>
+      <div class="err" id="li-err"></div>
+      <input type="text" id="li-email" placeholder="Phone number or Email"/>
+      <input type="password" id="li-pass" placeholder="Password"/>
+      <button class="btn-gold" id="li-btn" onclick="doLogin()">Login to Shop</button>
+      <div class="auth-switch">No account? <a onclick="switchAuth('register')">Create one</a></div>
     </div>
-    <!-- Register Form -->
     <div id="form-register" style="display:none">
-      <div class="auth-logo"><img src="images/VBS_logo.png" alt="VBS"/></div>
       <h2>Create Account</h2>
-      <p class="auth-sub">Join VBS Enterprises</p>
-      <div class="auth-fields">
-        <div class="field"><label>Full Name *</label><input type="text" id="rg-name" placeholder="Your full name"/></div>
-        <div class="field"><label>Phone Number *</label><input type="tel" id="rg-phone" placeholder="+91 9876543210"/></div>
-        <div class="field"><label>Email *</label><input type="email" id="rg-email" placeholder="yourmail@gmail.com"/></div>
-        <div class="field"><label>Password *</label><input type="password" id="rg-pass" placeholder="Min 6 characters"/></div>
-        <div class="field full"><label>Address</label><input type="text" id="rg-addr" placeholder="Your delivery address"/></div>
-      </div>
-      <div class="auth-err" id="rg-err"></div>
-      <button class="btn-auth" id="rg-btn" onclick="doRegister()">Create My Account</button>
-      <p class="auth-switch">Already have account? <a href="#" onclick="switchAuth('login')">Login</a></p>
+      <div class="err" id="rg-err"></div>
+      <input type="text" id="rg-name" placeholder="Full Name *"/>
+      <input type="tel" id="rg-phone" placeholder="Phone Number *"/>
+      <input type="email" id="rg-email" placeholder="Email (optional)"/>
+      <input type="password" id="rg-pass" placeholder="Password (min 6 chars) *"/>
+      <textarea id="rg-addr" placeholder="Delivery Address (optional)" rows="2" style="resize:vertical;padding:.7rem .9rem;border:1.5px solid #e0d4c0;border-radius:8px;font-size:.9rem;font-family:inherit;margin-bottom:.75rem;background:#fdfaf5;width:100%;outline:none"></textarea>
+      <button class="btn-gold" id="rg-btn" onclick="doRegister()">Create My Account</button>
+      <div class="auth-switch">Already have an account? <a onclick="switchAuth('login')">Login</a></div>
     </div>
   </div>
 </div>
 
-<!-- HEADER -->
-<header>
-  <div class="header-inner">
-    <div class="logo" onclick="showPage('shop')">
-      <img src="images/VBS_logo.png" alt="VBS Enterprises" class="logo-img"/>
-    </div>
-    <nav id="main-nav">
-      <button class="nb active" data-page="shop">🏪 Shop</button>
-      <button class="nb" data-page="orders">📦 My Orders</button>
-      <button class="nb cart-nb" data-page="cart">🛒 Cart <span class="cbadge" id="cbadge">0</span></button>
-      <div class="user-pill" id="user-pill"></div>
-    </nav>
-    <button class="ham" id="ham">☰</button>
+<!-- NAVBAR -->
+<nav>
+  <div class="logo">
+    <img src="images/VBS_logo.png" alt="VBS Enterprises" onerror="this.style.display='none';this.nextSibling.style.display='block'"/>
+    <span style="display:none;color:var(--gold-l);font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700">VBS</span>
   </div>
-  <div class="mob-nav" id="mob-nav">
-    <button data-page="shop">🏪 Shop</button>
-    <button data-page="orders">📦 My Orders</button>
-    <button data-page="cart">🛒 Cart (<span id="cbadge-m">0</span>)</button>
-    <button onclick="handleUserBtn()">👤 Account</button>
+  <div class="nav-right">
+    <button class="nb active" data-page="shop">🛍️ Shop</button>
+    <button class="nb" data-page="orders">📦 My Orders</button>
+    <button class="nb cart-nb" data-page="cart">🛒 Cart <span class="cbadge" id="cbadge">0</span></button>
+    <div id="user-pill"></div>
   </div>
-</header>
+  <button class="ham" id="ham">☰</button>
+</nav>
+<div class="mob-nav" id="mob-nav">
+  <button class="nb" data-page="shop">🛍️ Shop</button>
+  <button class="nb" data-page="orders">📦 My Orders</button>
+  <button class="nb" data-page="cart">🛒 Cart (<span id="cbadge-m">0</span>)</button>
+</div>
 
 <!-- HERO -->
 <div id="hero-wrap">
-  <section class="hero">
-    <div class="hero-glow"></div>
-    <div class="hero-body">
-      <img src="images/VBS_logo.png" alt="VBS Enterprises" class="hero-logo"/>
-      <p class="hero-tag">✨ Quality You Can Trust</p>
-      <h1>Groundnut Oil · Sarees · Chudidhars<br/>Nighties · Blouse Material · Rice Bag</h1>
-      <p class="hero-desc">Premium quality products delivered to your doorstep (With in Chennai) Fresh, pure and affordable.</p>
-      <div class="hero-cats">
-        <button onclick="filterCat('')"        class="hcat-btn active-cat">All Products</button>
-        <button onclick="filterCat('saree')" class="hcat-btn"> Sarees</button>
-        <button onclick="filterCat('chudidhar')" class="hcat-btn"> Chudidhars</button>
-        <button onclick="filterCat('oil')"     class="hcat-btn"> Oil</button>
-        <button onclick="filterCat('rice')"    class="hcat-btn"> Rice</button>
-        <button onclick="filterCat('nighty')"  class="hcat-btn"> Nighty</button>
-        <button onclick="filterCat('blouse')"  class="hcat-btn"> Blouses</button>
-        <button onclick="filterCat('other')"   class="hcat-btn"> Others</button>
-      </div>
-    </div>
-  </section>
+  <div class="hero-title">VBS Enterprises</div>
+  <div class="hero-sub">Premium Sarees · Chudidhars · Nighties · Blouses · Oil · Rice</div>
+  <div class="hcat-bar">
+    <button class="hcat-btn active-cat" onclick="filterCat('')">All Products</button>
+    <button class="hcat-btn" onclick="filterCat('saree')">👘 Sarees</button>
+    <button class="hcat-btn" onclick="filterCat('chudidhar')">👗 Chudidhars</button>
+    <button class="hcat-btn" onclick="filterCat('oil')">🫙 Oil</button>
+    <button class="hcat-btn" onclick="filterCat('rice')">🌾 Rice</button>
+    <button class="hcat-btn" onclick="filterCat('nighty')">🌙 Nighty</button>
+    <button class="hcat-btn" onclick="filterCat('blouse')">🪡 Blouses</button>
+    <button class="hcat-btn" onclick="filterCat('other')">📦 Others</button>
+  </div>
 </div>
 
-<main>
-
-  <!-- SHOP PAGE -->
-  <section class="page active" id="page-shop">
-    <div class="page-top">
-      <h2 class="page-title">Our <span>Products</span></h2>
-      <div class="filters">
-        <input id="srch" type="text" placeholder="🔍 Search products..." oninput="loadProducts()"/>
+<!-- PAGES -->
+<div class="page active" id="page-shop">
+  <div style="padding:2rem">
+    <div class="shop-header">
+      <div class="shop-title">Our <span>Products</span></div>
+      <div class="shop-controls">
+        <input type="text" id="srch" placeholder="🔍 Search products..." oninput="loadProducts()" style="width:200px"/>
         <select id="cat-sel" onchange="loadProducts()">
           <option value="">All Categories</option>
-          <option value="saree"> Sarees</option>
-          <option value="chudidhar"> Chudidhars</option>
-          <option value="oil"> Oil</option>
-          <option value="rice"> Rice</option>
-          <option value="nighty"> Nighties</option>
-          <option value="blouse"> Blouses</option>
-          <option value="other"> Others</option>
+          <option value="saree">Sarees</option>
+          <option value="chudidhar">Chudidhars</option>
+          <option value="oil">Oil</option>
+          <option value="rice">Rice</option>
+          <option value="nighty">Nighty</option>
+          <option value="blouse">Blouses</option>
+          <option value="other">Others</option>
         </select>
         <select id="sort-sel" onchange="loadProducts()">
           <option value="">Sort By</option>
-          <option value="asc">Price ↑</option>
-          <option value="desc">Price ↓</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
         </select>
       </div>
     </div>
     <div class="prod-grid" id="prod-grid">
-      <div class="loading"><div class="spin"></div><p>Loading products...</p></div>
+      <div class="empty" style="grid-column:1/-1">
+        <div class="ei">⏳</div>
+        <h3>Loading products...</h3>
+      </div>
     </div>
-  </section>
-
-  <!-- CART PAGE -->
-  <section class="page" id="page-cart">
-    <h2 class="page-title">Your <span>Cart</span></h2>
-    <div id="cart-wrap"></div>
-  </section>
-
-  <!-- ORDERS PAGE -->
-  <section class="page" id="page-orders">
-    <h2 class="page-title">My <span>Orders</span></h2>
-    <div id="orders-wrap"></div>
-  </section>
-
-</main>
-
-<!-- SUCCESS MODAL -->
-<div class="overlay" id="success-overlay">
-  <div class="modal" id="success-box"></div>
+  </div>
 </div>
 
-<footer>
-  <img src="images/VBS_logo.png" alt="VBS" style="height:50px;opacity:.7;margin-bottom:.5rem"/>
-  <p>© 2026 <strong>VBS Enterprises</strong></p>
-  <p>Groundnut Oil · Sarees · Chudidhars · Nighties · Blouse Material · Rice Bag</p>
-  <p><strong>Contact Us:</strong> +91 9840042290 & +91 9840357267 | <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a9dac0dfc8dac2db9198e9cec4c8c0c587cac6c4">[email&#160;protected]</a></p>
-  <p><strong>Address:</strong>📍 108/7C, 5th Cross St,
+<div class="page" id="page-cart">
+  <div style="padding:2rem">
+    <div class="page-title">Your <span>Cart</span></div>
+    <div id="cart-wrap"></div>
+  </div>
+</div>
+
+<div class="page" id="page-orders">
+  <div style="padding:2rem">
+    <div class="page-title">My <span>Orders</span></div>
+    <div id="orders-wrap"></div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div id="success-overlay">
+  <div id="success-box" style="position:relative"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span id="toast-icon">✓</span>
+  <span id="toast-msg">Done</span>
+</div>
+
+<script src="js/main.js?v=3"></script>
+</body>
+</html>
