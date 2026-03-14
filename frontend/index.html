@@ -53,9 +53,11 @@ nav{background:var(--deep);padding:.75rem 2rem;display:flex;align-items:center;j
 @media(max-width:640px){.nav-right{display:none}.ham{display:block}}
 
 /* ── HERO ── */
-#hero-wrap{background:linear-gradient(135deg,var(--deep) 0%,var(--dark) 60%,#3d2500 100%);padding:3.5rem 2rem 2.5rem;text-align:center}
-.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.2rem);color:var(--gold-l);margin-bottom:.5rem}
-.hero-sub{color:#b0a090;font-size:.95rem;margin-bottom:1.5rem}
+#hero-wrap{background:radial-gradient(ellipse at top,#3d2000 0%,#1a0f00 60%,#0f0800 100%);padding:3.5rem 2rem 2.5rem;text-align:center}
+.hero-logo-wrap{margin-bottom:1.25rem}
+.hero-logo{height:110px;width:auto;filter:drop-shadow(0 4px 20px rgba(200,144,42,.35))}
+.hero-badge{display:inline-block;border:1.5px solid rgba(200,144,42,.5);color:var(--gold-l);font-size:.75rem;font-weight:600;letter-spacing:.15em;padding:.4rem 1.2rem;border-radius:20px;margin-bottom:1.25rem;background:rgba(200,144,42,.08)}
+.hero-desc{font-family:'Cormorant Garamond',serif;font-size:clamp(1.1rem,2.5vw,1.4rem);color:#e8ddd0;line-height:1.7;margin-bottom:1.75rem}
 .hcat-bar{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
 .hcat-btn{background:rgba(255,255,255,.07);border:1.5px solid rgba(200,144,42,.3);color:#ccc;padding:.45rem 1.1rem;border-radius:20px;cursor:pointer;font-size:.85rem;font-family:'DM Sans',sans-serif;transition:all .2s}
 .hcat-btn:hover,.hcat-btn.active-cat{background:var(--gold);border-color:var(--gold);color:#fff}
@@ -225,8 +227,11 @@ footer a:hover{text-decoration:underline}
 
 <!-- HERO -->
 <div id="hero-wrap">
-  <div class="hero-title">VBS Enterprises</div>
-  <div class="hero-sub">Premium Sarees · Chudidhars · Nighties · Blouses · Oil · Rice</div>
+  <div class="hero-logo-wrap">
+    <img src="images/VBS_logo.png" alt="VBS Enterprises" class="hero-logo"/>
+  </div>
+  <div class="hero-badge">✦ QUALITY YOU CAN TRUST</div>
+  <div class="hero-desc">Premium quality products delivered to your doorstep<br/><span style="font-size:.9rem;opacity:.75">(Within Chennai) · Fresh, pure and affordable.</span></div>
   <div class="hcat-bar">
     <button class="hcat-btn active-cat" onclick="filterCat('')">All Products</button>
     <button class="hcat-btn" onclick="filterCat('saree')">👘 Sarees</button>
