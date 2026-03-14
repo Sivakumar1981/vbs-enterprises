@@ -528,7 +528,10 @@ function orderCard(o,isAdmin){
     ${o.notes?`<div style="font-size:.78rem;color:var(--muted);margin-bottom:.65rem">📝 ${o.notes}</div>`:''}
     <div class="oc-foot">
       <div class="oc-total">₹${o.totalAmount.toLocaleString('en-IN')}</div>
-      ${isAdmin?`<select class="ssel" onchange="updateStatus('${o._id}',this.value)">
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <button class="btn-gh" onclick="viewInvoice('${o._id}')" style="font-size:.78rem;padding:.38rem .85rem">👁 View</button>
+        <button class="btn-g" onclick="downloadInvoice('${o._id}')" style="font-size:.78rem;padding:.38rem .85rem">⬇️ Download</button>
+        ${isAdmin?`<select class="ssel" onchange="updateStatus('${o._id}',this.value)">
         <option value="new"        ${o.status==='new'?'selected':''}>🆕 New</option>
         <option value="confirmed"  ${o.status==='confirmed'?'selected':''}>✅ Confirmed</option>
         <option value="processing" ${o.status==='processing'?'selected':''}>⚙️ Processing</option>
@@ -536,10 +539,25 @@ function orderCard(o,isAdmin){
         <option value="delivered"  ${o.status==='delivered'?'selected':''}>🚚 Delivered</option>
         <option value="cancelled"  ${o.status==='cancelled'?'selected':''}>❌ Cancelled</option>
       </select>`:''}
+      </div>
     </div>
   </div>`;
 }
 
+
+function viewInvoice(orderId) {
+  fetch(`${API}/orders`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      window.open(url,'_blank');
+      setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    }).catch(()=>toast('❌','Could not load order'));
+}
 
 function downloadInvoice(orderId) {
   fetch(`${API}/orders`,{headers:{Authorization:`Bearer ${token}`}})
