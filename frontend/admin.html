@@ -542,19 +542,26 @@ function orderCard(o,isAdmin){
 
 
 function downloadInvoice(orderId) {
-  // Find order from current rendered data
-  const card = document.querySelector(`[data-orderid="${orderId}"]`) || document.getElementById('orders-box');
-  // Re-fetch order and generate invoice
   fetch(`${API}/orders`,{headers:{Authorization:`Bearer ${token}`}})
     .then(r=>r.json())
     .then(d=>{
       const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
       if(!o){toast('❌','Order not found');return;}
-      generateInvoicePDF(o);
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'Invoice-' + o.orderId + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      toast('✅','Invoice downloaded!');
     }).catch(()=>toast('❌','Could not load order'));
 }
 
-function generateInvoicePDF(o) {
+function generateInvoiceHTML(o) {
   const date = new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'long',timeStyle:'short'});
   const itemsRows = o.items.map((i,idx)=>`
     <tr style="background:${idx%2===0?'#fff8f0':'#fff'}">
@@ -639,13 +646,10 @@ function generateInvoicePDF(o) {
       Thank you for shopping with VBS Enterprises! · This is a computer generated invoice.
     </div>
   </div>
-  <scr'+'ipt>window.onload=()=>{window.print();}</scr'+'ipt>
+
   </body></html>`;
 
-  const blob = new Blob([html], {type:'text/html'});
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url,'_blank');
-  setTimeout(()=>URL.revokeObjectURL(url), 10000);
+  return html;
 }
 
 async function updateStatus(id,status){
