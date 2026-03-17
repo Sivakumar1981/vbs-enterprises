@@ -301,6 +301,14 @@ tr:hover td{background:var(--warm)}
           </div>
         </div>
 
+        <!-- Bar Chart -->
+        <div class="tc" style="margin-bottom:1.25rem">
+          <div class="tc-top"><h3>📊 Monthly Revenue Chart</h3></div>
+          <div style="padding:1rem 1.25rem 1.5rem">
+            <canvas id="monthly-chart" style="width:100%;height:220px"></canvas>
+          </div>
+        </div>
+
         <!-- Item-wise breakdown -->
         <div class="tc">
           <div class="tc-top">
@@ -314,6 +322,7 @@ tr:hover td{background:var(--warm)}
               <th style="text-align:right">Qty Sold</th>
               <th style="text-align:right">Unit Price</th>
               <th style="text-align:right">Revenue</th>
+              <th>Last Order Date</th>
             </tr></thead>
             <tbody id="tally-items"></tbody>
           </table>
@@ -499,13 +508,86 @@ function renderTally() {
   const itemMap = {};
   orders.forEach(o=>o.items.forEach(i=>{
     const k = i.name+'__'+i.category;
-    if(!itemMap[k]) itemMap[k]={name:i.name,cat:i.category||'other',orders:0,qty:0,price:i.price,rev:0};
+    const oDate = new Date(o.createdAt);
+    if(!itemMap[k]) itemMap[k]={name:i.name,cat:i.category||'other',orders:0,qty:0,price:i.price,rev:0,lastDate:oDate};
     itemMap[k].orders++;
     itemMap[k].qty += i.quantity;
     itemMap[k].rev += i.price*i.quantity;
+    if(oDate > itemMap[k].lastDate) itemMap[k].lastDate = oDate;
   }));
-  tallyItemsData = Object.values(itemMap).sort((a,b)=>b.rev-a.rev);
+  tallyItemsData = Object.values(itemMap).sort((a,b)=>b.rev-a.rev).map(i=>({
+    ...i,
+    lastDate: i.lastDate.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+  }));
   renderTallyItems(tallyItemsData);
+
+  // Draw bar chart
+  drawBarChart(mMap);
+}
+
+function drawBarChart(mMap) {
+  const canvas = document.getElementById('monthly-chart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const entries = Object.keys(mMap).sort((a,b)=>parseInt(a)-parseInt(b));
+  if(!entries.length){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+
+  // Set canvas dimensions
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.clientWidth - 40;
+  const H = 220;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const maxRev = Math.max(...entries.map(m=>mMap[m].rev));
+  const pad = {top:20, right:20, bottom:50, left:70};
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+  const barW   = Math.min(50, (chartW / entries.length) - 10);
+
+  ctx.clearRect(0,0,W,H);
+
+  // Y axis gridlines
+  ctx.strokeStyle = '#e8d5b8';
+  ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++){
+    const y = pad.top + chartH - (chartH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+    ctx.fillStyle='#8a7060'; ctx.font='10px DM Sans,sans-serif'; ctx.textAlign='right';
+    ctx.fillText('₹'+(Math.round(maxRev/4*i)).toLocaleString('en-IN'), pad.left-6, y+4);
+  }
+
+  // Bars
+  entries.forEach((m, idx) => {
+    const barH = maxRev > 0 ? (mMap[m].rev / maxRev) * chartH : 0;
+    const x = pad.left + (chartW / entries.length) * idx + (chartW / entries.length - barW) / 2;
+    const y = pad.top + chartH - barH;
+
+    // Gold gradient bar
+    const grad = ctx.createLinearGradient(0, y, 0, pad.top+chartH);
+    grad.addColorStop(0, '#e8c068');
+    grad.addColorStop(1, '#c8902a');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
+    ctx.fill();
+
+    // Value on top
+    ctx.fillStyle='#2d1a00'; ctx.font='bold 10px DM Sans,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('₹'+(mMap[m].rev/1000).toFixed(1)+'k', x+barW/2, y-5);
+
+    // Month label
+    ctx.fillStyle='#2d1a00'; ctx.font='11px DM Sans,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(months[parseInt(m)], x+barW/2, pad.top+chartH+16);
+
+    // Orders count
+    ctx.fillStyle='#8a7060'; ctx.font='9px DM Sans,sans-serif';
+    ctx.fillText(mMap[m].orders+' orders', x+barW/2, pad.top+chartH+28);
+  });
 }
 
 function renderTallyItems(data) {
@@ -518,8 +600,9 @@ function renderTallyItems(data) {
       <td style="text-align:right;font-weight:600">${item.qty}</td>
       <td style="text-align:right">₹${item.price.toLocaleString('en-IN')}</td>
       <td style="text-align:right;font-weight:700;color:var(--gold)">₹${item.rev.toLocaleString('en-IN')}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${item.lastDate}</td>
     </tr>`).join('')
-  : '<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
+  : '<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
 }
 
 function filterTallyItems() {
