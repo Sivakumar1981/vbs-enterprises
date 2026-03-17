@@ -295,7 +295,7 @@ router.put('/:id/amount', auth, async (req, res) => {
     }
     const order = await Order.findByIdAndUpdate(
       req.params.id,
-      { totalAmount, discount: discount||0, originalAmount: originalAmount||totalAmount, discountReason: discountReason||'' },
+      { $set: { totalAmount, discount: discount||0, originalAmount: originalAmount||totalAmount, discountReason: discountReason||'' } },
       { new: true }
     );
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
