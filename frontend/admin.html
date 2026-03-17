@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -364,6 +364,36 @@ tr:hover td{background:var(--warm)}
 </div>
 
 <!-- TOAST -->
+<!-- EDIT AMOUNT MODAL -->
+<div class="movl" id="edit-amount-modal">
+  <div class="mbox" style="max-width:340px">
+    <h3>✏️ Edit Order Amount</h3>
+    <p style="margin-bottom:.5rem">Apply discount or adjust total for this order.</p>
+    <input type="hidden" id="ea-order-id"/>
+    <input type="hidden" id="ea-original"/>
+    <div style="margin-bottom:.75rem">
+      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Original Amount</label>
+      <div id="ea-orig-display" style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-top:.25rem"></div>
+    </div>
+    <div style="margin-bottom:.75rem">
+      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Discount Amount (₹)</label>
+      <input type="number" id="ea-discount" placeholder="e.g. 50" min="0" oninput="calcNewTotal()" style="width:100%"/>
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">New Total</label>
+      <div id="ea-new-total" style="font-size:1.3rem;font-weight:700;color:#22c55e;margin-top:.25rem"></div>
+    </div>
+    <div style="margin-bottom:.75rem">
+      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Reason (optional)</label>
+      <input type="text" id="ea-reason" placeholder="e.g. Loyal customer, Festival offer" style="width:100%"/>
+    </div>
+    <div class="macts">
+      <button class="btn-g" onclick="saveOrderAmount()">✅ Save</button>
+      <button class="btn-gh" onclick="document.getElementById('edit-amount-modal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span id="t-icon">✅</span><span id="t-msg"></span></div>
 
 <script>
@@ -624,7 +654,7 @@ function printTally() {
   const catHTML    = document.getElementById('tally-category').innerHTML;
   const itemsHTML  = document.getElementById('tally-items').innerHTML;
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Tally Report</title>
+  const html = `<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
@@ -838,8 +868,14 @@ function orderCard(o,isAdmin){
     <div class="oc-items">${o.items.map(i=>`<span class="ichip">${catIcon(i.category)} ${i.name} ×${i.quantity}</span>`).join('')}</div>
     ${o.notes?`<div style="font-size:.78rem;color:var(--muted);margin-bottom:.65rem">📝 ${o.notes}</div>`:''}
     <div class="oc-foot">
-      <div class="oc-total">₹${o.totalAmount.toLocaleString('en-IN')}</div>
+      <div>
+        <div class="oc-total">₹${o.totalAmount.toLocaleString('en-IN')}
+          ${o.discount ? `<span style="font-size:.72rem;color:#22c55e;margin-left:.4rem">(-₹${o.discount} discount)</span>` : ''}
+        </div>
+        ${o.originalAmount && o.originalAmount !== o.totalAmount ? `<div style="font-size:.75rem;color:var(--muted);text-decoration:line-through">₹${o.originalAmount.toLocaleString('en-IN')}</div>` : ''}
+      </div>
       <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        ${isAdmin ? `<button class="btn-gh" onclick="editOrderAmount('${o._id}',${o.totalAmount},${o.discount||0})" style="font-size:.78rem;padding:.38rem .85rem">✏️ Edit Amount</button>` : ''}
         <button class="btn-gh" onclick="viewInvoice('${o._id}')" style="font-size:.78rem;padding:.38rem .85rem">👁 View</button>
         <button class="btn-g" onclick="downloadInvoice('${o._id}')" style="font-size:.78rem;padding:.38rem .85rem">⬇️ Download</button>
         ${isAdmin?`<select class="ssel" onchange="updateStatus('${o._id}',this.value)">
@@ -899,7 +935,7 @@ function generateInvoiceHTML(o) {
     </div>`
   ).join('');
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  const html = `<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 --><html><head><meta charset="UTF-8"/>
   <title>Receipt ${o.orderId}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -943,6 +979,43 @@ function generateInvoiceHTML(o) {
   </div>
   </body></html>`;
   return html;
+}
+
+function editOrderAmount(id, currentTotal, currentDiscount) {
+  document.getElementById('ea-order-id').value  = id;
+  document.getElementById('ea-original').value  = currentTotal + (currentDiscount||0);
+  document.getElementById('ea-discount').value  = currentDiscount || '';
+  document.getElementById('ea-orig-display').textContent = '₹' + (currentTotal + (currentDiscount||0)).toLocaleString('en-IN');
+  calcNewTotal();
+  document.getElementById('edit-amount-modal').classList.add('open');
+}
+
+function calcNewTotal() {
+  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
+  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
+  const newTotal = Math.max(0, orig - discount);
+  document.getElementById('ea-new-total').textContent = '₹' + newTotal.toLocaleString('en-IN')
+    + (discount > 0 ? ' (saved ₹' + discount.toLocaleString('en-IN') + ')' : '');
+}
+
+async function saveOrderAmount() {
+  const id       = document.getElementById('ea-order-id').value;
+  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
+  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
+  const reason   = document.getElementById('ea-reason').value.trim();
+  const newTotal = Math.max(0, orig - discount);
+  try {
+    const res = await fetch(`${API}/orders/${id}/amount`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify({ totalAmount: newTotal, discount, originalAmount: orig, discountReason: reason })
+    });
+    const d = await res.json();
+    if(!d.success) throw new Error(d.message);
+    document.getElementById('edit-amount-modal').classList.remove('open');
+    toast('✅', `Amount updated → ₹${newTotal.toLocaleString('en-IN')}`);
+    loadOrders();
+  } catch(e) { toast('❌', e.message); }
 }
 
 async function updateStatus(id,status){
