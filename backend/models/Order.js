@@ -46,7 +46,10 @@ const orderSchema = new mongoose.Schema({
   notes: {
     type: String,
     default: ''
-  }
+  },
+  discount:       { type: Number, default: 0 },
+  originalAmount: { type: Number, default: 0 },
+  discountReason: { type: String, default: '' }
 }, { timestamps: true });
 
 // Auto-generate orderId before saving
