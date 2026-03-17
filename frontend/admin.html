@@ -250,6 +250,75 @@ tr:hover td{background:var(--warm)}
         <div id="orders-box"></div>
       </div>
 
+      <!-- TALLY / REPORTS -->
+      <div class="tab" id="tab-tally">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--text)">📊 Tally & Reports</h2>
+            <p style="font-size:.82rem;color:var(--muted)">Monthly breakdown · Item-wise sales · Revenue summary</p>
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <select id="tally-year" onchange="loadTally()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+            </select>
+            <select id="tally-month" onchange="loadTallyMonth()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+              <option value="">All Months</option>
+              <option value="0">January</option><option value="1">February</option>
+              <option value="2">March</option><option value="3">April</option>
+              <option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option>
+              <option value="8">September</option><option value="9">October</option>
+              <option value="10">November</option><option value="11">December</option>
+            </select>
+            <button class="btn-g" onclick="printTally()" style="font-size:.82rem;padding:.45rem 1rem">🖨️ Print Report</button>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div id="tally-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
+          <!-- Monthly Table -->
+          <div class="tc" id="tally-monthly-wrap">
+            <div class="tc-top"><h3>📅 Monthly Orders</h3></div>
+            <table>
+              <thead><tr>
+                <th>Month</th><th style="text-align:right">Orders</th>
+                <th style="text-align:right">Items</th><th style="text-align:right">Revenue</th>
+              </tr></thead>
+              <tbody id="tally-monthly"></tbody>
+            </table>
+          </div>
+          <!-- Category Table -->
+          <div class="tc">
+            <div class="tc-top"><h3>🏷️ Category-wise Sales</h3></div>
+            <table>
+              <thead><tr>
+                <th>Category</th><th style="text-align:right">Qty Sold</th><th style="text-align:right">Revenue</th>
+              </tr></thead>
+              <tbody id="tally-category"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Item-wise breakdown -->
+        <div class="tc">
+          <div class="tc-top">
+            <h3>📦 Item-wise Sales</h3>
+            <input type="text" id="tally-item-srch" placeholder="Search item..." oninput="filterTallyItems()" style="width:180px;padding:.4rem .75rem;font-size:.82rem"/>
+          </div>
+          <table>
+            <thead><tr>
+              <th>Product Name</th><th>Category</th>
+              <th style="text-align:center">Orders</th>
+              <th style="text-align:right">Qty Sold</th>
+              <th style="text-align:right">Unit Price</th>
+              <th style="text-align:right">Revenue</th>
+            </tr></thead>
+            <tbody id="tally-items"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- CUSTOMERS -->
       <div class="tab" id="tab-customers">
         <div class="tc">
@@ -344,11 +413,169 @@ function showTab(t){
   if(t==='dash')loadDash();
   if(t==='products')loadProds();
   if(t==='orders')loadOrders();
+  if(t==='tally')loadTally();
   if(t==='customers')loadCustomers();
   document.getElementById('sidebar').classList.remove('open');
 }
 
 /* ── DASHBOARD ── */
+/* ── TALLY ── */
+let allOrdersCache = [];
+let tallyItemsData = [];
+
+async function loadTally() {
+  try {
+    const res = await fetch(`${API}/orders?limit=9999`, {headers:{Authorization:`Bearer ${token}`}});
+    const d   = await res.json();
+    if(!d.success) throw new Error(d.message);
+    allOrdersCache = d.orders.filter(o => o.status !== 'cancelled');
+
+    // Populate year dropdown
+    const years = [...new Set(allOrdersCache.map(o => new Date(o.createdAt).getFullYear()))].sort((a,b)=>b-a);
+    const ySel  = document.getElementById('tally-year');
+    const curY  = ySel.value || new Date().getFullYear();
+    ySel.innerHTML = years.map(y=>`<option value="${y}" ${y==curY?'selected':''}>${y}</option>`).join('');
+
+    renderTally();
+  } catch(e) { toast('❌', e.message); }
+}
+
+function loadTallyMonth() { renderTally(); }
+
+function renderTally() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('tally-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  // Summary stats
+  const totalRev   = orders.reduce((s,o)=>s+o.totalAmount,0);
+  const totalItems = orders.reduce((s,o)=>s+o.items.reduce((ss,i)=>ss+i.quantity,0),0);
+  const avgOrder   = orders.length ? Math.round(totalRev/orders.length) : 0;
+  document.getElementById('tally-stats').innerHTML = `
+    <div class="tally-stat"><div class="tn">${orders.length}</div><div class="tl">Orders</div></div>
+    <div class="tally-stat"><div class="tn">₹${totalRev.toLocaleString('en-IN')}</div><div class="tl">Revenue</div></div>
+    <div class="tally-stat"><div class="tn">${totalItems}</div><div class="tl">Items Sold</div></div>
+    <div class="tally-stat"><div class="tn">₹${avgOrder.toLocaleString('en-IN')}</div><div class="tl">Avg Order</div></div>`;
+
+  // Monthly breakdown
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mMap   = {};
+  allOrdersCache.filter(o=>new Date(o.createdAt).getFullYear()===year).forEach(o=>{
+    const m = new Date(o.createdAt).getMonth();
+    if(!mMap[m]) mMap[m] = {orders:0,items:0,rev:0};
+    mMap[m].orders++;
+    mMap[m].items += o.items.reduce((s,i)=>s+i.quantity,0);
+    mMap[m].rev   += o.totalAmount;
+  });
+  document.getElementById('tally-monthly').innerHTML = Object.keys(mMap).sort((a,b)=>b-a).map(m=>`
+    <tr class="month-row" onclick="selectMonth(${m})">
+      <td><strong>${months[m]}</strong></td>
+      <td style="text-align:right">${mMap[m].orders}</td>
+      <td style="text-align:right">${mMap[m].items}</td>
+      <td style="text-align:right;font-weight:700;color:var(--gold)">₹${mMap[m].rev.toLocaleString('en-IN')}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
+
+  // Category breakdown
+  const catMap = {};
+  orders.forEach(o=>o.items.forEach(i=>{
+    const c = i.category||'other';
+    if(!catMap[c]) catMap[c]={qty:0,rev:0};
+    catMap[c].qty += i.quantity;
+    catMap[c].rev += i.price*i.quantity;
+  }));
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',other:'📦 Other'};
+  document.getElementById('tally-category').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].rev-a[1].rev).map(([c,v])=>`
+    <tr>
+      <td>${cLabel2[c]||c}</td>
+      <td style="text-align:right">${v.qty}</td>
+      <td style="text-align:right;font-weight:700;color:var(--gold)">₹${v.rev.toLocaleString('en-IN')}</td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
+
+  // Item-wise
+  const itemMap = {};
+  orders.forEach(o=>o.items.forEach(i=>{
+    const k = i.name+'__'+i.category;
+    if(!itemMap[k]) itemMap[k]={name:i.name,cat:i.category||'other',orders:0,qty:0,price:i.price,rev:0};
+    itemMap[k].orders++;
+    itemMap[k].qty += i.quantity;
+    itemMap[k].rev += i.price*i.quantity;
+  }));
+  tallyItemsData = Object.values(itemMap).sort((a,b)=>b.rev-a.rev);
+  renderTallyItems(tallyItemsData);
+}
+
+function renderTallyItems(data) {
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',other:'📦 Other'};
+  document.getElementById('tally-items').innerHTML = data.length ? data.map((item,idx)=>`
+    <tr style="background:${idx%2===0?'var(--card)':'#fff'}">
+      <td><strong>${item.name}</strong></td>
+      <td><span class="cat-tag ${item.cat}">${cLabel2[item.cat]||item.cat}</span></td>
+      <td style="text-align:center">${item.orders}</td>
+      <td style="text-align:right;font-weight:600">${item.qty}</td>
+      <td style="text-align:right">₹${item.price.toLocaleString('en-IN')}</td>
+      <td style="text-align:right;font-weight:700;color:var(--gold)">₹${item.rev.toLocaleString('en-IN')}</td>
+    </tr>`).join('')
+  : '<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
+}
+
+function filterTallyItems() {
+  const q = document.getElementById('tally-item-srch').value.toLowerCase();
+  renderTallyItems(q ? tallyItemsData.filter(i=>i.name.toLowerCase().includes(q)||i.cat.includes(q)) : tallyItemsData);
+}
+
+function selectMonth(m) {
+  document.getElementById('tally-month').value = m;
+  renderTally();
+}
+
+function printTally() {
+  const year  = document.getElementById('tally-year')?.value;
+  const mSel  = document.getElementById('tally-month');
+  const mName = mSel.options[mSel.selectedIndex].text;
+  const statsHTML  = document.getElementById('tally-stats').innerHTML;
+  const monthlyHTML= document.getElementById('tally-monthly').innerHTML;
+  const catHTML    = document.getElementById('tally-category').innerHTML;
+  const itemsHTML  = document.getElementById('tally-items').innerHTML;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Tally Report</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
+    h1{font-size:1.4rem;color:#1a0f00;margin-bottom:.25rem}
+    h3{font-size:1rem;margin:1rem 0 .5rem;color:#1a0f00;border-bottom:2px solid #c8902a;padding-bottom:.25rem}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
+    .stat{background:#1a0f00;color:#fff;border-radius:8px;padding:.75rem;text-align:center}
+    .stat .n{font-size:1.4rem;color:#e8c068;font-weight:700}
+    .stat .l{font-size:.65rem;color:#b0a090;text-transform:uppercase;margin-top:.2rem}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+    table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+    th{background:#1a0f00;color:#e8c068;padding:6px 8px;text-align:left;font-size:11px}
+    td{padding:5px 8px;border-bottom:1px solid #e8d5b8;font-size:11px}
+    tr:nth-child(even) td{background:#fff8f0}
+    .gold{color:#c8902a;font-weight:700}
+    @media print{@page{margin:1cm}button{display:none}}
+  </style></head><body>
+  <h1>VBS Enterprises — Tally Report</h1>
+  <p style="color:#7a6652;font-size:.8rem;margin-bottom:1rem">${mName} ${year} · Generated on ${new Date().toLocaleString('en-IN')}</p>
+  <div class="stats">${statsHTML.replace(/class="tally-stat"/g,'class="stat"').replace(/class="tn"/g,'class="n"').replace(/class="tl"/g,'class="l"')}</div>
+  <div class="grid2">
+    <div><h3>📅 Monthly Orders</h3><table><thead><tr><th>Month</th><th>Orders</th><th>Items</th><th>Revenue</th></tr></thead><tbody>${monthlyHTML}</tbody></table></div>
+    <div><h3>🏷️ Category Sales</h3><table><thead><tr><th>Category</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>${catHTML}</tbody></table></div>
+  </div>
+  <h3>📦 Item-wise Sales</h3>
+  <table><thead><tr><th>Product</th><th>Category</th><th>Orders</th><th>Qty</th><th>Price</th><th>Revenue</th></tr></thead><tbody>${itemsHTML}</tbody></table>
+  <button onclick="window.print()" style="background:#c8902a;color:#fff;border:none;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">🖨️ Print / Save PDF</button>
+  </body></html>`;
+
+  const blob = new Blob([html],{type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+
 async function loadDash(){
   try{
     const[sr,or]=await Promise.all([
