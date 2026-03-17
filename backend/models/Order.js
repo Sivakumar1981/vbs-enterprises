@@ -52,11 +52,24 @@ const orderSchema = new mongoose.Schema({
   discountReason: { type: String, default: '' }
 }, { timestamps: true });
 
-// Auto-generate orderId before saving
+// Auto-generate unique orderId before saving
 orderSchema.pre('save', async function (next) {
   if (!this.orderId) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderId = 'VBS-' + String(count + 1001).padStart(4, '0');
+    let unique = false;
+    let attempts = 0;
+    while (!unique && attempts < 20) {
+      const count = await mongoose.model('Order').countDocuments();
+      const candidate = 'VBS-' + String(count + 1001 + attempts).padStart(4, '0');
+      const existing = await mongoose.model('Order').findOne({ orderId: candidate });
+      if (!existing) {
+        this.orderId = candidate;
+        unique = true;
+      }
+      attempts++;
+    }
+    if (!unique) {
+      this.orderId = 'VBS-' + Date.now();
+    }
   }
   next();
 });
