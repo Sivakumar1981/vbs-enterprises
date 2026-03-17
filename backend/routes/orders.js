@@ -286,4 +286,23 @@ router.get('/customers/:phone', auth, async (req, res) => {
   }
 });
 
+// ── ADMIN: Update order amount (discount) ─────────────────────
+router.put('/:id/amount', auth, async (req, res) => {
+  try {
+    const { totalAmount, discount, originalAmount, discountReason } = req.body;
+    if (totalAmount === undefined || totalAmount < 0) {
+      return res.status(400).json({ success: false, message: 'Invalid amount' });
+    }
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { totalAmount, discount: discount||0, originalAmount: originalAmount||totalAmount, discountReason: discountReason||'' },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    res.json({ success: true, message: 'Amount updated', order });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
