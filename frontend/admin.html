@@ -850,15 +850,11 @@ function downloadFinalReportExcel() {
   let grandPurchase=0, grandSales=0, grandProfit=0;
 
   // Build CSV content
-  let csv = 'VBS Enterprises - Final Report
-';
-  csv += 'Period: ' + periodLabel + '
-';
-  csv += 'Generated: ' + new Date().toLocaleString('en-IN') + '
-
-';
-  csv += 'Product Name,Unit,Purchase Price (₹),Sales Price (₹),Qty Sold,Purchase Total (₹),Sales Total (₹),Difference (₹),Profit (₹)
-';
+  const NL = String.fromCharCode(10);
+  let csv = 'VBS Enterprises - Final Report' + NL;
+  csv += 'Period: ' + periodLabel + NL;
+  csv += 'Generated: ' + new Date().toLocaleString('en-IN') + NL + NL;
+  csv += 'Product Name,Unit,Purchase Price (Rs),Sales Price (Rs),Qty Sold,Purchase Total (Rs),Sales Total (Rs),Difference (Rs),Profit (Rs)' + NL;
 
   rows.forEach(p => {
     const purchaseTotal = p.purchasePrice * p.qty;
@@ -867,16 +863,11 @@ function downloadFinalReportExcel() {
     grandPurchase += purchaseTotal;
     grandSales    += p.salesTotal;
     grandProfit   += profit;
-    csv += `"${p.name}","${p.unit}",${p.purchasePrice||''},${p.salesPrice},${p.qty},${purchaseTotal||''},${p.salesTotal},${diff||''},${purchaseTotal>0?profit:''}
-`;
+    csv += '"'+p.name+'","'+p.unit+'",'+( p.purchasePrice||'')+','+p.salesPrice+','+p.qty+','+(purchaseTotal||'')+','+p.salesTotal+','+(diff||'')+','+(purchaseTotal>0?profit:'') + NL;
   });
 
-  csv += `
-TOTAL,,,,,${grandPurchase},${grandSales},${grandSales-grandPurchase},${grandProfit}
-`;
-  csv += '
-Note: Enter purchase prices in the admin panel to see accurate profit calculations.
-';
+  csv += NL + 'TOTAL,,,,,'+grandPurchase+','+grandSales+','+(grandSales-grandPurchase)+','+grandProfit + NL;
+  csv += NL + 'Note: Enter purchase prices in the admin panel to see accurate profit calculations.' + NL;
 
   const BOM = '﻿'; // UTF-8 BOM for Excel Tamil text support
   const blob = new Blob([BOM + csv], {type:'text/csv;charset=utf-8'});
