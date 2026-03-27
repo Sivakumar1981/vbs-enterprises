@@ -66,7 +66,9 @@ router.post('/customer/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Phone/email and password required' });
     }
     // Find by phone or email
-    const query = phone ? { phone } : { email };
+    // Normalize phone - strip spaces, +, - for matching
+    const normalizedPhone = phone ? phone.replace(/[\s+\-()]/g,'') : null;
+    const query = normalizedPhone ? { phone: { $regex: normalizedPhone.slice(-10) } } : { email };
     const customer = await Customer.findOne(query);
     if (!customer) {
       return res.status(401).json({ success: false, message: 'Account not found. Please register first.' });
