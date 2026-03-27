@@ -271,6 +271,8 @@ tr:hover td{background:var(--warm)}
               <option value="10">November</option><option value="11">December</option>
             </select>
             <button class="btn-g" onclick="printTally()" style="font-size:.82rem;padding:.45rem 1rem">🖨️ Print Report</button>
+            <button class="btn-g" onclick="showFinalReport()" style="font-size:.82rem;padding:.45rem 1rem;background:var(--deep);border:1.5px solid var(--gold)">📋 Final Report</button>
+            <button class="btn-gh" onclick="downloadFinalReportExcel()" style="font-size:.82rem;padding:.45rem 1rem">⬇️ Download Excel</button>
           </div>
         </div>
 
@@ -327,6 +329,49 @@ tr:hover td{background:var(--warm)}
             <tbody id="tally-items"></tbody>
           </table>
         </div>
+
+        <!-- FINAL REPORT TABLE -->
+        <div class="tc" id="final-report-wrap" style="display:none;margin-top:1.25rem">
+          <div class="tc-top" style="flex-wrap:wrap;gap:.75rem">
+            <div>
+              <h3>📋 Final Report — Purchase & Sales</h3>
+              <p style="font-size:.75rem;color:var(--muted);margin-top:.2rem">Product-wise purchase price, sales price, quantity sold, gross & profit</p>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+              <select id="fr-month" onchange="renderFinalReport()" style="padding:.4rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem">
+                <option value="">All Months</option>
+                <option value="0">January</option><option value="1">February</option>
+                <option value="2">March</option><option value="3">April</option>
+                <option value="4">May</option><option value="5">June</option>
+                <option value="6">July</option><option value="7">August</option>
+                <option value="8">September</option><option value="9">October</option>
+                <option value="10">November</option><option value="11">December</option>
+              </select>
+              <button class="btn-g" onclick="downloadFinalReportExcel()" style="font-size:.78rem;padding:.4rem .85rem">⬇️ Excel</button>
+              <button class="btn-gh" onclick="document.getElementById('final-report-wrap').style.display='none'" style="font-size:.78rem;padding:.4rem .85rem">✕ Close</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table id="final-report-table" style="min-width:900px">
+              <thead>
+                <tr style="background:var(--deep)">
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:left;font-size:.78rem">Product Name</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:left;font-size:.78rem">Unit</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Purchase Price (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Sales Price (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Qty Sold</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Purchase Total (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Sales Total (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Difference (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Profit (₹)</th>
+                </tr>
+              </thead>
+              <tbody id="final-report-body"></tbody>
+              <tfoot id="final-report-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       <!-- CUSTOMERS -->
@@ -643,6 +688,207 @@ function filterTallyItems() {
 function selectMonth(m) {
   document.getElementById('tally-month').value = m;
   renderTally();
+}
+
+/* ── FINAL REPORT ── */
+let frPurchasePrices = {}; // { "name||unit||month||year": price }
+
+function showFinalReport() {
+  document.getElementById('final-report-wrap').style.display = 'block';
+  const tallyMonth = document.getElementById('tally-month')?.value;
+  if(tallyMonth !== undefined) document.getElementById('fr-month').value = tallyMonth;
+  loadAndRenderFinalReport();
+  document.getElementById('final-report-wrap').scrollIntoView({behavior:'smooth'});
+}
+
+async function loadAndRenderFinalReport() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('fr-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+
+  try {
+    // Load purchase prices for this month/year from backend
+    let url = `/api/purchaseprices?year=${year}`;
+    if(mIdx !== null) url += `&month=${mIdx}`;
+    const res  = await fetch(url, {headers:{Authorization:`Bearer ${token}`}});
+    const data = await res.json();
+    if(data.success) {
+      frPurchasePrices = {};
+      data.prices.forEach(p => {
+        const key = p.productName+'||'+p.unit+'||'+p.month+'||'+p.year;
+        frPurchasePrices[key] = p.price;
+      });
+    }
+  } catch(e) {}
+  renderFinalReport();
+}
+
+function renderFinalReport() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('fr-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  const prodMap = {};
+  orders.forEach(o => {
+    const oMonth = new Date(o.createdAt).getMonth();
+    const oYear  = new Date(o.createdAt).getFullYear();
+    o.items.forEach(i => {
+      const key = i.name+'||'+(i.unit||'');
+      if(!prodMap[key]) {
+        const ppKey = i.name+'||'+(i.unit||'')+'||'+(mIdx!==null?mIdx:oMonth)+'||'+oYear;
+        prodMap[key] = {
+          name: i.name, unit: i.unit||'per pcs',
+          salesPrice: i.price,
+          purchasePrice: frPurchasePrices[ppKey] || 0,
+          month: mIdx!==null?mIdx:oMonth, year: oYear,
+          qty:0, salesTotal:0
+        };
+      }
+      prodMap[key].qty += i.quantity;
+      prodMap[key].salesTotal += i.price * i.quantity;
+    });
+  });
+
+  const rows = Object.values(prodMap).sort((a,b)=>b.salesTotal-a.salesTotal);
+  const tbody = document.getElementById('final-report-body');
+  const tfoot = document.getElementById('final-report-foot');
+
+  if(!rows.length) {
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:1.5rem;color:var(--muted)">No sales data for this period</td></tr>';
+    tfoot.innerHTML=''; return;
+  }
+
+  let grandPurchase=0, grandSales=0, grandProfit=0;
+
+  tbody.innerHTML = rows.map((p,idx) => {
+    const purchaseTotal = p.purchasePrice * p.qty;
+    const diff   = p.salesPrice - p.purchasePrice;
+    const profit = p.salesTotal - purchaseTotal;
+    grandPurchase += purchaseTotal;
+    grandSales    += p.salesTotal;
+    grandProfit   += profit;
+    const pColor = profit>=0?'#16a34a':'#dc2626';
+    const dColor = diff>=0?'#16a34a':'#dc2626';
+    const safeKey = (p.name+'||'+p.unit).replace(/'/g,"\'");
+
+    return `<tr style="background:${idx%2===0?'var(--card)':'#fff'}">
+      <td style="padding:9px 12px;font-weight:600;font-size:.83rem">${p.name}</td>
+      <td style="padding:9px 12px;font-size:.78rem;color:var(--muted)">${p.unit}</td>
+      <td style="padding:9px 12px;text-align:right">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+          <input type="number" id="pp_${idx}" value="${p.purchasePrice||''}" placeholder="Enter ₹" min="0"
+            style="width:85px;padding:4px 6px;border:1.5px solid var(--border);border-radius:5px;font-size:.78rem;text-align:right"/>
+          <button onclick="savePurchasePrice('${safeKey}',${p.month},${p.year},${idx})"
+            style="background:var(--gold);color:var(--deep);border:none;padding:4px 8px;border-radius:5px;font-size:.72rem;font-weight:700;cursor:pointer">Save</button>
+        </div>
+        ${p.purchasePrice>0?`<div style="font-size:.7rem;color:#16a34a;margin-top:2px">Saved: ₹${p.purchasePrice}</div>`:'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">Not set for this month</div>'}
+      </td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;color:var(--gold);font-weight:600">₹${p.salesPrice.toLocaleString('en-IN')}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:600">${p.qty}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem">${purchaseTotal>0?'₹'+purchaseTotal.toLocaleString('en-IN'):'—'}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:600">₹${p.salesTotal.toLocaleString('en-IN')}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:600;color:${dColor}">${diff!==0?(diff>0?'+':'')+diff.toLocaleString('en-IN'):'—'}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:700;color:${pColor}">${purchaseTotal>0?(profit>=0?'+':'')+profit.toLocaleString('en-IN'):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  tfoot.innerHTML=`<tr style="background:var(--deep)">
+    <td colspan="5" style="padding:10px 12px;color:var(--gold-l);font-weight:700;font-size:.85rem">TOTAL</td>
+    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${grandPurchase.toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${grandSales.toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700">₹${(grandSales-grandPurchase).toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700;font-size:.95rem">₹${grandProfit.toLocaleString('en-IN')}</td>
+  </tr>`;
+}
+
+async function savePurchasePrice(key, month, year, idx) {
+  const parts = key.split('||');
+  const productName = parts[0];
+  const unit = parts[1];
+  const price = parseFloat(document.getElementById('pp_'+idx)?.value) || 0;
+  try {
+    const res = await fetch('/api/purchaseprices', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify({productName, unit, month, year, price})
+    });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    // Update local cache
+    const ppKey = productName+'||'+unit+'||'+month+'||'+year;
+    frPurchasePrices[ppKey] = price;
+    toast('✅', 'Purchase price saved for this month!');
+    renderFinalReport();
+  } catch(e) { toast('❌', e.message); }
+}
+
+function downloadFinalReportExcel() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const frMonth = document.getElementById('fr-month');
+  const mIdx  = frMonth && frMonth.value !== '' ? parseInt(frMonth.value) : null;
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const periodLabel = mIdx !== null ? months[mIdx] + ' ' + year : 'Full Year ' + year;
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  const prodMap = {};
+  orders.forEach(o => o.items.forEach(i => {
+    const key = i.name + '||' + (i.unit||'');
+    if(!prodMap[key]) {
+      prodMap[key] = {name:i.name, unit:i.unit||'per pcs', salesPrice:i.price,
+        purchasePrice:purchasePrices[key]||0, qty:0, salesTotal:0};
+    }
+    prodMap[key].qty += i.quantity;
+    prodMap[key].salesTotal += i.price * i.quantity;
+  }));
+
+  const rows = Object.values(prodMap).sort((a,b)=>b.salesTotal-a.salesTotal);
+  let grandPurchase=0, grandSales=0, grandProfit=0;
+
+  // Build CSV content
+  let csv = 'VBS Enterprises - Final Report
+';
+  csv += 'Period: ' + periodLabel + '
+';
+  csv += 'Generated: ' + new Date().toLocaleString('en-IN') + '
+
+';
+  csv += 'Product Name,Unit,Purchase Price (₹),Sales Price (₹),Qty Sold,Purchase Total (₹),Sales Total (₹),Difference (₹),Profit (₹)
+';
+
+  rows.forEach(p => {
+    const purchaseTotal = p.purchasePrice * p.qty;
+    const diff   = p.salesPrice - p.purchasePrice;
+    const profit = p.salesTotal - purchaseTotal;
+    grandPurchase += purchaseTotal;
+    grandSales    += p.salesTotal;
+    grandProfit   += profit;
+    csv += `"${p.name}","${p.unit}",${p.purchasePrice||''},${p.salesPrice},${p.qty},${purchaseTotal||''},${p.salesTotal},${diff||''},${purchaseTotal>0?profit:''}
+`;
+  });
+
+  csv += `
+TOTAL,,,,,${grandPurchase},${grandSales},${grandSales-grandPurchase},${grandProfit}
+`;
+  csv += '
+Note: Enter purchase prices in the admin panel to see accurate profit calculations.
+';
+
+  const BOM = '﻿'; // UTF-8 BOM for Excel Tamil text support
+  const blob = new Blob([BOM + csv], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'VBS-FinalReport-' + periodLabel.replace(' ','-') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  toast('✅', 'Excel report downloaded!');
 }
 
 function printTally() {
