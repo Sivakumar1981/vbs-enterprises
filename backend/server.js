@@ -18,6 +18,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth',     require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/orders',   require('./routes/orders'));
+app.use('/api/purchaseprices', require('./routes/purchaseprices'));
 
 // ── Frontend static files AFTER API routes ──
 const FE = path.join(__dirname, '../frontend');
