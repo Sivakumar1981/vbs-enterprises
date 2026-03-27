@@ -708,17 +708,13 @@ async function loadAndRenderFinalReport() {
 
   // Load from localStorage first (always works)
   frPurchasePrices = {};
-  if(mIdx !== null) {
-    const lsKey = 'vbs_pp_'+mIdx+'_'+year;
-    const stored = JSON.parse(localStorage.getItem(lsKey)||'{}');
-    Object.assign(frPurchasePrices, stored);
-  } else {
-    // Load all months for the year
-    for(let m=0; m<12; m++) {
-      const lsKey = 'vbs_pp_'+m+'_'+year;
+  // Load all months for the year so switching months works
+  for(let m=0; m<12; m++) {
+    const lsKey = 'vbs_pp_'+m+'_'+year;
+    try {
       const stored = JSON.parse(localStorage.getItem(lsKey)||'{}');
       Object.assign(frPurchasePrices, stored);
-    }
+    } catch(e) {}
   }
 
   // Try backend too (overrides localStorage if available)
@@ -751,22 +747,23 @@ function renderFinalReport() {
   if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
 
   const prodMap = {};
+  const useMonth = mIdx !== null ? mIdx : new Date().getMonth();
   orders.forEach(o => {
-    const oMonth = new Date(o.createdAt).getMonth();
-    const oYear  = new Date(o.createdAt).getFullYear();
+    const oYear = new Date(o.createdAt).getFullYear();
     o.items.forEach(i => {
-      const key = i.name+'||'+(i.unit||'');
+      const unit = i.unit || 'per pcs';
+      const key  = i.name + '||' + unit;
+      const ppKey = i.name + '||' + unit + '||' + useMonth + '||' + year;
       if(!prodMap[key]) {
-        const ppKey = i.name+'||'+(i.unit||'')+'||'+(mIdx!==null?mIdx:oMonth)+'||'+oYear;
         prodMap[key] = {
-          name: i.name, unit: i.unit||'per pcs',
+          name: i.name, unit: unit,
           salesPrice: i.price,
           purchasePrice: frPurchasePrices[ppKey] || 0,
-          month: mIdx!==null?mIdx:oMonth, year: oYear,
-          qty:0, salesTotal:0
+          month: useMonth, year: year,
+          qty: 0, salesTotal: 0
         };
       }
-      prodMap[key].qty += i.quantity;
+      prodMap[key].qty        += i.quantity;
       prodMap[key].salesTotal += i.price * i.quantity;
     });
   });
