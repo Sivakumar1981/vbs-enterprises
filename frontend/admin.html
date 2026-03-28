@@ -752,8 +752,9 @@ function renderFinalReport() {
     const oYear = new Date(o.createdAt).getFullYear();
     o.items.forEach(i => {
       const unit = i.unit || 'per pcs';
-      const key  = i.name + '||' + unit;
-      const ppKey = i.name + '||' + unit + '||' + useMonth + '||' + year;
+      // Use name + unit + price as key so 1L and 500ml are separate rows
+      const key  = i.name + '||' + unit + '||' + i.price;
+      const ppKey = i.name + '||' + unit + '||' + i.price + '||' + useMonth + '||' + year;
       if(!prodMap[key]) {
         prodMap[key] = {
           name: i.name, unit: unit,
@@ -788,7 +789,7 @@ function renderFinalReport() {
     grandProfit   += profit;
     const pColor = profit>=0?'#16a34a':'#dc2626';
     const dColor = diff>=0?'#16a34a':'#dc2626';
-    const safeKey = (p.name+'||'+p.unit).replace(/'/g,"\'");
+    const safeKey = (p.name+'||'+p.unit+'||'+p.salesPrice).replace(/'/g,"\\'") 
 
     return `<tr style="background:${idx%2===0?'var(--card)':'#fff'}">
       <td style="padding:9px 12px;font-weight:600;font-size:.83rem">${p.name}</td>
@@ -824,10 +825,11 @@ async function savePurchasePrice(key, month, year, idx) {
   const parts = key.split('||');
   const productName = parts[0];
   const unit = parts[1];
+  const salesPrice = parts[2]; // includes sales price for uniqueness
   const price = parseFloat(document.getElementById('pp_'+idx)?.value) || 0;
 
   // Always save to localStorage first (instant, works offline)
-  const ppKey = productName+'||'+unit+'||'+month+'||'+year;
+  const ppKey = productName+'||'+unit+'||'+salesPrice+'||'+month+'||'+year;
   frPurchasePrices[ppKey] = price;
   const lsKey = 'vbs_pp_'+month+'_'+year;
   const stored = JSON.parse(localStorage.getItem(lsKey)||'{}');
@@ -839,7 +841,7 @@ async function savePurchasePrice(key, month, year, idx) {
     const res = await fetch('/api/purchaseprices', {
       method: 'POST',
       headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
-      body: JSON.stringify({productName, unit, month, year, price})
+      body: JSON.stringify({productName, unit: unit+'||'+salesPrice, month, year, price})
     });
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
