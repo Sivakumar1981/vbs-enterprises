@@ -176,14 +176,14 @@ router.get('/my', async (req, res) => {
 // ── ADMIN: Get all orders ──────────────────────────────────────
 router.get('/', auth, async (req, res) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status, page = 1, limit = 50 } = req.query;
     const filter = {};
     if (status) filter.status = status;
 
     const orders = await Order.find(filter)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .skip((page - 1) * parseInt(limit))
+      .limit(Math.min(parseInt(limit), 9999));
 
     const total = await Order.countDocuments(filter);
     res.json({ success: true, orders, total, page: parseInt(page) });
