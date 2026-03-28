@@ -590,14 +590,18 @@ function renderTally() {
       <td style="text-align:right;font-weight:700;color:var(--gold)">₹${mMap[m].rev.toLocaleString('en-IN')}</td>
     </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
 
-  // Category breakdown
+  // Category breakdown — use actual received amount (after discount)
   const catMap = {};
-  orders.forEach(o=>o.items.forEach(i=>{
-    const c = i.category||'other';
-    if(!catMap[c]) catMap[c]={qty:0,rev:0};
-    catMap[c].qty += i.quantity;
-    catMap[c].rev += i.price*i.quantity;
-  }));
+  orders.forEach(o=>{
+    const oItemTotal = o.items.reduce((s,i)=>s+i.price*i.quantity,0);
+    const oRatio     = oItemTotal > 0 ? o.totalAmount / oItemTotal : 1;
+    o.items.forEach(i=>{
+      const c = i.category||'other';
+      if(!catMap[c]) catMap[c]={qty:0,rev:0};
+      catMap[c].qty += i.quantity;
+      catMap[c].rev += i.price * i.quantity * oRatio;
+    });
+  });
   const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',other:'📦 Other'};
   document.getElementById('tally-category').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].rev-a[1].rev).map(([c,v])=>`
     <tr style="cursor:pointer" onclick="drillCategory('${c}')" title="Click to see all ${c} orders">
@@ -608,15 +612,19 @@ function renderTally() {
 
   // Item-wise
   const itemMap = {};
-  orders.forEach(o=>o.items.forEach(i=>{
-    const k = i.name+'__'+(i.category||'other')+'__'+i.price;
-    const oDate = new Date(o.createdAt);
-    if(!itemMap[k]) itemMap[k]={name:i.name,cat:i.category||'other',orders:0,qty:0,price:i.price,rev:0,lastDate:oDate};
-    itemMap[k].orders++;
-    itemMap[k].qty += i.quantity;
-    itemMap[k].rev += i.price*i.quantity;
-    if(oDate > itemMap[k].lastDate) itemMap[k].lastDate = oDate;
-  }));
+  orders.forEach(o=>{
+    const oIT  = o.items.reduce((s,i)=>s+i.price*i.quantity,0);
+    const oR   = oIT > 0 ? o.totalAmount / oIT : 1;
+    o.items.forEach(i=>{
+      const k = i.name+'__'+(i.category||'other')+'__'+i.price;
+      const oDate = new Date(o.createdAt);
+      if(!itemMap[k]) itemMap[k]={name:i.name,cat:i.category||'other',orders:0,qty:0,price:i.price,rev:0,lastDate:oDate};
+      itemMap[k].orders++;
+      itemMap[k].qty += i.quantity;
+      itemMap[k].rev += i.price * i.quantity * oR;
+      if(oDate > itemMap[k].lastDate) itemMap[k].lastDate = oDate;
+    });
+  });
   tallyItemsData = Object.values(itemMap).sort((a,b)=>b.rev-a.rev).map(i=>({
     ...i,
     lastDate: i.lastDate.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
@@ -841,11 +849,15 @@ function renderFinalReport() {
   const useMonth = mIdx !== null ? mIdx : new Date().getMonth();
   orders.forEach(o => {
     const oYear = new Date(o.createdAt).getFullYear();
+    // Calculate order-level ratio: if discount applied, spread proportionally
+    const orderItemTotal = o.items.reduce((s,i) => s + i.price * i.quantity, 0);
+    const discountRatio  = orderItemTotal > 0 ? o.totalAmount / orderItemTotal : 1;
+
     o.items.forEach(i => {
-      const unit = i.unit || 'per pcs';
-      // Use name + unit + price as key so 1L and 500ml are separate rows
-      const key  = i.name + '||' + unit + '||' + i.price;
-      const ppKey = i.name + '||' + unit + '||' + i.price + '||' + useMonth + '||' + year;
+      const unit   = i.unit || 'per pcs';
+      const key    = i.name + '||' + unit + '||' + i.price;
+      const ppKey  = i.name + '||' + unit + '||' + i.price + '||' + useMonth + '||' + year;
+      const actualItemTotal = i.price * i.quantity * discountRatio;
       if(!prodMap[key]) {
         prodMap[key] = {
           name: i.name, unit: unit,
@@ -856,7 +868,7 @@ function renderFinalReport() {
         };
       }
       prodMap[key].qty        += i.quantity;
-      prodMap[key].salesTotal += i.price * i.quantity;
+      prodMap[key].salesTotal += actualItemTotal;
     });
   });
 
@@ -905,10 +917,10 @@ function renderFinalReport() {
 
   tfoot.innerHTML=`<tr style="background:var(--deep)">
     <td colspan="5" style="padding:10px 12px;color:var(--gold-l);font-weight:700;font-size:.85rem">TOTAL</td>
-    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${grandPurchase.toLocaleString('en-IN')}</td>
-    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${grandSales.toLocaleString('en-IN')}</td>
-    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700">₹${(grandSales-grandPurchase).toLocaleString('en-IN')}</td>
-    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700;font-size:.95rem">₹${grandProfit.toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${Math.round(grandPurchase).toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${Math.round(grandSales).toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700">₹${Math.round(grandSales-grandPurchase).toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700;font-size:.95rem">₹${Math.round(grandProfit).toLocaleString('en-IN')}</td>
   </tr>`;
 }
 
@@ -956,17 +968,21 @@ function downloadFinalReportExcel() {
 
   const useMonth2 = mIdx !== null ? mIdx : new Date().getMonth();
   const prodMap = {};
-  orders.forEach(o => o.items.forEach(i => {
-    const unit = i.unit || 'per pcs';
-    const key  = i.name + '||' + unit + '||' + i.price;
-    const ppKey = i.name + '||' + unit + '||' + i.price + '||' + useMonth2 + '||' + year;
-    if(!prodMap[key]) {
-      prodMap[key] = {name:i.name, unit:unit, salesPrice:i.price,
-        purchasePrice:frPurchasePrices[ppKey]||0, qty:0, salesTotal:0};
-    }
-    prodMap[key].qty += i.quantity;
-    prodMap[key].salesTotal += i.price * i.quantity;
-  }));
+  orders.forEach(o => {
+    const orderItemTotal2 = o.items.reduce((s,i) => s + i.price * i.quantity, 0);
+    const discountRatio2  = orderItemTotal2 > 0 ? o.totalAmount / orderItemTotal2 : 1;
+    o.items.forEach(i => {
+      const unit = i.unit || 'per pcs';
+      const key  = i.name + '||' + unit + '||' + i.price;
+      const ppKey = i.name + '||' + unit + '||' + i.price + '||' + useMonth2 + '||' + year;
+      if(!prodMap[key]) {
+        prodMap[key] = {name:i.name, unit:unit, salesPrice:i.price,
+          purchasePrice:frPurchasePrices[ppKey]||0, qty:0, salesTotal:0};
+      }
+      prodMap[key].qty += i.quantity;
+      prodMap[key].salesTotal += i.price * i.quantity * discountRatio2;
+    });
+  });
 
   const rows = Object.values(prodMap).sort((a,b)=>b.salesTotal-a.salesTotal);
   let grandPurchase=0, grandSales=0, grandProfit=0;
