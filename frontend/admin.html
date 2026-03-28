@@ -374,6 +374,33 @@ tr:hover td{background:var(--warm)}
 
       </div>
 
+      <!-- CATEGORY DRILL-DOWN MODAL -->
+      <div class="movl" id="cat-drill-modal">
+        <div class="mbox" style="max-width:700px;width:100%">
+          <h3 id="cat-drill-title" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem"></h3>
+          <p id="cat-drill-sub" style="font-size:.78rem;color:var(--muted);margin:.25rem 0 1rem"></p>
+          <div style="overflow-y:auto;max-height:420px">
+            <table style="width:100%;border-collapse:collapse">
+              <thead><tr style="background:var(--deep)">
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Order ID</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Date</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Customer</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Item</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Qty</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Price</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Total</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Discount</th>
+              </tr></thead>
+              <tbody id="cat-drill-body"></tbody>
+              <tfoot id="cat-drill-foot"></tfoot>
+            </table>
+          </div>
+          <div style="margin-top:1rem;text-align:right">
+            <button class="btn-gh" onclick="document.getElementById('cat-drill-modal').classList.remove('open')">✕ Close</button>
+          </div>
+        </div>
+      </div>
+
       <!-- CUSTOMERS -->
       <div class="tab" id="tab-customers">
         <div class="tc">
@@ -573,8 +600,8 @@ function renderTally() {
   }));
   const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',other:'📦 Other'};
   document.getElementById('tally-category').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].rev-a[1].rev).map(([c,v])=>`
-    <tr>
-      <td>${cLabel2[c]||c}</td>
+    <tr style="cursor:pointer" onclick="drillCategory('${c}')" title="Click to see all ${c} orders">
+      <td>${cLabel2[c]||c} <span style="font-size:.7rem;color:var(--muted)">↗</span></td>
       <td style="text-align:right">${v.qty}</td>
       <td style="text-align:right;font-weight:700;color:var(--gold)">₹${v.rev.toLocaleString('en-IN')}</td>
     </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
@@ -582,7 +609,7 @@ function renderTally() {
   // Item-wise
   const itemMap = {};
   orders.forEach(o=>o.items.forEach(i=>{
-    const k = i.name+'__'+i.category;
+    const k = i.name+'__'+(i.category||'other')+'__'+i.price;
     const oDate = new Date(o.createdAt);
     if(!itemMap[k]) itemMap[k]={name:i.name,cat:i.category||'other',orders:0,qty:0,price:i.price,rev:0,lastDate:oDate};
     itemMap[k].orders++;
@@ -598,6 +625,70 @@ function renderTally() {
 
   // Draw bar chart
   drawBarChart(mMap);
+}
+
+function drillCategory(cat) {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('tally-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',other:'📦 Other'};
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  // Get all items in this category across all orders
+  const rows = [];
+  orders.forEach(o => {
+    o.items.filter(i => (i.category||'other') === cat).forEach(i => {
+      rows.push({
+        orderId:  o.orderId,
+        date:     new Date(o.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+        customer: o.customer?.name || '—',
+        name:     i.name,
+        qty:      i.quantity,
+        price:    i.price,
+        total:    i.price * i.quantity,
+        discount: o.discount || 0,
+        orderTotal: o.totalAmount
+      });
+    });
+  });
+
+  rows.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  const grandTotal = rows.reduce((s,r) => s + r.total, 0);
+  const grandQty   = rows.reduce((s,r) => s + r.qty, 0);
+
+  const periodLabel = mIdx !== null ? months[mIdx] + ' ' + year : 'Year ' + year;
+  document.getElementById('cat-drill-title').textContent = (cLabel2[cat]||cat) + ' — Sales Detail';
+  document.getElementById('cat-drill-sub').textContent   = periodLabel + ' · ' + rows.length + ' line items · ' + grandQty + ' qty sold';
+
+  document.getElementById('cat-drill-body').innerHTML = rows.length ? rows.map((r,idx) => `
+    <tr style="background:${idx%2===0?'var(--card)':'#fff'}">
+      <td style="padding:7px 10px;font-size:.78rem;font-weight:600;color:var(--gold)">${r.orderId}</td>
+      <td style="padding:7px 10px;font-size:.78rem">${r.date}</td>
+      <td style="padding:7px 10px;font-size:.78rem">${r.customer}</td>
+      <td style="padding:7px 10px;font-size:.78rem">${r.name}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem">${r.qty}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem">₹${r.price.toLocaleString('en-IN')}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem;font-weight:600">₹${r.total.toLocaleString('en-IN')}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem;color:${r.discount>0?'#16a34a':'var(--muted)'}">
+        ${r.discount > 0 ? '-₹'+r.discount.toLocaleString('en-IN') : '—'}
+      </td>
+    </tr>`).join('')
+  : '<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--muted)">No items</td></tr>';
+
+  document.getElementById('cat-drill-foot').innerHTML = `
+    <tr style="background:var(--deep)">
+      <td colspan="4" style="padding:8px 10px;color:var(--gold-l);font-weight:700;font-size:.82rem">TOTAL</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--gold-l);font-weight:700">${grandQty}</td>
+      <td></td>
+      <td style="padding:8px 10px;text-align:right;color:var(--gold-l);font-weight:700">₹${grandTotal.toLocaleString('en-IN')}</td>
+      <td></td>
+    </tr>`;
+
+  document.getElementById('cat-drill-modal').classList.add('open');
 }
 
 function drawBarChart(mMap) {
