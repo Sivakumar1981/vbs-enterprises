@@ -675,7 +675,8 @@ function drillCategory(cat) {
 
   const periodLabel = mIdx !== null ? months[mIdx] + ' ' + year : 'Year ' + year;
   document.getElementById('cat-drill-title').textContent = (cLabel2[cat]||cat) + ' — Sales Detail';
-  document.getElementById('cat-drill-sub').textContent   = periodLabel + ' · ' + rows.length + ' line items · ' + grandQty + ' qty sold';
+  const discountedOrders = rows.filter(r=>r.discount>0).length;
+  document.getElementById('cat-drill-sub').textContent   = periodLabel + ' · ' + rows.length + ' line items · ' + grandQty + ' qty sold' + (discountedOrders > 0 ? ' · * = discount applied on order' : '');
 
   document.getElementById('cat-drill-body').innerHTML = rows.length ? rows.map((r,idx) => `
     <tr style="background:${idx%2===0?'var(--card)':'#fff'}">
@@ -687,17 +688,17 @@ function drillCategory(cat) {
       <td style="padding:7px 10px;text-align:right;font-size:.78rem">₹${r.price.toLocaleString('en-IN')}</td>
       <td style="padding:7px 10px;text-align:right;font-size:.78rem;font-weight:600">₹${r.actual.toLocaleString('en-IN')}</td>
       <td style="padding:7px 10px;text-align:right;font-size:.78rem;color:${r.discount>0?'#16a34a':'var(--muted)'}">
-        ${r.discount > 0 ? '-₹'+r.discount.toLocaleString('en-IN') : '—'}
+        ${r.discount > 0 ? '<span title="Order-level discount applied">*</span>' : '—'}
       </td>
     </tr>`).join('')
   : '<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--muted)">No items</td></tr>';
 
   document.getElementById('cat-drill-foot').innerHTML = `
     <tr style="background:var(--deep)">
-      <td colspan="4" style="padding:8px 10px;color:var(--gold-l);font-weight:700;font-size:.82rem">TOTAL</td>
+      <td colspan="4" style="padding:8px 10px;color:var(--gold-l);font-weight:700;font-size:.82rem">TOTAL (after discount)</td>
       <td style="padding:8px 10px;text-align:right;color:var(--gold-l);font-weight:700">${grandQty}</td>
       <td></td>
-      <td style="padding:8px 10px;text-align:right;color:var(--gold-l);font-weight:700">₹${grandTotal.toLocaleString('en-IN')}</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--gold-l);font-weight:700">₹${Math.round(grandTotal).toLocaleString('en-IN')}</td>
       <td></td>
     </tr>`;
 
@@ -1224,7 +1225,7 @@ function clearPForm(){
 async function loadOrders(){
   const status=document.getElementById('o-filter')?.value||'';
   try{
-    const res=await fetch(`${API}/orders${status?'?status='+status:''}`,{headers:{Authorization:`Bearer ${token}`}});
+    const res=await fetch(`${API}/orders?limit=9999${status?'&status='+status:''}`,{headers:{Authorization:`Bearer ${token}`}});
     const d=await res.json();
     if(!d.success)throw new Error(d.message);
     const box=document.getElementById('orders-box');
