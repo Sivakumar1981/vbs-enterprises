@@ -863,12 +863,15 @@ function downloadFinalReportExcel() {
   let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
   if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
 
+  const useMonth2 = mIdx !== null ? mIdx : new Date().getMonth();
   const prodMap = {};
   orders.forEach(o => o.items.forEach(i => {
-    const key = i.name + '||' + (i.unit||'');
+    const unit = i.unit || 'per pcs';
+    const key  = i.name + '||' + unit + '||' + i.price;
+    const ppKey = i.name + '||' + unit + '||' + i.price + '||' + useMonth2 + '||' + year;
     if(!prodMap[key]) {
-      prodMap[key] = {name:i.name, unit:i.unit||'per pcs', salesPrice:i.price,
-        purchasePrice:purchasePrices[key]||0, qty:0, salesTotal:0};
+      prodMap[key] = {name:i.name, unit:unit, salesPrice:i.price,
+        purchasePrice:frPurchasePrices[ppKey]||0, qty:0, salesTotal:0};
     }
     prodMap[key].qty += i.quantity;
     prodMap[key].salesTotal += i.price * i.quantity;
