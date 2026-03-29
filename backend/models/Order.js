@@ -49,7 +49,9 @@ const orderSchema = new mongoose.Schema({
   },
   discount:       { type: Number, default: 0 },
   originalAmount: { type: Number, default: 0 },
-  discountReason: { type: String, default: '' }
+  discountReason: { type: String, default: '' },
+  discountedItem: { type: String, default: '' },
+  courierCharge:  { type: Number, default: 0 }
 }, { timestamps: true });
 
 // Auto-generate unique orderId before saving
