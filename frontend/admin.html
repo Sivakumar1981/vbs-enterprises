@@ -438,27 +438,50 @@ tr:hover td{background:var(--warm)}
 <!-- TOAST -->
 <!-- EDIT AMOUNT MODAL -->
 <div class="movl" id="edit-amount-modal">
-  <div class="mbox" style="max-width:340px">
-    <h3>✏️ Edit Order Amount</h3>
-    <p style="margin-bottom:.5rem">Apply discount or adjust total for this order.</p>
+  <div class="mbox" style="max-width:480px;width:100%">
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem">✏️ Edit Order Amount</h3>
     <input type="hidden" id="ea-order-id"/>
     <input type="hidden" id="ea-original"/>
+
+    <!-- Original Amount -->
+    <div style="background:var(--warm);border-radius:8px;padding:.75rem 1rem;margin:.75rem 0">
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Original Total</div>
+      <div id="ea-orig-display" style="font-size:1.2rem;font-weight:700;color:var(--gold);margin-top:.2rem"></div>
+    </div>
+
+    <!-- Items list for specific discount -->
     <div style="margin-bottom:.75rem">
-      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Original Amount</label>
-      <div id="ea-orig-display" style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-top:.25rem"></div>
+      <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.4rem">Select Item to Discount (optional)</label>
+      <select id="ea-item-sel" onchange="calcNewTotal()" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.83rem">
+        <option value="">— Apply discount to whole order —</option>
+      </select>
     </div>
+
+    <!-- Discount -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Discount (₹)</label>
+        <input type="number" id="ea-discount" placeholder="e.g. 50" min="0" oninput="calcNewTotal()" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem"/>
+      </div>
+      <div>
+        <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Courier Charge (₹)</label>
+        <input type="number" id="ea-courier" placeholder="e.g. 40" min="0" oninput="calcNewTotal()" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem"/>
+      </div>
+    </div>
+
+    <!-- New Total -->
+    <div style="background:var(--warm);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem">
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">New Total</div>
+      <div id="ea-new-total" style="font-size:1.4rem;font-weight:700;color:#16a34a;margin-top:.2rem"></div>
+      <div id="ea-breakdown" style="font-size:.75rem;color:var(--muted);margin-top:.2rem"></div>
+    </div>
+
+    <!-- Reason -->
     <div style="margin-bottom:.75rem">
-      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Discount Amount (₹)</label>
-      <input type="number" id="ea-discount" placeholder="e.g. 50" min="0" oninput="calcNewTotal()" style="width:100%"/>
+      <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Reason (optional)</label>
+      <input type="text" id="ea-reason" placeholder="e.g. Loyal customer, courier added" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem"/>
     </div>
-    <div style="margin-bottom:1rem">
-      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">New Total</label>
-      <div id="ea-new-total" style="font-size:1.3rem;font-weight:700;color:#22c55e;margin-top:.25rem"></div>
-    </div>
-    <div style="margin-bottom:.75rem">
-      <label style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Reason (optional)</label>
-      <input type="text" id="ea-reason" placeholder="e.g. Loyal customer, Festival offer" style="width:100%"/>
-    </div>
+
     <div class="macts">
       <button class="btn-g" onclick="saveOrderAmount()">✅ Save</button>
       <button class="btn-gh" onclick="document.getElementById('edit-amount-modal').classList.remove('open')">Cancel</button>
@@ -1229,6 +1252,7 @@ async function loadOrders(){
     const d=await res.json();
     if(!d.success)throw new Error(d.message);
     const box=document.getElementById('orders-box');
+    window._allOrders = d.orders;
     box.innerHTML=d.orders.length?d.orders.map(o=>orderCard(o,true)).join(''):`<div class="empty"><h3>No orders found</h3></div>`;
   }catch(e){toast('❌',e.message);}
 }
@@ -1251,7 +1275,8 @@ function orderCard(o,isAdmin){
     <div class="oc-foot">
       <div>
         <div class="oc-total">₹${o.totalAmount.toLocaleString('en-IN')}
-          ${o.discount ? `<span style="font-size:.72rem;color:#22c55e;margin-left:.4rem">(-₹${o.discount} discount)</span>` : ''}
+          ${o.discount ? `<span style="font-size:.72rem;color:#22c55e;margin-left:.4rem">(-₹${o.discount}${o.discountedItem?' on '+o.discountedItem:''})</span>` : ''}
+          ${o.courierCharge ? `<span style="font-size:.72rem;color:#f59e0b;margin-left:.4rem">(+₹${o.courierCharge} courier)</span>` : ''}
         </div>
         ${o.originalAmount && o.originalAmount !== o.totalAmount ? `<div style="font-size:.75rem;color:var(--muted);text-decoration:line-through">₹${o.originalAmount.toLocaleString('en-IN')}</div>` : ''}
       </div>
@@ -1362,11 +1387,26 @@ function generateInvoiceHTML(o) {
   return html;
 }
 
+let eaOrderItems = [];
+
 function editOrderAmount(id, currentTotal, currentDiscount) {
-  document.getElementById('ea-order-id').value  = id;
-  document.getElementById('ea-original').value  = currentTotal + (currentDiscount||0);
-  document.getElementById('ea-discount').value  = currentDiscount || '';
-  document.getElementById('ea-orig-display').textContent = '₹' + (currentTotal + (currentDiscount||0)).toLocaleString('en-IN');
+  const origTotal = currentTotal + (currentDiscount||0);
+  document.getElementById('ea-order-id').value = id;
+  document.getElementById('ea-original').value = origTotal;
+  document.getElementById('ea-orig-display').textContent = '₹' + origTotal.toLocaleString('en-IN');
+
+  // Populate item dropdown
+  const order = (window._allOrders||[]).find(o=>o._id===id);
+  eaOrderItems = order ? order.items : [];
+  const sel = document.getElementById('ea-item-sel');
+  sel.innerHTML = '<option value="">— Apply to whole order —</option>';
+  eaOrderItems.forEach((item,idx)=>{
+    sel.innerHTML += '<option value="'+idx+'">'+item.name+' x'+item.quantity+' (Rs '+(item.price*item.quantity)+')</option>';
+  });
+
+  document.getElementById('ea-discount').value = currentDiscount || '';
+  document.getElementById('ea-courier').value  = order?.courierCharge || '';
+  document.getElementById('ea-reason').value   = order?.discountReason || '';
   calcNewTotal();
   document.getElementById('edit-amount-modal').classList.add('open');
 }
@@ -1374,27 +1414,41 @@ function editOrderAmount(id, currentTotal, currentDiscount) {
 function calcNewTotal() {
   const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
   const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
-  const newTotal = Math.max(0, orig - discount);
-  document.getElementById('ea-new-total').textContent = '₹' + newTotal.toLocaleString('en-IN')
-    + (discount > 0 ? ' (saved ₹' + discount.toLocaleString('en-IN') + ')' : '');
+  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
+  const itemSel  = document.getElementById('ea-item-sel').value;
+  const newTotal = Math.max(0, orig - discount + courier);
+  document.getElementById('ea-new-total').textContent = 'Rs ' + newTotal.toLocaleString('en-IN');
+  let parts = [];
+  if(discount > 0) {
+    if(itemSel !== '') {
+      const item = eaOrderItems[parseInt(itemSel)];
+      parts.push('Discount -Rs'+discount+' on "'+item.name+'"');
+    } else { parts.push('Discount -Rs'+discount+' (whole order)'); }
+  }
+  if(courier > 0) parts.push('Courier +Rs'+courier);
+  document.getElementById('ea-breakdown').textContent = parts.join(' · ');
 }
 
 async function saveOrderAmount() {
   const id       = document.getElementById('ea-order-id').value;
   const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
   const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
+  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
   const reason   = document.getElementById('ea-reason').value.trim();
-  const newTotal = Math.max(0, orig - discount);
+  const itemSel  = document.getElementById('ea-item-sel').value;
+  const discountedItem = itemSel !== '' ? eaOrderItems[parseInt(itemSel)]?.name : null;
+  const newTotal = Math.max(0, orig - discount + courier);
   try {
-    const res = await fetch(`${API}/orders/${id}/amount`, {
+    const res = await fetch(API+'/orders/'+id+'/amount', {
       method: 'PUT',
-      headers: {'Content-Type':'application/json', Authorization:`Bearer ${token}`},
-      body: JSON.stringify({ totalAmount: newTotal, discount, originalAmount: orig, discountReason: reason })
+      headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({ totalAmount: newTotal, discount, originalAmount: orig,
+        discountReason: reason, discountedItem, courierCharge: courier })
     });
     const d = await res.json();
     if(!d.success) throw new Error(d.message);
     document.getElementById('edit-amount-modal').classList.remove('open');
-    toast('✅', `Amount updated → ₹${newTotal.toLocaleString('en-IN')}`);
+    toast('✅', 'Amount updated → Rs '+newTotal.toLocaleString('en-IN'));
     loadOrders();
   } catch(e) { toast('❌', e.message); }
 }
