@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 -->
+<!DOCTYPE html><!-- VBS Admin v5 - 31Mar2026 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -1058,7 +1058,7 @@ function printTally() {
   const catHTML    = document.getElementById('tally-category').innerHTML;
   const itemsHTML  = document.getElementById('tally-items').innerHTML;
 
-  const html = `<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
+  const html = `<!DOCTYPE html><!-- VBS Admin v5 - 31Mar2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
@@ -1407,5 +1407,113 @@ function generateInvoiceHTML(o) {
   </body></html>`;
   return html;
 }
+function viewInvoice(orderId) {
+  fetch(API+'/orders?limit=9999',{headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      window.open(url,'_blank');
+      setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    }).catch(()=>toast('❌','Could not load order'));
+}
 
+function downloadInvoice(orderId) {
+  fetch(API+'/orders?limit=9999',{headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = 'Invoice-' + o.orderId + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      toast('✅','Invoice downloaded!');
+    }).catch(()=>toast('❌','Could not load order'));
+}
 
+async function updateStatus(id,status){
+  try{
+    const res=await fetch(API+'/orders/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({status})});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    toast('✅','Status updated to '+status);
+    loadOrders();
+  }catch(e){toast('❌',e.message);}
+}
+
+async function loadCustomers(){
+  try{
+    const res=await fetch(API+'/orders/customers',{headers:{Authorization:'Bearer '+token}});
+    const d=await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    const tb=document.getElementById('c-tbody');
+    if(!d.customers||!d.customers.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No customers yet</td></tr>';return;}
+    tb.innerHTML=d.customers.map((c,i)=>`<tr>
+      <td style="padding:.85rem 1rem">${i+1}</td>
+      <td style="padding:.85rem 1rem"><strong>${c.name}</strong></td>
+      <td style="padding:.85rem 1rem">${c.phone}</td>
+      <td style="padding:.85rem 1rem">${c.address||'—'}</td>
+      <td style="padding:.85rem 1rem;text-align:center">${c.orders}</td>
+      <td style="padding:.85rem 1rem;text-align:right;color:var(--gold);font-weight:700">₹${c.totalSpent.toLocaleString('en-IN')}</td>
+      <td style="padding:.85rem 1rem">${new Date(c.lastOrder).toLocaleDateString('en-IN',{dateStyle:'medium'})}</td>
+      <td style="padding:.85rem 1rem"><button class="abtn edit" onclick="showCustHistory('${c.phone}')">📋 Orders</button></td>
+    </tr>`).join('');
+  }catch(e){toast('❌',e.message);}
+}
+
+async function showCustHistory(phone){
+  const wrap=document.getElementById('cust-history-wrap');
+  wrap.style.display='block';
+  document.getElementById('cust-history-phone').textContent=phone;
+  try{
+    const res=await fetch(API+'/orders/customers/'+phone,{headers:{Authorization:'Bearer '+token}});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    document.getElementById('cust-history-body').innerHTML=d.orders.length
+      ?d.orders.map(o=>'<div class="oc">'+orderCard(o,false)+'</div>').join('')
+      :'<p style="color:var(--muted);padding:1rem">No orders found</p>';
+  }catch(e){toast('❌',e.message);}
+}
+
+/* ── CONFIRM MODAL ── */
+let cfCb=null;
+function cfDel(id,name){
+  document.getElementById('cf-msg').textContent='Delete "'+name+'"? This cannot be undone.';
+  document.getElementById('cf-overlay').classList.add('open');
+  cfCb=async()=>{
+    try{
+      const res=await fetch(API+'/products/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});
+      const d=await res.json();
+      if(!d.success)throw new Error(d.message);
+      toast('✅','Product deleted');
+      loadProds();
+    }catch(e){toast('❌',e.message);}
+  };
+}
+function closeCf(){document.getElementById('cf-overlay').classList.remove('open');cfCb=null;}
+document.getElementById('c-ok').addEventListener('click',()=>{
+  document.getElementById('cf-overlay').classList.remove('open');
+  if(cfCb)cfCb();
+});
+
+/* ── TOAST ── */
+let tt;
+function toast(icon,msg){
+  document.getElementById('t-icon').textContent=icon;
+  document.getElementById('t-msg').textContent=msg;
+  const t=document.getElementById('toast');t.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3500);
+}
+</script>
+</body>
+</html>
