@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 -->
+<!DOCTYPE html><!-- VBS Admin v5 - 31Mar2026 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -403,18 +403,63 @@ tr:hover td{background:var(--warm)}
 
       <!-- CUSTOMERS -->
       <div class="tab" id="tab-customers">
+        <!-- Search + Filter Bar -->
+        <div class="fc" style="margin-bottom:1.25rem;padding:1rem 1.25rem">
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+            <input type="text" id="cust-srch" placeholder="🔍 Search by name or phone..." oninput="filterCustomers()"
+              style="flex:1;min-width:200px;padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none"/>
+            <select id="cust-sort" onchange="filterCustomers()" style="padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none">
+              <option value="spent">Sort: Most Spent</option>
+              <option value="orders">Sort: Most Orders</option>
+              <option value="recent">Sort: Recent</option>
+              <option value="name">Sort: Name A-Z</option>
+            </select>
+            <button class="btn-gh" onclick="loadCustomers()">🔄 Refresh</button>
+          </div>
+          <div id="cust-count" style="font-size:.78rem;color:var(--muted);margin-top:.5rem"></div>
+        </div>
+
+        <!-- Customers Table -->
         <div class="tc">
-          <div class="tc-top"><h3>All Customers</h3><button class="btn-gh" onclick="loadCustomers()">🔄 Refresh</button></div>
           <div class="tw">
-            <table><thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Address</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th>History</th></tr></thead>
-            <tbody id="c-tbody"></tbody></table>
+            <table>
+              <thead><tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th style="text-align:center">Orders</th>
+                <th style="text-align:right">Total Spent</th>
+                <th>Last Order</th>
+                <th>Actions</th>
+              </tr></thead>
+              <tbody id="c-tbody"></tbody>
+            </table>
           </div>
         </div>
+
+        <!-- Customer Order History + Edit Panel -->
         <div id="cust-history-wrap" style="display:none;margin-top:1.5rem">
           <div class="fc">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-              <h3 id="cust-history-title" style="margin:0;font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--deep)">Order History</h3>
-              <button class="btn-gh" onclick="document.getElementById('cust-history-wrap').style.display='none'">✕ Close</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+              <div>
+                <h3 id="cust-history-title" style="margin:0;font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--deep)">Order History</h3>
+                <div id="cust-history-meta" style="font-size:.78rem;color:var(--muted);margin-top:.15rem"></div>
+              </div>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <input type="text" id="cust-order-srch" placeholder="🔍 Search orders..." oninput="filterCustOrders()"
+                  style="padding:.4rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:'DM Sans',sans-serif;outline:none;width:180px"/>
+                <select id="cust-order-status" onchange="filterCustOrders()" style="padding:.4rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:'DM Sans',sans-serif;outline:none">
+                  <option value="">All Status</option>
+                  <option value="new">New</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="processing">Processing</option>
+                  <option value="ready">Ready</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="btn-gh" onclick="document.getElementById('cust-history-wrap').style.display='none'">✕ Close</button>
+              </div>
             </div>
             <div id="cust-history-orders"></div>
           </div>
@@ -1058,7 +1103,7 @@ function printTally() {
   const catHTML    = document.getElementById('tally-category').innerHTML;
   const itemsHTML  = document.getElementById('tally-items').innerHTML;
 
-  const html = `<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
+  const html = `<!DOCTYPE html><!-- VBS Admin v5 - 31Mar2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
@@ -1333,15 +1378,37 @@ function downloadInvoice(orderId) {
 }
 
 function generateInvoiceHTML(o) {
-  const date = new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+  const date      = new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+  const discount  = o.discount      || 0;
+  const courier   = o.courierCharge || 0;
+  const discItem  = o.discountedItem|| '';
+  const itemsTotal= o.items.reduce((s,i)=>s+i.price*i.quantity,0);
+
   const items = o.items.map(i=>
     `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #ccc;font-size:11px">
-      <div style="flex:1;padding-right:4px">${i.name}<br/><span style="color:#666;font-size:10px">x${i.quantity} @ ₹${i.price}</span></div>
-      <div style="font-weight:700;white-space:nowrap">₹${(i.price*i.quantity).toLocaleString('en-IN')}</div>
+      <div style="flex:1;padding-right:4px">${i.name}<br/><span style="color:#666;font-size:10px">x${i.quantity} @ Rs.${i.price}</span></div>
+      <div style="font-weight:700;white-space:nowrap">Rs.${(i.price*i.quantity).toLocaleString('en-IN')}</div>
     </div>`
   ).join('');
 
-  const html = `<!DOCTYPE html><!-- VBS Admin v4 - 17Mar2026 --><html><head><meta charset="UTF-8"/>
+  const discountRow = discount > 0
+    ? `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#006600">
+        <span>Discount${discItem?' ('+discItem+')':''}</span>
+        <span style="font-weight:700">- Rs.${discount.toLocaleString('en-IN')}</span>
+      </div>` : '';
+
+  const courierRow = courier > 0
+    ? `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#cc6600">
+        <span>Courier Charge</span>
+        <span style="font-weight:700">+ Rs.${courier.toLocaleString('en-IN')}</span>
+      </div>` : '';
+
+  const subtotalRow = (discount > 0 || courier > 0)
+    ? `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#555">
+        <span>Sub Total</span><span>Rs.${itemsTotal.toLocaleString('en-IN')}</span>
+      </div>` : '';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
   <title>Receipt ${o.orderId}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -1353,11 +1420,7 @@ function generateInvoiceHTML(o) {
     .shop-name{font-size:15px;font-weight:700;text-align:center;letter-spacing:.05em}
     .total-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:4px 0;border-top:2px solid #000;border-bottom:2px solid #000;margin:4px 0}
     .thank{text-align:center;font-size:10px;margin-top:6px;padding-top:4px;border-top:1px dashed #000}
-    @media print{
-      @page{margin:0;size:80mm auto}
-      body{padding:4px}
-      .no-print{display:none}
-    }
+    @media print{@page{margin:0;size:80mm auto}body{padding:4px}.no-print{display:none}}
   </style></head><body>
   <div class="shop-name">VBS ENTERPRISES</div>
   <div class="center" style="font-size:9px;margin-top:2px">108/7C, 5th Cross St, Rajiv Nagar</div>
@@ -1375,137 +1438,192 @@ function generateInvoiceHTML(o) {
   <hr class="divider"/>
   <div class="bold" style="font-size:10px;margin-bottom:3px">ITEMS</div>
   ${items}
-  <div class="total-row"><span>TOTAL</span><span>₹${o.totalAmount.toLocaleString('en-IN')}</span></div>
+  <hr class="divider"/>
+  ${subtotalRow}
+  ${discountRow}
+  ${courierRow}
+  <div class="total-row"><span>TOTAL</span><span>Rs.${o.totalAmount.toLocaleString('en-IN')}</span></div>
   <div class="row"><span>Payment:</span><span>${o.paymentMethod==='cod'?'Cash on Delivery':o.paymentMethod.toUpperCase()}</span></div>
-  ${o.notes?`<div class="row"><span>Notes:</span><span style="text-align:right;flex:1;padding-left:4px">${o.notes}</span></div>`:''}
+  ${o.notes?'<div class="row"><span>Notes:</span><span style="text-align:right;flex:1;padding-left:4px">'+o.notes+'</span></div>':''}
   <div class="thank">
-    Thank you for shopping!<br/>
-    Quality You Can Trust<br/>
-    <button onclick="window.print()" class="no-print" style="margin-top:6px;background:#000;color:#fff;border:none;padding:5px 20px;border-radius:4px;cursor:pointer;font-size:11px">🖨️ Print</button>
+    Thank you for shopping!<br/>Quality You Can Trust<br/>
+    <button onclick="window.print()" class="no-print" style="margin-top:6px;background:#000;color:#fff;border:none;padding:5px 20px;border-radius:4px;cursor:pointer;font-size:11px">Print</button>
   </div>
   </body></html>`;
   return html;
 }
-
-let eaOrderItems = [];
-
-function editOrderAmount(id, currentTotal, currentDiscount) {
-  const origTotal = currentTotal + (currentDiscount||0);
-  document.getElementById('ea-order-id').value = id;
-  document.getElementById('ea-original').value = origTotal;
-  document.getElementById('ea-orig-display').textContent = '₹' + origTotal.toLocaleString('en-IN');
-
-  // Populate item dropdown
-  const order = (window._allOrders||[]).find(o=>o._id===id);
-  eaOrderItems = order ? order.items : [];
-  const sel = document.getElementById('ea-item-sel');
-  sel.innerHTML = '<option value="">— Apply to whole order —</option>';
-  eaOrderItems.forEach((item,idx)=>{
-    sel.innerHTML += '<option value="'+idx+'">'+item.name+' x'+item.quantity+' (Rs '+(item.price*item.quantity)+')</option>';
-  });
-
-  document.getElementById('ea-discount').value = currentDiscount || '';
-  document.getElementById('ea-courier').value  = order?.courierCharge || '';
-  document.getElementById('ea-reason').value   = order?.discountReason || '';
-  calcNewTotal();
-  document.getElementById('edit-amount-modal').classList.add('open');
+function viewInvoice(orderId) {
+  fetch(API+'/orders?limit=9999',{headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      window.open(url,'_blank');
+      setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    }).catch(()=>toast('❌','Could not load order'));
 }
 
-function calcNewTotal() {
-  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
-  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
-  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
-  const itemSel  = document.getElementById('ea-item-sel').value;
-  const newTotal = Math.max(0, orig - discount + courier);
-  document.getElementById('ea-new-total').textContent = 'Rs ' + newTotal.toLocaleString('en-IN');
-  let parts = [];
-  if(discount > 0) {
-    if(itemSel !== '') {
-      const item = eaOrderItems[parseInt(itemSel)];
-      parts.push('Discount -Rs'+discount+' on "'+item.name+'"');
-    } else { parts.push('Discount -Rs'+discount+' (whole order)'); }
-  }
-  if(courier > 0) parts.push('Courier +Rs'+courier);
-  document.getElementById('ea-breakdown').textContent = parts.join(' · ');
-}
-
-async function saveOrderAmount() {
-  const id       = document.getElementById('ea-order-id').value;
-  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
-  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
-  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
-  const reason   = document.getElementById('ea-reason').value.trim();
-  const itemSel  = document.getElementById('ea-item-sel').value;
-  const discountedItem = itemSel !== '' ? eaOrderItems[parseInt(itemSel)]?.name : null;
-  const newTotal = Math.max(0, orig - discount + courier);
-  try {
-    const res = await fetch(API+'/orders/'+id+'/amount', {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
-      body: JSON.stringify({ totalAmount: newTotal, discount, originalAmount: orig,
-        discountReason: reason, discountedItem, courierCharge: courier })
-    });
-    const d = await res.json();
-    if(!d.success) throw new Error(d.message);
-    document.getElementById('edit-amount-modal').classList.remove('open');
-    toast('✅', 'Amount updated → Rs '+newTotal.toLocaleString('en-IN'));
-    loadOrders();
-  } catch(e) { toast('❌', e.message); }
+function downloadInvoice(orderId) {
+  fetch(API+'/orders?limit=9999',{headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = 'Invoice-' + o.orderId + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      toast('✅','Invoice downloaded!');
+    }).catch(()=>toast('❌','Could not load order'));
 }
 
 async function updateStatus(id,status){
   try{
-    const res=await fetch(`${API}/orders/${id}/status`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({status})});
+    const res=await fetch(API+'/orders/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({status})});
     const d=await res.json();
     if(!d.success)throw new Error(d.message);
-    toast('✅','Status → '+status);
+    toast('✅','Status updated to '+status);
+    loadOrders();
   }catch(e){toast('❌',e.message);}
 }
 
-/* ── CUSTOMERS ── */
+let allCustomersCache = [];
+let custOrdersCache   = [];
+
 async function loadCustomers(){
   try{
-    const res=await fetch(`${API}/orders/customers`,{headers:{Authorization:`Bearer ${token}`}});
-    const d=await res.json();
-    if(!d.success)throw new Error(d.message);
-    const tb=document.getElementById('c-tbody');
-    if(!d.customers||!d.customers.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No customers yet</td></tr>`;return;}
-    tb.innerHTML=d.customers.map((c,i)=>`<tr>
-      <td>${i+1}</td>
-      <td><strong>${c.name}</strong></td>
-      <td>${c.phone}</td>
-      <td style="font-size:.78rem;color:var(--muted);max-width:160px">${c.address||'-'}</td>
-      <td style="text-align:center"><strong>${c.orders}</strong></td>
-      <td><strong>₹${c.totalSpent.toLocaleString('en-IN')}</strong></td>
-      <td style="font-size:.78rem">${new Date(c.lastOrder).toLocaleDateString('en-IN',{dateStyle:'medium'})}</td>
-      <td><button class="abtn edit" onclick="loadCustHistory('${c.phone}','${c.name.replace(/'/g,"\\'")}')">📋 View</button></td>
-    </tr>`).join('');
+    const res = await fetch(API+'/orders/customers',{headers:{Authorization:'Bearer '+token}});
+    const d   = await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allCustomersCache = d.customers || [];
+    filterCustomers();
   }catch(e){toast('❌',e.message);}
 }
 
-async function loadCustHistory(phone, name){
-  document.getElementById('cust-history-title').textContent=`📋 ${name} — Order History`;
-  document.getElementById('cust-history-wrap').style.display='block';
-  document.getElementById('cust-history-orders').innerHTML='<div class="spin"></div>';
-  document.getElementById('cust-history-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+function filterCustomers(){
+  const q    = (document.getElementById('cust-srch')?.value||'').toLowerCase();
+  const sort = document.getElementById('cust-sort')?.value || 'spent';
+
+  let list = allCustomersCache.filter(c =>
+    !q || c.name.toLowerCase().includes(q) || c.phone.includes(q) || (c.address||'').toLowerCase().includes(q)
+  );
+
+  if(sort==='spent')  list.sort((a,b)=>b.totalSpent-a.totalSpent);
+  if(sort==='orders') list.sort((a,b)=>b.orders-a.orders);
+  if(sort==='recent') list.sort((a,b)=>new Date(b.lastOrder)-new Date(a.lastOrder));
+  if(sort==='name')   list.sort((a,b)=>a.name.localeCompare(b.name));
+
+  const tb = document.getElementById('c-tbody');
+  const count = document.getElementById('cust-count');
+  count.textContent = list.length + ' of ' + allCustomersCache.length + ' customers';
+
+  if(!list.length){
+    tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No customers found</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map((c,i)=>`<tr>
+    <td style="padding:.8rem 1rem;font-size:.82rem">${i+1}</td>
+    <td style="padding:.8rem 1rem"><strong>${c.name}</strong></td>
+    <td style="padding:.8rem 1rem;font-size:.83rem">${c.phone}</td>
+    <td style="padding:.8rem 1rem;font-size:.78rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.address||''}">${c.address||'—'}</td>
+    <td style="padding:.8rem 1rem;text-align:center">${c.orders}</td>
+    <td style="padding:.8rem 1rem;text-align:right;color:var(--gold);font-weight:700">₹${c.totalSpent.toLocaleString('en-IN')}</td>
+    <td style="padding:.8rem 1rem;font-size:.8rem">${new Date(c.lastOrder).toLocaleDateString('en-IN',{dateStyle:'medium'})}</td>
+    <td style="padding:.8rem 1rem">
+    <button class="abtn edit" onclick="showCustHistory('${c.phone}',this.dataset.name)" data-name="${c.name}">📋 Orders</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function showCustHistory(phone, name){
+  const wrap = document.getElementById('cust-history-wrap');
+  wrap.style.display = 'block';
+  document.getElementById('cust-history-title').textContent = (name||phone) + ' — Orders';
+  document.getElementById('cust-history-meta').textContent  = phone;
+  document.getElementById('cust-history-orders').innerHTML  = '<div class="empty"><div class="ei">⏳</div><h3>Loading...</h3></div>';
+  wrap.scrollIntoView({behavior:'smooth'});
+
   try{
-    const res=await fetch(`${API}/orders/customers/${phone}`,{headers:{Authorization:`Bearer ${token}`}});
-    const d=await res.json();
-    if(!d.success)throw new Error(d.message);
-    document.getElementById('cust-history-orders').innerHTML=d.orders.length
-      ?d.orders.map(o=>orderCard(o,false)).join('')
-      :`<div class="empty"><h3>No orders found</h3></div>`;
+    const res = await fetch(API+'/orders/customers/'+phone,{headers:{Authorization:'Bearer '+token}});
+    const d   = await res.json();
+    if(!d.success) throw new Error(d.message);
+    custOrdersCache = d.orders || [];
+    window._custHistoryPhone = phone;
+    renderCustOrders(custOrdersCache);
   }catch(e){toast('❌',e.message);}
 }
 
-/* ── CONFIRM ── */
-function showCf(title,msg,onOk){
-  document.getElementById('c-title').textContent=title;
-  document.getElementById('c-msg').textContent=msg;
-  document.getElementById('c-ok').onclick=()=>{onOk();closeCf();};
-  document.getElementById('c-ovl').classList.add('open');
+function filterCustOrders(){
+  const q      = (document.getElementById('cust-order-srch')?.value||'').toLowerCase();
+  const status = document.getElementById('cust-order-status')?.value||'';
+  let list = custOrdersCache.filter(o=>{
+    const matchQ = !q || o.orderId.toLowerCase().includes(q) ||
+      o.items.some(i=>i.name.toLowerCase().includes(q));
+    const matchS = !status || o.status === status;
+    return matchQ && matchS;
+  });
+  renderCustOrders(list);
 }
-function closeCf(){document.getElementById('c-ovl').classList.remove('open');}
+
+function renderCustOrders(orders){
+  const div = document.getElementById('cust-history-orders');
+  if(!orders.length){
+    div.innerHTML='<div class="empty"><div class="ei">📦</div><h3>No orders found</h3></div>';
+    return;
+  }
+  // Show summary stats
+  const totalSpent = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+o.totalAmount,0);
+  const statHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem;margin-bottom:1rem">
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--gold-l)">${orders.length}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Orders</div>
+    </div>
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--gold-l)">₹${totalSpent.toLocaleString('en-IN')}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Total Spent</div>
+    </div>
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--gold-l)">${orders.filter(o=>o.status==='delivered').length}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Delivered</div>
+    </div>
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:#f87171">${orders.filter(o=>o.status==='cancelled').length}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Cancelled</div>
+    </div>
+  </div>`;
+
+  div.innerHTML = statHtml + orders.map(o=>orderCard(o,true)).join('');
+}
+
+/* ── CONFIRM MODAL ── */
+let cfCb=null;
+function cfDel(id,name){
+  document.getElementById('cf-msg').textContent='Delete "'+name+'"? This cannot be undone.';
+  document.getElementById('cf-overlay').classList.add('open');
+  cfCb=async()=>{
+    try{
+      const res=await fetch(API+'/products/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});
+      const d=await res.json();
+      if(!d.success)throw new Error(d.message);
+      toast('✅','Product deleted');
+      loadProds();
+    }catch(e){toast('❌',e.message);}
+  };
+}
+function closeCf(){document.getElementById('cf-overlay').classList.remove('open');cfCb=null;}
+document.getElementById('c-ok').addEventListener('click',()=>{
+  document.getElementById('cf-overlay').classList.remove('open');
+  if(cfCb)cfCb();
+});
 
 /* ── TOAST ── */
 let tt;
