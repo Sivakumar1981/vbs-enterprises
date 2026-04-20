@@ -8,97 +8,82 @@ const nodemailer = require('nodemailer');
 
 // ── Email Notification Helper ──────────────────────────────────
 async function sendOwnerNotification(order) {
-  if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'vbsenterprise7@gmail.com') return;
-  try {
-    const nodemailer  = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-    });
-
-    const itemRows = order.items.map(i =>
-      `<tr>
-        <td style="padding:8px 12px;border-bottom:1px solid #e8d5b8">${i.name}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e8d5b8;text-align:center">${i.quantity}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e8d5b8;text-align:right">Rs.${i.price.toLocaleString('en-IN')}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e8d5b8;text-align:right;font-weight:700">Rs.${(i.price*i.quantity).toLocaleString('en-IN')}</td>
-      </tr>`
-    ).join('');
-
-    const mailOptions = {
-      from: `"VBS Enterprises" <${process.env.EMAIL_USER}>`,
-      to: 'vbsenterprise7@gmail.com',
-      subject: `New Order ${order.orderId} - Rs.${order.totalAmount.toLocaleString('en-IN')} - ${order.customer.name}`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">
-          <div style="background:#1a0f00;padding:1.5rem 2rem;border-radius:8px 8px 0 0;text-align:center">
-            <h1 style="color:#e8c068;margin:0;font-size:1.6rem">New Order Received!</h1>
-            <p style="color:#b0a090;margin:.3rem 0 0;font-size:.85rem">VBS Enterprises</p>
-          </div>
-          <div style="background:#fff8f0;padding:1.5rem 2rem;border:1px solid #e8d5b8;border-top:none">
-
-            <div style="display:flex;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
-              <div style="flex:1;min-width:100px;background:#fff;border:1px solid #e8d5b8;border-radius:8px;padding:.75rem 1rem;text-align:center">
-                <div style="font-size:.68rem;color:#8a7060;text-transform:uppercase;letter-spacing:.06em">Order ID</div>
-                <div style="font-size:1.1rem;font-weight:700;color:#c8902a">${order.orderId}</div>
-              </div>
-              <div style="flex:1;min-width:100px;background:#fff;border:1px solid #e8d5b8;border-radius:8px;padding:.75rem 1rem;text-align:center">
-                <div style="font-size:.68rem;color:#8a7060;text-transform:uppercase;letter-spacing:.06em">Total</div>
-                <div style="font-size:1.1rem;font-weight:700;color:#1a0f00">Rs.${order.totalAmount.toLocaleString('en-IN')}</div>
-              </div>
-              <div style="flex:1;min-width:100px;background:#fff;border:1px solid #e8d5b8;border-radius:8px;padding:.75rem 1rem;text-align:center">
-                <div style="font-size:.68rem;color:#8a7060;text-transform:uppercase;letter-spacing:.06em">Payment</div>
-                <div style="font-size:1rem;font-weight:600;color:#1a0f00">${order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod.toUpperCase()}</div>
-              </div>
-            </div>
-
-            <h3 style="color:#1a0f00;font-size:.9rem;margin:0 0 .5rem;border-bottom:2px solid #c8902a;padding-bottom:.3rem;text-transform:uppercase;letter-spacing:.06em">Customer Details</h3>
-            <table style="width:100%;border-collapse:collapse;margin-bottom:1.25rem;font-size:.88rem">
-              <tr><td style="padding:5px 0;color:#8a7060;width:80px">Name</td><td style="padding:5px 0;font-weight:600">${order.customer.name}</td></tr>
-              <tr><td style="padding:5px 0;color:#8a7060">Phone</td><td style="padding:5px 0">${order.customer.phone}</td></tr>
-              <tr><td style="padding:5px 0;color:#8a7060">Address</td><td style="padding:5px 0">${order.customer.address}</td></tr>
-              ${order.notes ? `<tr><td style="padding:5px 0;color:#8a7060">Notes</td><td style="padding:5px 0;font-style:italic;color:#555">${order.notes}</td></tr>` : ''}
-            </table>
-
-            <h3 style="color:#1a0f00;font-size:.9rem;margin:0 0 .5rem;border-bottom:2px solid #c8902a;padding-bottom:.3rem;text-transform:uppercase;letter-spacing:.06em">Items Ordered</h3>
-            <table style="width:100%;border-collapse:collapse;margin-bottom:1.25rem;font-size:.85rem">
-              <thead>
-                <tr style="background:#1a0f00">
-                  <th style="padding:8px 12px;color:#e8c068;text-align:left">Item</th>
-                  <th style="padding:8px 12px;color:#e8c068;text-align:center">Qty</th>
-                  <th style="padding:8px 12px;color:#e8c068;text-align:right">Price</th>
-                  <th style="padding:8px 12px;color:#e8c068;text-align:right">Total</th>
-                </tr>
-              </thead>
-              <tbody>${itemRows}</tbody>
-              <tfoot>
-                <tr style="background:#1a0f00">
-                  <td colspan="3" style="padding:10px 12px;color:#e8c068;font-weight:700;text-align:right">Grand Total</td>
-                  <td style="padding:10px 12px;color:#e8c068;font-weight:700;text-align:right">Rs.${order.totalAmount.toLocaleString('en-IN')}</td>
-                </tr>
-              </tfoot>
-            </table>
-
-            <div style="text-align:center;margin-top:1rem">
-              <a href="https://vbs-enterprises-92sz.onrender.com/admin"
-                 style="background:#c8902a;color:#fff;text-decoration:none;padding:.7rem 2rem;border-radius:8px;font-weight:700;font-size:.9rem;display:inline-block">
-                Open Admin Panel
-              </a>
-            </div>
-            <p style="color:#8a7060;font-size:.72rem;text-align:center;margin-top:1rem">
-              ${new Date().toLocaleString('en-IN', {dateStyle:'full', timeStyle:'short'})}
-            </p>
-          </div>
-        </div>`
-    };
-
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) console.log('Email failed:', err.message);
-      else console.log('Order notification sent:', order.orderId);
-    });
-  } catch(err) {
-    console.log('Email setup failed:', err.message);
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  if (!emailUser || !emailPass || emailUser === 'your_gmail@gmail.com') {
+    console.log('Email not configured - skipping notification');
+    return;
   }
+
+  const TO_EMAIL = 'vbsenterprise7@gmail.com';
+
+  const itemRows = order.items.map(i =>
+    '<tr>' +
+    '<td style="padding:8px 12px;border-bottom:1px solid #e8d5b8">' + i.name + '</td>' +
+    '<td style="padding:8px 12px;border-bottom:1px solid #e8d5b8;text-align:center">' + i.quantity + '</td>' +
+    '<td style="padding:8px 12px;border-bottom:1px solid #e8d5b8;text-align:right">Rs.' + i.price.toLocaleString('en-IN') + '</td>' +
+    '<td style="padding:8px 12px;border-bottom:1px solid #e8d5b8;text-align:right;font-weight:700">Rs.' + (i.price * i.quantity).toLocaleString('en-IN') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const subject = 'New Order ' + order.orderId + ' - Rs.' + order.totalAmount.toLocaleString('en-IN') + ' - ' + order.customer.name;
+
+  const html =
+    '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">' +
+    '<div style="background:#1a0f00;padding:1.5rem 2rem;border-radius:8px 8px 0 0;text-align:center">' +
+    '<h1 style="color:#e8c068;margin:0;font-size:1.5rem">New Order Received!</h1>' +
+    '<p style="color:#b0a090;margin:.25rem 0 0">VBS Enterprises</p>' +
+    '</div>' +
+    '<div style="background:#fff8f0;padding:1.5rem 2rem;border:1px solid #e8d5b8;border-top:none">' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:1rem">' +
+    '<tr><td style="padding:6px 0;color:#8a7060;width:100px">Order ID</td><td style="font-weight:700;color:#c8902a">' + order.orderId + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a7060">Total</td><td style="font-weight:700">Rs.' + order.totalAmount.toLocaleString('en-IN') + '</td></tr>' +
+    '<tr><td style="padding:6px 0;color:#8a7060">Payment</td><td>' + (order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod.toUpperCase()) + '</td></tr>' +
+    '</table>' +
+    '<hr style="border:1px solid #e8d5b8;margin:1rem 0"/>' +
+    '<h3 style="margin:0 0 .5rem;color:#1a0f00">Customer</h3>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:1rem">' +
+    '<tr><td style="padding:5px 0;color:#8a7060;width:80px">Name</td><td style="font-weight:600">' + order.customer.name + '</td></tr>' +
+    '<tr><td style="padding:5px 0;color:#8a7060">Phone</td><td>' + order.customer.phone + '</td></tr>' +
+    '<tr><td style="padding:5px 0;color:#8a7060">Address</td><td>' + order.customer.address + '</td></tr>' +
+    (order.notes ? '<tr><td style="padding:5px 0;color:#8a7060">Notes</td><td style="font-style:italic">' + order.notes + '</td></tr>' : '') +
+    '</table>' +
+    '<hr style="border:1px solid #e8d5b8;margin:1rem 0"/>' +
+    '<h3 style="margin:0 0 .5rem;color:#1a0f00">Items Ordered</h3>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:1rem">' +
+    '<thead><tr style="background:#1a0f00">' +
+    '<th style="padding:8px 12px;color:#e8c068;text-align:left">Item</th>' +
+    '<th style="padding:8px 12px;color:#e8c068;text-align:center">Qty</th>' +
+    '<th style="padding:8px 12px;color:#e8c068;text-align:right">Price</th>' +
+    '<th style="padding:8px 12px;color:#e8c068;text-align:right">Total</th>' +
+    '</tr></thead>' +
+    '<tbody>' + itemRows + '</tbody>' +
+    '<tfoot><tr style="background:#1a0f00">' +
+    '<td colspan="3" style="padding:10px 12px;color:#e8c068;font-weight:700;text-align:right">Grand Total</td>' +
+    '<td style="padding:10px 12px;color:#e8c068;font-weight:700;text-align:right">Rs.' + order.totalAmount.toLocaleString('en-IN') + '</td>' +
+    '</tr></tfoot>' +
+    '</table>' +
+    '<div style="text-align:center;margin-top:1rem">' +
+    '<a href="https://vbs-enterprises-92sz.onrender.com/admin" style="background:#c8902a;color:#fff;text-decoration:none;padding:.7rem 2rem;border-radius:8px;font-weight:700;display:inline-block">Open Admin Panel</a>' +
+    '</div></div></div>';
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: emailUser, pass: emailPass }
+  });
+
+  transporter.sendMail({
+    from: '"VBS Enterprises" <' + emailUser + '>',
+    to: TO_EMAIL,
+    subject: subject,
+    html: html
+  }, function(err, info) {
+    if (err) {
+      console.log('Email failed:', err.message);
+    } else {
+      console.log('Order notification sent to', TO_EMAIL, '- Order:', order.orderId);
+    }
+  });
 }
 
 // ── PUBLIC: Place new order ────────────────────────────────────
