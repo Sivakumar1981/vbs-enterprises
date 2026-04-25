@@ -374,6 +374,35 @@ tr:hover td{background:var(--warm)}
 
       </div>
 
+      <!-- EDIT CUSTOMER MODAL -->
+      <div class="movl" id="edit-cust-modal">
+        <div class="mbox" style="max-width:440px;width:100%">
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:1.25rem">✏️ Edit Customer Details</h3>
+          <input type="hidden" id="ec-phone-orig"/>
+          <div style="margin-bottom:.75rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Full Name *</label>
+            <input type="text" id="ec-name" placeholder="Customer name" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none"/>
+          </div>
+          <div style="margin-bottom:.75rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Phone Number *</label>
+            <input type="tel" id="ec-phone" placeholder="Phone number" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none"/>
+          </div>
+          <div style="margin-bottom:.75rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Email</label>
+            <input type="email" id="ec-email" placeholder="Email address (optional)" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none"/>
+          </div>
+          <div style="margin-bottom:1rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Delivery Address</label>
+            <textarea id="ec-address" rows="3" placeholder="Full delivery address" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none;resize:vertical"></textarea>
+          </div>
+          <div id="ec-err" style="display:none;color:#dc2626;font-size:.8rem;margin-bottom:.75rem;padding:.5rem .75rem;background:#fee2e2;border-radius:6px"></div>
+          <div class="macts">
+            <button class="btn-g" id="ec-save-btn" onclick="saveCustomerEdit()">✅ Save Changes</button>
+            <button class="btn-gh" onclick="document.getElementById('edit-cust-modal').classList.remove('open')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
       <!-- CATEGORY DRILL-DOWN MODAL -->
       <div class="movl" id="cat-drill-modal">
         <div class="mbox" style="max-width:700px;width:100%">
@@ -1509,6 +1538,59 @@ async function loadCustomers(){
   }catch(e){toast('❌',e.message);}
 }
 
+function editCustomer(phone) {
+  // Find customer from cache
+  const c = allCustomersCache.find(x => x.phone === phone);
+  if (!c) { toast('❌', 'Customer not found'); return; }
+
+  document.getElementById('ec-phone-orig').value = phone;
+  document.getElementById('ec-name').value        = c.name || '';
+  document.getElementById('ec-phone').value       = c.phone || '';
+  document.getElementById('ec-email').value       = c.email || '';
+  document.getElementById('ec-address').value     = c.address || '';
+  document.getElementById('ec-err').style.display = 'none';
+  document.getElementById('edit-cust-modal').classList.add('open');
+}
+
+async function saveCustomerEdit() {
+  const origPhone = document.getElementById('ec-phone-orig').value;
+  const name      = document.getElementById('ec-name').value.trim();
+  const phone     = document.getElementById('ec-phone').value.trim();
+  const email     = document.getElementById('ec-email').value.trim();
+  const address   = document.getElementById('ec-address').value.trim();
+  const errEl     = document.getElementById('ec-err');
+  const btn       = document.getElementById('ec-save-btn');
+
+  if (!name) { errEl.textContent = 'Name is required'; errEl.style.display = 'block'; return; }
+  if (!phone) { errEl.textContent = 'Phone is required'; errEl.style.display = 'block'; return; }
+
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  errEl.style.display = 'none';
+
+  try {
+    const res  = await fetch(API + '/auth/customer/' + encodeURIComponent(origPhone), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ name, phone, email, address })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+
+    // Update local cache
+    const idx = allCustomersCache.findIndex(x => x.phone === origPhone);
+    if (idx >= 0) { allCustomersCache[idx].name = name; allCustomersCache[idx].phone = phone; allCustomersCache[idx].address = address; allCustomersCache[idx].email = email; }
+
+    document.getElementById('edit-cust-modal').classList.remove('open');
+    toast('✅', 'Customer updated successfully!');
+    filterCustomers(); // re-render list
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = '✅ Save Changes'; btn.disabled = false;
+  }
+}
+
 function filterCustomers(){
   const q    = (document.getElementById('cust-srch')?.value||'').toLowerCase();
   const sort = document.getElementById('cust-sort')?.value || 'spent';
@@ -1540,6 +1622,7 @@ function filterCustomers(){
     <td style="padding:.8rem 1rem;font-size:.8rem">${new Date(c.lastOrder).toLocaleDateString('en-IN',{dateStyle:'medium'})}</td>
     <td style="padding:.8rem 1rem">
     <button class="abtn edit" onclick="showCustHistory('${c.phone}',this.dataset.name)" data-name="${c.name}">📋 Orders</button>
+      <button class="abtn" style="background:rgba(201,150,58,.15);color:var(--gold)" onclick="editCustomer('${c.phone}')" data-name="${c.name}" data-address="${c.address||''}">✏️ Edit</button>
     </td>
   </tr>`).join('');
 }
