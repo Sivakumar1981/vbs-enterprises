@@ -88,4 +88,27 @@ router.post('/customer/login', async (req, res) => {
   }
 });
 
+// Admin: Update customer details by phone
+router.put('/customer/:phone', auth, async (req, res) => {
+  try {
+    const { name, phone, email, address } = req.body;
+    const origPhone = decodeURIComponent(req.params.phone);
+
+    const customer = await Customer.findOne({
+      phone: { $regex: origPhone.replace(/[\s+\-()]/g, '').slice(-10) }
+    });
+    if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+
+    if (name)    customer.name    = name;
+    if (phone)   customer.phone   = phone;
+    if (email !== undefined) customer.email   = email;
+    if (address !== undefined) customer.address = address;
+
+    await customer.save();
+    res.json({ success: true, message: 'Customer updated', customer: { _id: customer._id, name: customer.name, phone: customer.phone, email: customer.email, address: customer.address } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
