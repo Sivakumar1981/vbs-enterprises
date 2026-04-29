@@ -101,7 +101,8 @@ router.put('/customer/:phone', auth, async (req, res) => {
 
     if (name)    customer.name    = name;
     if (phone)   customer.phone   = phone;
-    if (email !== undefined) customer.email   = email;
+    // Only update email if actually provided and not empty
+    if (email && email.trim()) customer.email = email.trim().toLowerCase();
     if (address !== undefined) customer.address = address;
 
     await customer.save();
