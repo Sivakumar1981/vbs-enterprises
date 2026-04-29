@@ -4,7 +4,7 @@ const bcrypt   = require('bcryptjs');
 const customerSchema = new mongoose.Schema({
   name:     { type: String, required: true, trim: true },
   phone:    { type: String, required: true, unique: true, trim: true },
-  email:    { type: String, trim: true, lowercase: true, default: '' },
+  email:    { type: String, trim: true, lowercase: true, default: '', sparse: true },
   password: { type: String, required: true },
   address:  { type: String, default: '' }
 }, { timestamps: true });
@@ -19,4 +19,9 @@ customerSchema.methods.matchPassword = async function(entered) {
   return bcrypt.compare(entered, this.password);
 };
 
-module.exports = mongoose.model('Customer', customerSchema);
+const Customer = mongoose.model('Customer', customerSchema);
+
+// Drop old email unique index if it exists (fixes duplicate key error)
+Customer.collection.dropIndex('email_1').catch(() => {});
+
+module.exports = Customer;
