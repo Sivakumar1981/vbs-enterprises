@@ -1515,6 +1515,74 @@ function downloadInvoice(orderId) {
     }).catch(()=>toast('❌','Could not load order'));
 }
 
+let eaOrderItems = [];
+
+function editOrderAmount(id, currentTotal, currentDiscount) {
+  const origTotal = currentTotal + (currentDiscount||0);
+  document.getElementById('ea-order-id').value = id;
+  document.getElementById('ea-original').value = origTotal;
+  document.getElementById('ea-orig-display').textContent = 'Rs.' + origTotal.toLocaleString('en-IN');
+
+  // Populate item dropdown from _allOrders cache
+  const order = (window._allOrders||[]).find(o=>o._id===id);
+  eaOrderItems = order ? order.items : [];
+  const sel = document.getElementById('ea-item-sel');
+  if(sel) {
+    sel.innerHTML = '<option value="">— Apply to whole order —</option>';
+    eaOrderItems.forEach((item,idx)=>{
+      sel.innerHTML += '<option value="'+idx+'">'+item.name+' x'+item.quantity+' (Rs '+(item.price*item.quantity)+')</option>';
+    });
+  }
+
+  document.getElementById('ea-discount').value = currentDiscount || '';
+  document.getElementById('ea-courier').value  = order ? (order.courierCharge||'') : '';
+  document.getElementById('ea-reason').value   = order ? (order.discountReason||'') : '';
+  calcNewTotal();
+  document.getElementById('edit-amount-modal').classList.add('open');
+}
+
+function calcNewTotal() {
+  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
+  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
+  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
+  const itemSel  = document.getElementById('ea-item-sel') ? document.getElementById('ea-item-sel').value : '';
+  const newTotal = Math.max(0, orig - discount + courier);
+  document.getElementById('ea-new-total').textContent = 'Rs.' + newTotal.toLocaleString('en-IN');
+  let parts = [];
+  if(discount > 0) {
+    if(itemSel !== '' && eaOrderItems[parseInt(itemSel)]) {
+      parts.push('Discount -Rs'+discount+' on "'+eaOrderItems[parseInt(itemSel)].name+'"');
+    } else { parts.push('Discount -Rs'+discount+' (whole order)'); }
+  }
+  if(courier > 0) parts.push('Courier +Rs'+courier);
+  const bd = document.getElementById('ea-breakdown');
+  if(bd) bd.textContent = parts.join(' · ');
+}
+
+async function saveOrderAmount() {
+  const id       = document.getElementById('ea-order-id').value;
+  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
+  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
+  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
+  const reason   = document.getElementById('ea-reason').value.trim();
+  const itemSel  = document.getElementById('ea-item-sel') ? document.getElementById('ea-item-sel').value : '';
+  const discountedItem = (itemSel !== '' && eaOrderItems[parseInt(itemSel)]) ? eaOrderItems[parseInt(itemSel)].name : null;
+  const newTotal = Math.max(0, orig - discount + courier);
+  try {
+    const res = await fetch(API+'/orders/'+id+'/amount', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({ totalAmount: newTotal, discount, originalAmount: orig,
+        discountReason: reason, discountedItem, courierCharge: courier })
+    });
+    const d = await res.json();
+    if(!d.success) throw new Error(d.message);
+    document.getElementById('edit-amount-modal').classList.remove('open');
+    toast('✅', 'Amount updated to Rs.'+newTotal.toLocaleString('en-IN'));
+    loadOrders();
+  } catch(e) { toast('❌', e.message); }
+}
+
 async function updateStatus(id,status){
   try{
     const res=await fetch(API+'/orders/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({status})});
