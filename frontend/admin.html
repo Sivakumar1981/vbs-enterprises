@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- VBS Admin v5 - 31Mar2026 -->
+<!DOCTYPE html><!-- VBS Admin v6 - 04May2026 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -566,6 +566,7 @@ tr:hover td{background:var(--warm)}
 <div class="toast" id="toast"><span id="t-icon">✅</span><span id="t-msg"></span></div>
 
 <script>
+/* VBS Admin v6 - Built 2026-05-04 */
 const API='/api';
 let token=localStorage.getItem('vbs_atoken');
 let allProds=[];
@@ -1132,7 +1133,7 @@ function printTally() {
   const catHTML    = document.getElementById('tally-category').innerHTML;
   const itemsHTML  = document.getElementById('tally-items').innerHTML;
 
-  const html = `<!DOCTYPE html><!-- VBS Admin v5 - 31Mar2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
+  const html = `<!DOCTYPE html><!-- VBS Admin v6 - 04May2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
