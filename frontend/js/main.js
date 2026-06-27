@@ -39,6 +39,7 @@ async function doLogin() {
     localStorage.setItem('vbs_cdata',JSON.stringify(data.customer));
     closeAuth(); renderHeader();
     showToast('👋','Welcome, '+data.customer.name+'!');
+    if (!localStorage.getItem('vbs_tour_seen')) setTimeout(openTour, 600);
   } catch(e) { showErr(err,e.message); }
   finally { btn.textContent='Login to Shop'; btn.disabled=false; }
 }
@@ -63,6 +64,7 @@ async function doRegister() {
     localStorage.setItem('vbs_cdata',JSON.stringify(data.customer));
     closeAuth(); renderHeader();
     showToast('🎉','Welcome, '+data.customer.name+'!');
+    if (!localStorage.getItem('vbs_tour_seen')) setTimeout(openTour, 600);
   } catch(e) { showErr(err,e.message); }
   finally { btn.textContent='Create My Account'; btn.disabled=false; }
 }
@@ -364,7 +366,59 @@ function showToast(icon,msg){
   _tt=setTimeout(()=>t.classList.remove('show'),3500);
 }
 
+/* ══ ONBOARDING TOUR ═══════════════════════════════════════════ */
+var tourSteps = [
+  { emoji:'👋', tag:'Step 1 of 5', title:'Welcome to <span>VBS Enterprises</span>!', desc:"Let's take a quick 30-second look around so you know exactly how to shop with us. You can skip anytime." },
+  { emoji:'🔍', tag:'Step 2 of 5', title:'Find What You Need', desc:'Use the category buttons (Sarees, Oil, Rice, Ghee, Honey, Peanut & more) or the search box up top to instantly filter our catalog.' },
+  { emoji:'🛒', tag:'Step 3 of 5', title:'Add to Your Cart', desc:'Found something you like? Just tap <b>Add to Cart</b> on the product card. You can adjust quantity anytime from the Cart page.' },
+  { emoji:'📍', tag:'Step 4 of 5', title:'Confirm Address & Pay', desc:'Open your Cart, confirm your delivery address, and choose to pay via <b>Cash on Delivery</b> or any <b>Credit/Debit Card & UPI</b>.' },
+  { emoji:'🎉', tag:'Step 5 of 5', title:"You're All Set!", desc:'Click <b>Place Order</b> to confirm your purchase, then track everything anytime under <b>📦 My Orders</b>. Happy shopping!' }
+];
+var tourIdx = 0;
+
+function renderTour(){
+  var s = tourSteps[tourIdx];
+  document.getElementById('tour-stage').innerHTML =
+    '<div class="tour-step-tag">'+s.tag+'</div>'
+    +'<div class="tour-emoji">'+s.emoji+'</div>'
+    +'<div class="tour-title">'+s.title+'</div>'
+    +'<div class="tour-desc">'+s.desc+'</div>';
+  document.getElementById('tour-progress').innerHTML = tourSteps.map((_,i)=>
+    '<span class="tour-dot'+(i===tourIdx?' active':'')+'"></span>').join('');
+  document.getElementById('tour-back').disabled = tourIdx===0;
+  document.getElementById('tour-next').textContent = tourIdx===tourSteps.length-1 ? "Let's Shop 🛍️" : 'Next →';
+}
+function openTour(){ tourIdx=0; renderTour(); document.getElementById('tour-overlay').classList.add('open'); }
+function tourNext(){
+  if (tourIdx < tourSteps.length-1) { tourIdx++; renderTour(); }
+  else { skipTour(); }
+}
+function tourPrev(){ if (tourIdx>0){ tourIdx--; renderTour(); } }
+function skipTour(){
+  document.getElementById('tour-overlay').classList.remove('open');
+  localStorage.setItem('vbs_tour_seen','1');
+}
+document.getElementById('tour-overlay').addEventListener('click', function(e){ if (e.target===this) skipTour(); });
+
+function maybeAutoShowTour(){
+  if (!localStorage.getItem('vbs_tour_seen')) {
+    setTimeout(openTour, 500);
+  }
+}
+
+function ensureTourFab(){
+  if (document.getElementById('tour-fab')) return;
+  var b = document.createElement('button');
+  b.id = 'tour-fab';
+  b.className = 'tour-fab';
+  b.innerHTML = '✨ How it works';
+  b.onclick = openTour;
+  document.body.appendChild(b);
+}
+
 /* ══ INIT ══════════════════════════════════════════════════════ */
 renderHeader();
 updateBadge();
 loadProducts();
+ensureTourFab();
+maybeAutoShowTour();
