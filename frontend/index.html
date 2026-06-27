@@ -65,8 +65,9 @@ nav{background:var(--deep);padding:.75rem 2rem;display:flex;align-items:center;j
 .hcat-btn:hover,.hcat-btn.active-cat{background:var(--gold);border-color:var(--gold);color:#fff}
 
 /* ── LOGO ICON & PAYMENT NOTE ── */
-.logo{display:flex;align-items:center;gap:.5rem}
-.logo-icon{height:34px;width:auto;object-fit:contain;border-radius:6px}
+.logo{display:flex;align-items:center;gap:.6rem}
+.logo-icon{height:36px;width:auto;object-fit:contain;border-radius:6px;background:#fff;padding:2px}
+@media(max-width:640px){.logo-icon{height:28px}}
 .hero-payment-note{font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--gold-l);background:rgba(200,144,42,.1);border:1px solid rgba(200,144,42,.35);display:inline-block;padding:.45rem 1.1rem;border-radius:20px;margin-bottom:1.75rem}
 
 /* ── PAGES ── */
@@ -215,8 +216,10 @@ footer a:hover{text-decoration:underline}
 <!-- NAVBAR -->
 <nav>
   <div class="logo">
-    <img src="images/brand_icon.png" alt="VBS Enterprises" class="logo-icon"/>
     <span style="color:var(--gold-l);font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;letter-spacing:.05em">VBS Enterprises</span>
+    <img src="images/brand_icon.png" alt="VBS Enterprises" class="logo-icon"/>
+    <img src="images/msme.webp" alt="MSME Registered" class="logo-icon"/>
+    <img src="images/fssai.jpg" alt="FSSAI Certified" class="logo-icon"/>
   </div>
   <div class="nav-right">
     <button class="nb active" data-page="shop">🛍️ Shop</button>
@@ -235,9 +238,7 @@ footer a:hover{text-decoration:underline}
 <!-- HERO -->
 <div id="hero-wrap">
   <div class="hero-logo-wrap">
-    <img src="images/msme.webp" alt="MSME Registered" class="hero-cert-badge cert-left"/>
     <img src="images/VBS_logo.png" alt="VBS Enterprises" class="hero-logo"/>
-    <img src="images/fssai.jpg" alt="FSSAI Certified" class="hero-cert-badge cert-right"/>
   </div>
   <div class="hero-badge">✦ QUALITY YOU CAN TRUST</div>
   <div class="hero-desc">Premium quality products delivered to your doorstep<br/><span style="font-size:.9rem;opacity:.75">(Within Chennai) · Fresh, pure and affordable.</span></div>
