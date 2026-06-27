@@ -54,11 +54,13 @@ nav{background:var(--deep);padding:.75rem 1rem;display:flex;align-items:center;j
 
 /* ── HERO ── */
 #hero-wrap{background:radial-gradient(ellipse at top,#3d2000 0%,#1a0f00 60%,#0f0800 100%);padding:3.5rem 2rem 2.5rem;text-align:center}
-.hero-logo-wrap{margin-bottom:1.25rem;display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap}
-.hero-logo{height:180px;width:auto;filter:drop-shadow(0 4px 28px rgba(200,144,42,.4))}
-.hero-icon-group{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
-.hero-mini-icon{height:60px;width:auto;object-fit:contain;background:#fff;border-radius:8px;padding:.3rem;box-shadow:0 4px 16px rgba(0,0,0,.25)}
-@media(max-width:640px){.hero-logo{height:120px}.hero-mini-icon{height:42px}}
+.hero-logo-wrap{margin-bottom:1.25rem;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1.5rem}
+.hero-logo-spacer{display:block}
+.hero-logo{height:180px;width:auto;filter:drop-shadow(0 4px 28px rgba(200,144,42,.4));justify-self:center}
+.hero-icon-group{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;justify-self:start}
+.hero-mini-icon{height:84px;width:auto;object-fit:contain;background:#fff;border-radius:8px;padding:.35rem;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+@media(max-width:900px){.hero-logo-wrap{grid-template-columns:1fr;justify-items:center}.hero-logo-spacer{display:none}.hero-icon-group{justify-self:center}}
+@media(max-width:640px){.hero-logo{height:120px}.hero-mini-icon{height:56px}}
 .hero-badge{display:inline-block;border:1.5px solid rgba(200,144,42,.5);color:var(--gold-l);font-size:.75rem;font-weight:600;letter-spacing:.15em;padding:.4rem 1.2rem;border-radius:20px;margin-bottom:1.25rem;background:rgba(200,144,42,.08)}
 .hero-desc{font-family:'Cormorant Garamond',serif;font-size:clamp(1.1rem,2.5vw,1.4rem);color:#e8ddd0;line-height:1.7;margin-bottom:1.75rem}
 .hcat-bar{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
@@ -234,9 +236,9 @@ footer a:hover{text-decoration:underline}
 <!-- HERO -->
 <div id="hero-wrap">
   <div class="hero-logo-wrap">
+    <div class="hero-logo-spacer"></div>
     <img src="images/VBS_logo.png" alt="VBS Enterprises" class="hero-logo"/>
     <div class="hero-icon-group">
-      <img src="images/brand_icon.png" alt="VBS Enterprises" class="hero-mini-icon"/>
       <img src="images/ghani_icon.png" alt="Traditional Cold-Pressed" class="hero-mini-icon"/>
       <img src="images/msme.webp" alt="MSME Registered" class="hero-mini-icon"/>
       <img src="images/fssai.jpg" alt="FSSAI Certified" class="hero-mini-icon"/>
