@@ -54,13 +54,20 @@ nav{background:var(--deep);padding:.75rem 2rem;display:flex;align-items:center;j
 
 /* ── HERO ── */
 #hero-wrap{background:radial-gradient(ellipse at top,#3d2000 0%,#1a0f00 60%,#0f0800 100%);padding:3.5rem 2rem 2.5rem;text-align:center}
-.hero-logo-wrap{margin-bottom:1.25rem}
+.hero-logo-wrap{margin-bottom:1.25rem;display:flex;align-items:center;justify-content:center;gap:1.75rem;flex-wrap:wrap}
 .hero-logo{height:180px;width:auto;filter:drop-shadow(0 4px 28px rgba(200,144,42,.4))}
+.hero-cert-badge{height:64px;width:auto;object-fit:contain;background:#fff;border-radius:10px;padding:.4rem .7rem;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+@media(max-width:640px){.hero-cert-badge{height:48px}}
 .hero-badge{display:inline-block;border:1.5px solid rgba(200,144,42,.5);color:var(--gold-l);font-size:.75rem;font-weight:600;letter-spacing:.15em;padding:.4rem 1.2rem;border-radius:20px;margin-bottom:1.25rem;background:rgba(200,144,42,.08)}
 .hero-desc{font-family:'Cormorant Garamond',serif;font-size:clamp(1.1rem,2.5vw,1.4rem);color:#e8ddd0;line-height:1.7;margin-bottom:1.75rem}
 .hcat-bar{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
 .hcat-btn{background:rgba(255,255,255,.07);border:1.5px solid rgba(200,144,42,.3);color:#ccc;padding:.45rem 1.1rem;border-radius:20px;cursor:pointer;font-size:.85rem;font-family:'DM Sans',sans-serif;transition:all .2s}
 .hcat-btn:hover,.hcat-btn.active-cat{background:var(--gold);border-color:var(--gold);color:#fff}
+
+/* ── LOGO ICON & PAYMENT NOTE ── */
+.logo{display:flex;align-items:center;gap:.5rem}
+.logo-icon{height:34px;width:auto;object-fit:contain;border-radius:6px}
+.hero-payment-note{font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--gold-l);background:rgba(200,144,42,.1);border:1px solid rgba(200,144,42,.35);display:inline-block;padding:.45rem 1.1rem;border-radius:20px;margin-bottom:1.75rem}
 
 /* ── PAGES ── */
 .page{display:none}.page.active{display:block}
@@ -208,6 +215,7 @@ footer a:hover{text-decoration:underline}
 <!-- NAVBAR -->
 <nav>
   <div class="logo">
+    <img src="images/brand_icon.png" alt="VBS Enterprises" class="logo-icon"/>
     <span style="color:var(--gold-l);font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;letter-spacing:.05em">VBS Enterprises</span>
   </div>
   <div class="nav-right">
@@ -227,10 +235,13 @@ footer a:hover{text-decoration:underline}
 <!-- HERO -->
 <div id="hero-wrap">
   <div class="hero-logo-wrap">
+    <img src="images/msme.png" alt="MSME Registered" class="hero-cert-badge cert-left"/>
     <img src="images/VBS_logo.png" alt="VBS Enterprises" class="hero-logo"/>
+    <img src="images/fssai.png" alt="FSSAI Certified" class="hero-cert-badge cert-right"/>
   </div>
   <div class="hero-badge">✦ QUALITY YOU CAN TRUST</div>
   <div class="hero-desc">Premium quality products delivered to your doorstep<br/><span style="font-size:.9rem;opacity:.75">(Within Chennai) · Fresh, pure and affordable.</span></div>
+  <div class="hero-payment-note">💳 We Accept All Types of Credit/Debit Cards &amp; UPI Payments</div>
   <div class="hcat-bar">
     <button class="hcat-btn active-cat" onclick="filterCat('')">All Products</button>
     <button class="hcat-btn" onclick="filterCat('saree')">👘 Sarees</button>
