@@ -392,7 +392,11 @@ tr:hover td{background:var(--warm)}
           <div class="fgrid">
             <input type="hidden" id="pu-id"/>
             <div class="field"><label>Purchase Date *</label><input type="date" id="pu-date"/></div>
-            <div class="field"><label>Product Name *</label><input type="text" id="pu-name" placeholder="e.g. Groundnut Oil"/></div>
+            <div class="field"><label>Product Name *</label>
+              <select id="pu-name" onchange="onPuProductChange()">
+                <option value="">Select product...</option>
+              </select>
+            </div>
             <div class="field"><label>Category *</label>
               <select id="pu-cat">
                 <option value="saree">👘 Saree</option>
@@ -408,7 +412,19 @@ tr:hover td{background:var(--warm)}
               </select>
             </div>
             <div class="field"><label>Quantity *</label><input type="number" id="pu-qty" placeholder="e.g. 50" min="0" step="any" oninput="updatePuTotal()"/></div>
-            <div class="field"><label>Unit</label><input type="text" id="pu-unit" placeholder="kg / litre / piece"/></div>
+            <div class="field"><label>Unit</label>
+              <select id="pu-unit">
+                <option value="kg">Kg</option>
+                <option value="litre">Litre</option>
+                <option value="gram">Gram</option>
+                <option value="ml">ml</option>
+                <option value="piece">Piece</option>
+                <option value="dozen">Dozen</option>
+                <option value="box">Box</option>
+                <option value="packet">Packet</option>
+                <option value="quintal">Quintal</option>
+              </select>
+            </div>
             <div class="field"><label>Price per Unit (₹) *</label><input type="number" id="pu-price" placeholder="e.g. 120" min="0" step="any" oninput="updatePuTotal()"/></div>
             <div class="field"><label>Total Price (₹)</label><input type="text" id="pu-total" placeholder="Auto-calculated" readonly style="background:#f5f0e6"/></div>
             <div class="field full"><label>Notes</label><textarea id="pu-notes" placeholder="Supplier name, remarks, etc. (optional)"></textarea></div>
@@ -416,6 +432,38 @@ tr:hover td{background:var(--warm)}
           <div class="fact">
             <button class="btn-g" onclick="savePurchase()">💾 Save Purchase</button>
             <button class="btn-gh" onclick="clearPuForm()">✕ Clear</button>
+          </div>
+        </div>
+
+        <!-- Purchase Report -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin:1.75rem 0 1.25rem">
+          <div>
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--text)">📑 Purchase Report</h3>
+            <p style="font-size:.8rem;color:var(--muted)">Filter, print or export your purchase records</p>
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <select id="pu-year" onchange="renderPurchaseReport()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem"></select>
+            <select id="pu-month" onchange="renderPurchaseReport()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+              <option value="">All Months</option>
+              <option value="0">January</option><option value="1">February</option>
+              <option value="2">March</option><option value="3">April</option>
+              <option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option>
+              <option value="8">September</option><option value="9">October</option>
+              <option value="10">November</option><option value="11">December</option>
+            </select>
+            <button class="btn-g" onclick="printPurchaseReport()" style="font-size:.82rem;padding:.45rem 1rem">🖨️ Print Report</button>
+            <button class="btn-gh" onclick="downloadPurchaseExcel()" style="font-size:.82rem;padding:.45rem 1rem">⬇️ Download Excel</button>
+          </div>
+        </div>
+
+        <div id="pu-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem"></div>
+
+        <!-- Purchase vs Revenue Chart -->
+        <div class="tc" style="margin-bottom:1.25rem">
+          <div class="tc-top"><h3>📊 Purchase vs Revenue</h3></div>
+          <div style="padding:1rem 1.25rem 1.5rem">
+            <canvas id="pr-chart" style="width:100%;height:240px"></canvas>
           </div>
         </div>
 
@@ -1389,6 +1437,7 @@ function clearPForm(){
 /* ── PURCHASE ── */
 let allPurchases=[];
 let editPuId=null;
+let puProductsCache=[];
 
 function updatePuTotal(){
   const qty=parseFloat(document.getElementById('pu-qty').value)||0;
@@ -1396,26 +1445,110 @@ function updatePuTotal(){
   document.getElementById('pu-total').value=qty&&price?'₹'+(qty*price).toLocaleString('en-IN',{maximumFractionDigits:2}):'';
 }
 
+async function populatePuProductDropdown(){
+  try{
+    const res=await fetch(`${API}/products`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success)return;
+    puProductsCache=d.products;
+    const sel=document.getElementById('pu-name');
+    const current=sel.value;
+    sel.innerHTML='<option value="">Select product...</option>'+
+      puProductsCache.map(p=>`<option value="${p.name.replace(/"/g,'&quot;')}" data-cat="${p.category}" data-unit="${(p.unit||'').replace(/"/g,'&quot;')}">${p.name}</option>`).join('');
+    if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
+  }catch(e){}
+}
+
+function onPuProductChange(){
+  const sel=document.getElementById('pu-name');
+  const opt=sel.options[sel.selectedIndex];
+  if(!opt||!opt.value)return;
+  const cat=opt.dataset.cat;
+  const unitRaw=(opt.dataset.unit||'').toLowerCase();
+  if(cat)document.getElementById('pu-cat').value=cat;
+  const unitSel=document.getElementById('pu-unit');
+  if(unitRaw.includes('litre')||unitRaw.includes('liter'))unitSel.value='litre';
+  else if(unitRaw.includes('kg')||unitRaw.includes('kilo'))unitSel.value='kg';
+  else if(unitRaw.includes('quintal'))unitSel.value='quintal';
+  else if(unitRaw.includes('gram')||unitRaw.includes('gm'))unitSel.value='gram';
+  else if(unitRaw.includes('ml')||unitRaw.includes('millilitre'))unitSel.value='ml';
+  else if(unitRaw.includes('dozen'))unitSel.value='dozen';
+  else if(unitRaw.includes('box'))unitSel.value='box';
+  else if(unitRaw.includes('packet')||unitRaw.includes('pack'))unitSel.value='packet';
+  else unitSel.value='piece';
+}
+
+async function ensureOrdersCache(){
+  try{
+    const res=await fetch(`${API}/orders?limit=9999`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success)allOrdersCache=d.orders.filter(o=>o.status!=='cancelled');
+  }catch(e){}
+}
+
 async function loadPurchases(){
   try{
+    await populatePuProductDropdown();
+    if(!document.getElementById('pu-name').value)document.getElementById('pu-cat').value='saree';
     const res=await fetch(`${API}/purchases`,{headers:{Authorization:`Bearer ${token}`}});
     const d=await res.json();
     if(!d.success){toast('❌',d.message);return;}
     allPurchases=d.purchases;
-    renderPurchaseTable(allPurchases);
+    populatePuYearFilter();
+    await ensureOrdersCache();
+    renderPurchaseReport();
   }catch(e){toast('❌',e.message);}
+}
+
+function populatePuYearFilter(){
+  const curYear=new Date().getFullYear();
+  const years=[...new Set(allPurchases.map(p=>new Date(p.purchaseDate).getFullYear()))];
+  if(!years.includes(curYear))years.push(curYear);
+  years.sort((a,b)=>b-a);
+  const ySel=document.getElementById('pu-year');
+  const curVal=ySel.value||curYear;
+  ySel.innerHTML=years.map(y=>`<option value="${y}" ${y==curVal?'selected':''}>${y}</option>`).join('');
+}
+
+function loadPuMonth(){renderPurchaseReport();}
+
+function getFilteredPurchases(){
+  const year=parseInt(document.getElementById('pu-year')?.value||new Date().getFullYear());
+  const month=document.getElementById('pu-month')?.value;
+  const mIdx=(month!==''&&month!==undefined&&month!==null)?parseInt(month):null;
+  return allPurchases.filter(p=>{
+    const d=new Date(p.purchaseDate);
+    if(d.getFullYear()!==year)return false;
+    if(mIdx!==null&&d.getMonth()!==mIdx)return false;
+    return true;
+  });
+}
+
+function renderPurchaseReport(){
+  const filtered=getFilteredPurchases();
+  const totalQty=filtered.reduce((s,p)=>s+p.quantity,0);
+  const totalAmt=filtered.reduce((s,p)=>s+p.totalPrice,0);
+  const avg=filtered.length?Math.round(totalAmt/filtered.length):0;
+  document.getElementById('pu-stats').innerHTML=`
+    <div class="tally-stat"><div class="tn">${filtered.length}</div><div class="tl">Purchases</div></div>
+    <div class="tally-stat"><div class="tn">${totalQty}</div><div class="tl">Total Qty</div></div>
+    <div class="tally-stat"><div class="tn">₹${totalAmt.toLocaleString('en-IN')}</div><div class="tl">Amount Spent</div></div>
+    <div class="tally-stat"><div class="tn">₹${avg.toLocaleString('en-IN')}</div><div class="tl">Avg / Purchase</div></div>`;
+  filterPurchases();
+  drawPurchaseVsRevenueChart();
 }
 
 function filterPurchases(){
   const q=document.getElementById('pu-srch').value.toLowerCase();
-  renderPurchaseTable(q?allPurchases.filter(p=>p.productName.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)):allPurchases);
+  const base=getFilteredPurchases();
+  renderPurchaseTable(q?base.filter(p=>p.productName.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)):base);
 }
 
 function renderPurchaseTable(list){
   const tb=document.getElementById('pu-tbody');
   const tf=document.getElementById('pu-tfoot');
   if(!list.length){
-    tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No purchases recorded yet</td></tr>`;
+    tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No purchases recorded for this period</td></tr>`;
     tf.innerHTML='';
     return;
   }
@@ -1441,6 +1574,79 @@ function renderPurchaseTable(list){
     <td style="text-align:right;padding:.7rem">₹${grandTotal.toLocaleString('en-IN')}</td>
     <td></td>
   </tr>`;
+}
+
+function drawPurchaseVsRevenueChart(){
+  const canvas=document.getElementById('pr-chart');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const year=parseInt(document.getElementById('pu-year')?.value||new Date().getFullYear());
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const purchaseByMonth=new Array(12).fill(0);
+  allPurchases.filter(p=>new Date(p.purchaseDate).getFullYear()===year).forEach(p=>{
+    purchaseByMonth[new Date(p.purchaseDate).getMonth()]+=p.totalPrice;
+  });
+  const revenueByMonth=new Array(12).fill(0);
+  (allOrdersCache||[]).filter(o=>new Date(o.createdAt).getFullYear()===year).forEach(o=>{
+    revenueByMonth[new Date(o.createdAt).getMonth()]+=o.totalAmount;
+  });
+
+  const activeMonths=[...Array(12).keys()].filter(m=>purchaseByMonth[m]>0||revenueByMonth[m]>0);
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-40;
+  const H=240;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  if(!activeMonths.length){
+    ctx.fillStyle='#8a7060';ctx.font='13px DM Sans,sans-serif';ctx.textAlign='center';
+    ctx.fillText('No purchase or revenue data for '+year,W/2,H/2);
+    return;
+  }
+
+  const maxVal=Math.max(...activeMonths.map(m=>Math.max(purchaseByMonth[m],revenueByMonth[m])),1);
+  const pad={top:20,right:20,bottom:56,left:70};
+  const chartW=W-pad.left-pad.right;
+  const chartH=H-pad.top-pad.bottom;
+  const groupW=chartW/activeMonths.length;
+  const barW=Math.min(28,(groupW-16)/2);
+
+  ctx.strokeStyle='#e8d5b8';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.top+chartH-(chartH/4)*i;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();
+    ctx.fillStyle='#8a7060';ctx.font='10px DM Sans,sans-serif';ctx.textAlign='right';
+    ctx.fillText('₹'+Math.round(maxVal/4*i/1000)+'k',pad.left-6,y+4);
+  }
+
+  activeMonths.forEach((m,idx)=>{
+    const gx=pad.left+groupW*idx+groupW/2;
+    const pH=(purchaseByMonth[m]/maxVal)*chartH;
+    const px=gx-barW-3;
+    const py=pad.top+chartH-pH;
+    ctx.fillStyle='#c0392b';
+    ctx.beginPath();ctx.roundRect(px,py,barW,pH,[3,3,0,0]);ctx.fill();
+
+    const rH=(revenueByMonth[m]/maxVal)*chartH;
+    const rx=gx+3;
+    const ry=pad.top+chartH-rH;
+    const grad=ctx.createLinearGradient(0,ry,0,pad.top+chartH);
+    grad.addColorStop(0,'#e8c068');grad.addColorStop(1,'#c8902a');
+    ctx.fillStyle=grad;
+    ctx.beginPath();ctx.roundRect(rx,ry,barW,rH,[3,3,0,0]);ctx.fill();
+
+    ctx.fillStyle='#2d1a00';ctx.font='11px DM Sans,sans-serif';ctx.textAlign='center';
+    ctx.fillText(months[m],gx,pad.top+chartH+18);
+  });
+
+  ctx.fillStyle='#c0392b';ctx.fillRect(pad.left,H-14,10,10);
+  ctx.fillStyle='#2d1a00';ctx.font='10px DM Sans,sans-serif';ctx.textAlign='left';
+  ctx.fillText('Purchase',pad.left+14,H-5);
+  ctx.fillStyle='#c8902a';ctx.fillRect(pad.left+90,H-14,10,10);
+  ctx.fillStyle='#2d1a00';ctx.fillText('Revenue',pad.left+104,H-5);
 }
 
 async function savePurchase(){
@@ -1472,10 +1678,14 @@ function editPurchase(id){
   if(!p)return;
   editPuId=id;
   document.getElementById('pu-date').value=new Date(p.purchaseDate).toISOString().slice(0,10);
-  document.getElementById('pu-name').value=p.productName;
+  const sel=document.getElementById('pu-name');
+  if(![...sel.options].some(o=>o.value===p.productName)){
+    sel.insertAdjacentHTML('beforeend',`<option value="${p.productName.replace(/"/g,'&quot;')}">${p.productName} (not in product list)</option>`);
+  }
+  sel.value=p.productName;
   document.getElementById('pu-cat').value=p.category;
   document.getElementById('pu-qty').value=p.quantity;
-  document.getElementById('pu-unit').value=p.unit||'';
+  document.getElementById('pu-unit').value=p.unit||'piece';
   document.getElementById('pu-price').value=p.price;
   document.getElementById('pu-notes').value=p.notes||'';
   updatePuTotal();
@@ -1493,10 +1703,95 @@ function cfDelPurchase(id,name){
 }
 
 function clearPuForm(){
-  ['pu-name','pu-qty','pu-unit','pu-price','pu-total','pu-notes','pu-date'].forEach(i=>document.getElementById(i).value='');
+  ['pu-qty','pu-price','pu-total','pu-notes','pu-date'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('pu-name').value='';
   document.getElementById('pu-cat').value='saree';
+  document.getElementById('pu-unit').value='kg';
   document.getElementById('pu-form-head').textContent='➕ Add New Purchase';
   editPuId=null;
+}
+
+function printPurchaseReport(){
+  const year=document.getElementById('pu-year')?.value;
+  const mSel=document.getElementById('pu-month');
+  const mName=mSel.options[mSel.selectedIndex].text;
+  const statsHTML=document.getElementById('pu-stats').innerHTML;
+  const filtered=getFilteredPurchases();
+  const rowsHTML=filtered.map(p=>{
+    const d=new Date(p.purchaseDate);
+    const dstr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    return `<tr><td>${dstr}</td><td>${p.productName}</td><td>${cLabel[p.category]||p.category}</td>
+      <td style="text-align:right">${p.quantity}${p.unit?' '+p.unit:''}</td>
+      <td style="text-align:right">₹${p.price.toLocaleString('en-IN')}</td>
+      <td style="text-align:right">₹${p.totalPrice.toLocaleString('en-IN')}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1rem">No data</td></tr>';
+  const grandTotal=filtered.reduce((s,p)=>s+p.totalPrice,0);
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Purchase Report</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
+    h1{font-size:1.4rem;color:#1a0f00;margin-bottom:.25rem}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
+    .stat{background:#1a0f00;color:#fff;border-radius:8px;padding:.75rem;text-align:center}
+    .stat .n{font-size:1.4rem;color:#e8c068;font-weight:700}
+    .stat .l{font-size:.65rem;color:#b0a090;text-transform:uppercase;margin-top:.2rem}
+    table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+    th{background:#1a0f00;color:#e8c068;padding:6px 8px;text-align:left;font-size:11px}
+    td{padding:5px 8px;border-bottom:1px solid #e8d5b8;font-size:11px}
+    tr:nth-child(even) td{background:#fff8f0}
+    @media print{@page{margin:1cm}button{display:none}}
+  </style></head><body>
+  <h1>VBS Enterprises — Purchase Report</h1>
+  <p style="color:#7a6652;font-size:.8rem;margin-bottom:1rem">${mName} ${year} · Generated on ${new Date().toLocaleString('en-IN')}</p>
+  <div class="stats">${statsHTML.replace(/class="tally-stat"/g,'class="stat"').replace(/class="tn"/g,'class="n"').replace(/class="tl"/g,'class="l"')}</div>
+  <table><thead><tr><th>Date</th><th>Product</th><th>Category</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+  <tbody>${rowsHTML}</tbody>
+  <tfoot><tr><td colspan="5" style="text-align:right;font-weight:700;padding:6px 8px">Grand Total</td><td style="text-align:right;font-weight:700;padding:6px 8px">₹${grandTotal.toLocaleString('en-IN')}</td></tr></tfoot>
+  </table>
+  <button onclick="window.print()" style="background:#c8902a;color:#fff;border:none;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">🖨️ Print / Save PDF</button>
+  </body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+
+function downloadPurchaseExcel(){
+  const year=document.getElementById('pu-year')?.value;
+  const mSel=document.getElementById('pu-month');
+  const mIdx=mSel&&mSel.value!==''?parseInt(mSel.value):null;
+  const monthsFull=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const periodLabel=mIdx!==null?monthsFull[mIdx]+' '+year:'Full Year '+year;
+  const filtered=getFilteredPurchases();
+
+  const NL=String.fromCharCode(10);
+  let csv='VBS Enterprises - Purchase Report'+NL;
+  csv+='Period: '+periodLabel+NL;
+  csv+='Generated: '+new Date().toLocaleString('en-IN')+NL+NL;
+  csv+='Purchase Date,Purchased Product,Category,Purchased Quantity,Price (Rs),Total Price (Rs)'+NL;
+
+  let grandTotal=0;
+  filtered.forEach(p=>{
+    const d=new Date(p.purchaseDate);
+    const dstr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    grandTotal+=p.totalPrice;
+    csv+='"'+dstr+'","'+p.productName+'","'+(cLabel[p.category]||p.category)+'","'+p.quantity+(p.unit?' '+p.unit:'')+'",'+p.price+','+p.totalPrice+NL;
+  });
+  csv+=NL+'TOTAL,,,,,'+grandTotal+NL;
+
+  const BOM='﻿';
+  const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='VBS-PurchaseReport-'+periodLabel.replace(' ','-')+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  toast('✅','Excel report downloaded!');
 }
 
 /* ── ORDERS ── */
