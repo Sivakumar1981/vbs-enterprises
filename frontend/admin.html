@@ -97,7 +97,7 @@ tr:hover td{background:var(--warm)}
 .spill.delivered{background:#f0fdf4;color:#166534}
 .spill.cancelled{background:#fee2e2;color:#b91c1c}
 .cat-tag{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700}
-.cat-tag.saree{background:#fce7f3;color:#9d174d}.cat-tag.nighty{background:#ede9fe;color:#5b21b6}.cat-tag.chudidhar{background:#fef3c7;color:#92400e}.cat-tag.blouse{background:#fdf2f8;color:#be185d}.cat-tag.ghee{background:#fef9c3;color:#854d0e}.cat-tag.honey{background:#ffedd5;color:#9a3412}
+.cat-tag.saree{background:#fce7f3;color:#9d174d}.cat-tag.nighty{background:#ede9fe;color:#5b21b6}.cat-tag.chudidhar{background:#fef3c7;color:#92400e}.cat-tag.blouse{background:#fdf2f8;color:#be185d}.cat-tag.ghee{background:#fef9c3;color:#854d0e}.cat-tag.honey{background:#ffedd5;color:#9a3412}.cat-tag.peanut{background:#f3e8d2;color:#7c4a03}
 .cat-tag.oil{background:#fef3c7;color:#92400e}
 .cat-tag.rice{background:#d1fae5;color:#065f46}
 .cat-tag.other{background:#e0e7ff;color:#3730a3}
@@ -166,6 +166,7 @@ tr:hover td{background:var(--warm)}
       <button class="sn" data-tab="orders">🧾 Orders</button>
       <button class="sn" data-tab="customers">👥 Customers</button>
       <button class="sn" data-tab="tally">📊 Tally / Reports</button>
+      <button class="sn" data-tab="purchase">🛒 Purchase</button>
     </nav>
     <div class="sb-btns">
       <a class="btn-visit" href="/" target="_blank">🛍️ Visit Shop ↗</a>
@@ -205,6 +206,7 @@ tr:hover td{background:var(--warm)}
                 <option value="rice">🌾 Rice</option>
                 <option value="ghee">🧈 Ghee</option>
                 <option value="honey">🍯 Honey</option>
+                <option value="peanut">🥜 Peanut</option>
                 <option value="other">📦 Other</option>
               </select>
             </div>
@@ -374,6 +376,68 @@ tr:hover td{background:var(--warm)}
           </div>
         </div>
 
+      </div>
+
+      <!-- PURCHASE -->
+      <div class="tab" id="tab-purchase">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--text)">🛒 Purchase</h2>
+            <p style="font-size:.82rem;color:var(--muted)">Track products you've purchased for your company stock</p>
+          </div>
+        </div>
+
+        <div class="fc">
+          <h3 id="pu-form-head">➕ Add New Purchase</h3>
+          <div class="fgrid">
+            <input type="hidden" id="pu-id"/>
+            <div class="field"><label>Purchase Date *</label><input type="date" id="pu-date"/></div>
+            <div class="field"><label>Product Name *</label><input type="text" id="pu-name" placeholder="e.g. Groundnut Oil"/></div>
+            <div class="field"><label>Category *</label>
+              <select id="pu-cat">
+                <option value="saree">👘 Saree</option>
+                <option value="nighty">🌙 Nighty</option>
+                <option value="chudidhar">👗 Chudidhar</option>
+                <option value="blouse">🪡 Blouse</option>
+                <option value="oil">🫙 Oil</option>
+                <option value="rice">🌾 Rice</option>
+                <option value="ghee">🧈 Ghee</option>
+                <option value="honey">🍯 Honey</option>
+                <option value="peanut">🥜 Peanut</option>
+                <option value="other">📦 Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Quantity *</label><input type="number" id="pu-qty" placeholder="e.g. 50" min="0" step="any" oninput="updatePuTotal()"/></div>
+            <div class="field"><label>Unit</label><input type="text" id="pu-unit" placeholder="kg / litre / piece"/></div>
+            <div class="field"><label>Price per Unit (₹) *</label><input type="number" id="pu-price" placeholder="e.g. 120" min="0" step="any" oninput="updatePuTotal()"/></div>
+            <div class="field"><label>Total Price (₹)</label><input type="text" id="pu-total" placeholder="Auto-calculated" readonly style="background:#f5f0e6"/></div>
+            <div class="field full"><label>Notes</label><textarea id="pu-notes" placeholder="Supplier name, remarks, etc. (optional)"></textarea></div>
+          </div>
+          <div class="fact">
+            <button class="btn-g" onclick="savePurchase()">💾 Save Purchase</button>
+            <button class="btn-gh" onclick="clearPuForm()">✕ Clear</button>
+          </div>
+        </div>
+
+        <div class="tc">
+          <div class="tc-top">
+            <h3>All Purchases</h3>
+            <input type="text" id="pu-srch" placeholder="🔍 Search..." oninput="filterPurchases()"/>
+          </div>
+          <div class="tw">
+            <table>
+              <thead><tr>
+                <th>Purchase Date</th><th>Purchased Product</th><th>Category</th>
+                <th style="text-align:right">Purchased Quantity</th>
+                <th style="text-align:right">Price (₹)</th>
+                <th style="text-align:right">Total Price (₹)</th>
+                <th>Actions</th>
+              </tr></thead>
+              <tbody id="pu-tbody"></tbody>
+              <tfoot id="pu-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- EDIT CUSTOMER MODAL -->
@@ -619,7 +683,7 @@ function showTab(t){
   document.querySelectorAll('.sn').forEach(x=>x.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   document.querySelector(`[data-tab="${t}"]`)?.classList.add('active');
-  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers']};
+  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
   document.getElementById('tb-title').textContent=titles[t]?.[0]||'';
   document.getElementById('tb-sub').textContent=titles[t]?.[1]||'';
   if(t==='dash')loadDash();
@@ -627,6 +691,7 @@ function showTab(t){
   if(t==='orders')loadOrders();
   if(t==='tally')loadTally();
   if(t==='customers')loadCustomers();
+  if(t==='purchase')loadPurchases();
   document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -702,7 +767,7 @@ function renderTally() {
       catMap[c].rev += i.price * i.quantity * oRatio;  // rounded at display
     });
   });
-  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',other:'📦 Other'};
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',peanut:'🥜 Peanut',other:'📦 Other'};
   document.getElementById('tally-category').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].rev-a[1].rev).map(([c,v])=>`
     <tr style="cursor:pointer" onclick="drillCategory('${c}')" title="Click to see all ${c} orders">
       <td>${cLabel2[c]||c} <span style="font-size:.7rem;color:var(--muted)">↗</span></td>
@@ -740,7 +805,7 @@ function drillCategory(cat) {
   const month = document.getElementById('tally-month')?.value;
   const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',other:'📦 Other'};
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',peanut:'🥜 Peanut',other:'📦 Other'};
 
   let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
   if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
@@ -871,7 +936,7 @@ function drawBarChart(mMap) {
 }
 
 function renderTallyItems(data) {
-  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',other:'📦 Other'};
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',peanut:'🥜 Peanut',other:'📦 Other'};
   document.getElementById('tally-items').innerHTML = data.length ? data.map((item,idx)=>`
     <tr style="background:${idx%2===0?'var(--card)':'#fff'}">
       <td><strong>${item.name}</strong></td>
@@ -1207,8 +1272,8 @@ function filterProd(){
   const q=document.getElementById('p-srch').value.toLowerCase();
   renderProdTable(q?allProds.filter(p=>p.name.toLowerCase().includes(q)):allProds);
 }
-const cIcon={saree:'👘',nighty:'🌙',chudidhar:'👗',blouse:'🪡',oil:'🫙',rice:'🌾',ghee:'🧈',honey:'🍯',other:'📦'};
-const cLabel={saree:'Saree',nighty:'Nighty',chudidhar:'Chudidhar',blouse:'Blouse',oil:'Oil',rice:'Rice',ghee:'Ghee',honey:'Honey',other:'Other'};
+const cIcon={saree:'👘',nighty:'🌙',chudidhar:'👗',blouse:'🪡',oil:'🫙',rice:'🌾',ghee:'🧈',honey:'🍯',peanut:'🥜',other:'📦'};
+const cLabel={saree:'Saree',nighty:'Nighty',chudidhar:'Chudidhar',blouse:'Blouse',oil:'Oil',rice:'Rice',ghee:'Ghee',honey:'Honey',peanut:'Peanut',other:'Other'};
 
 function renderProdTable(prods){
   const tb=document.getElementById('p-tbody');
@@ -1319,6 +1384,119 @@ function clearPForm(){
   document.getElementById('cur-img-wrap').style.display='none';
   document.getElementById('f-head').textContent='➕ Add New Product';
   editId=null;
+}
+
+/* ── PURCHASE ── */
+let allPurchases=[];
+let editPuId=null;
+
+function updatePuTotal(){
+  const qty=parseFloat(document.getElementById('pu-qty').value)||0;
+  const price=parseFloat(document.getElementById('pu-price').value)||0;
+  document.getElementById('pu-total').value=qty&&price?'₹'+(qty*price).toLocaleString('en-IN',{maximumFractionDigits:2}):'';
+}
+
+async function loadPurchases(){
+  try{
+    const res=await fetch(`${API}/purchases`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allPurchases=d.purchases;
+    renderPurchaseTable(allPurchases);
+  }catch(e){toast('❌',e.message);}
+}
+
+function filterPurchases(){
+  const q=document.getElementById('pu-srch').value.toLowerCase();
+  renderPurchaseTable(q?allPurchases.filter(p=>p.productName.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)):allPurchases);
+}
+
+function renderPurchaseTable(list){
+  const tb=document.getElementById('pu-tbody');
+  const tf=document.getElementById('pu-tfoot');
+  if(!list.length){
+    tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No purchases recorded yet</td></tr>`;
+    tf.innerHTML='';
+    return;
+  }
+  tb.innerHTML=list.map(p=>{
+    const d=new Date(p.purchaseDate);
+    const dstr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    return `<tr>
+      <td>${dstr}</td>
+      <td><strong>${p.productName}</strong>${p.notes?`<br/><span style="font-size:.7rem;color:var(--muted)">${p.notes}</span>`:''}</td>
+      <td><span class="cat-tag ${p.category}">${cLabel[p.category]||'Other'}</span></td>
+      <td style="text-align:right">${p.quantity}${p.unit?' '+p.unit:''}</td>
+      <td style="text-align:right">₹${p.price.toLocaleString('en-IN')}</td>
+      <td style="text-align:right"><strong>₹${p.totalPrice.toLocaleString('en-IN')}</strong></td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="editPurchase('${p._id}')">✏️ Edit</button>
+        <button class="abtn del" onclick="cfDelPurchase('${p._id}','${p.productName.replace(/'/g,"\\'")}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  const grandTotal=list.reduce((s,p)=>s+p.totalPrice,0);
+  tf.innerHTML=`<tr style="font-weight:700;background:var(--warm)">
+    <td colspan="5" style="text-align:right;padding:.7rem">Total Purchase Amount</td>
+    <td style="text-align:right;padding:.7rem">₹${grandTotal.toLocaleString('en-IN')}</td>
+    <td></td>
+  </tr>`;
+}
+
+async function savePurchase(){
+  const purchaseDate=document.getElementById('pu-date').value;
+  const productName=document.getElementById('pu-name').value.trim();
+  const category=document.getElementById('pu-cat').value;
+  const quantity=document.getElementById('pu-qty').value;
+  const unit=document.getElementById('pu-unit').value.trim();
+  const price=document.getElementById('pu-price').value;
+  const notes=document.getElementById('pu-notes').value.trim();
+  if(!purchaseDate||!productName||!quantity||!price){toast('⚠️','Date, product, quantity and price are required');return;}
+  try{
+    const url=editPuId?`${API}/purchases/${editPuId}`:`${API}/purchases`;
+    const method=editPuId?'PUT':'POST';
+    const res=await fetch(url,{
+      method,
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+      body:JSON.stringify({purchaseDate,productName,category,quantity,unit,price,notes})
+    });
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    toast('✅',editPuId?'Purchase updated!':'Purchase added!');
+    clearPuForm();loadPurchases();
+  }catch(e){toast('❌',e.message);}
+}
+
+function editPurchase(id){
+  const p=allPurchases.find(x=>x._id===id);
+  if(!p)return;
+  editPuId=id;
+  document.getElementById('pu-date').value=new Date(p.purchaseDate).toISOString().slice(0,10);
+  document.getElementById('pu-name').value=p.productName;
+  document.getElementById('pu-cat').value=p.category;
+  document.getElementById('pu-qty').value=p.quantity;
+  document.getElementById('pu-unit').value=p.unit||'';
+  document.getElementById('pu-price').value=p.price;
+  document.getElementById('pu-notes').value=p.notes||'';
+  updatePuTotal();
+  document.getElementById('pu-form-head').textContent='✏️ Edit Purchase';
+  document.querySelectorAll('#tab-purchase .fc')[0].scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cfDelPurchase(id,name){
+  showCf(`Delete purchase of "${name}"?`,'This will permanently remove this purchase record.',async()=>{
+    const res=await fetch(`${API}/purchases/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadPurchases();}
+    else toast('❌',d.message);
+  });
+}
+
+function clearPuForm(){
+  ['pu-name','pu-qty','pu-unit','pu-price','pu-total','pu-notes','pu-date'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('pu-cat').value='saree';
+  document.getElementById('pu-form-head').textContent='➕ Add New Purchase';
+  editPuId=null;
 }
 
 /* ── ORDERS ── */
