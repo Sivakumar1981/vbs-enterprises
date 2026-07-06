@@ -152,8 +152,8 @@ function filterCat(cat) {
   showPage('shop');
 }
 
-const catIcon ={saree:'👘',nighty:'🌙',chudidhar:'👗',blouse:'🪡',oil:'🫙',rice:'🌾',other:'📦'};
-const catLabel={saree:'Saree',nighty:'Nighty',chudidhar:'Chudidhar',blouse:'Blouse',oil:'Oil',rice:'Rice',other:'Other'};
+const catIcon ={saree:'👘',nighty:'🌙',chudidhar:'👗',blouse:'🪡',oil:'🫙',rice:'🌾',ghee:'🧈',honey:'🍯',peanut:'🥜',other:'📦'};
+const catLabel={saree:'Saree',nighty:'Nighty',chudidhar:'Chudidhar',blouse:'Blouse',oil:'Oil',rice:'Rice',ghee:'Ghee',honey:'Honey',peanut:'Peanut',other:'Other'};
 
 function renderProds(){
   var grid=document.getElementById('prod-grid');
