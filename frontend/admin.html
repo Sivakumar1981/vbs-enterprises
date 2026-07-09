@@ -1928,9 +1928,12 @@ function generateInvoiceHTML(o) {
     @media print{@page{margin:0;size:80mm auto}body{padding:4px}.no-print{display:none}}
   </style></head><body>
   <div class="shop-name">VBS ENTERPRISES</div>
+  <div class="center" style="font-size:9px;margin-top:1px;color:#555">(Marachekku Oil)</div>
   <div class="center" style="font-size:9px;margin-top:2px">108/7C, 5th Cross St, Rajiv Nagar</div>
   <div class="center" style="font-size:9px">Pallikuppam, Vanagaram, Chennai-600077</div>
   <div class="center" style="font-size:9px">Ph: 9840042290 / 9840357267</div>
+  <div class="center" style="font-size:8.5px;margin-top:2px">MSME UDYAM-TN-24-0183360</div>
+  <div class="center" style="font-size:8.5px">FSSAI: 22426477000262</div>
   <hr class="divider"/>
   <div class="row"><span class="bold">Order:</span><span>${o.orderId}</span></div>
   <div class="row"><span class="bold">Date:</span><span>${date}</span></div>
@@ -1950,6 +1953,9 @@ function generateInvoiceHTML(o) {
   <div class="total-row"><span>TOTAL</span><span>Rs.${o.totalAmount.toLocaleString('en-IN')}</span></div>
   <div class="row"><span>Payment:</span><span>${o.paymentMethod==='cod'?'Cash on Delivery':o.paymentMethod.toUpperCase()}</span></div>
   ${o.notes?'<div class="row"><span>Notes:</span><span style="text-align:right;flex:1;padding-left:4px">'+o.notes+'</span></div>':''}
+  <hr class="divider"/>
+  <div class="center" style="font-size:9.5px;font-weight:700;margin-top:2px">💳 We Accept All Types of</div>
+  <div class="center" style="font-size:9.5px;font-weight:700">Credit/Debit Cards &amp; UPI Payments</div>
   <div class="thank">
     Thank you for shopping!<br/>Quality You Can Trust<br/>
     <button onclick="window.print()" class="no-print" style="margin-top:6px;background:#000;color:#fff;border:none;padding:5px 20px;border-radius:4px;cursor:pointer;font-size:11px">Print</button>
