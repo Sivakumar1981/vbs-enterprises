@@ -163,6 +163,7 @@ tr:hover td{background:var(--warm)}
     <nav class="sb-nav">
       <button class="sn active" data-tab="dash">📊 Dashboard</button>
       <button class="sn" data-tab="products">📦 Products</button>
+      <button class="sn" data-tab="gallery">📸 Weekend Events</button>
       <button class="sn" data-tab="orders">🧾 Orders</button>
       <button class="sn" data-tab="customers">👥 Customers</button>
       <button class="sn" data-tab="tally">📊 Tally / Reports</button>
@@ -234,6 +235,39 @@ tr:hover td{background:var(--warm)}
           <div class="tw">
             <table><thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="p-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GALLERY / WEEKEND EVENTS -->
+      <div class="tab" id="tab-gallery">
+        <div class="fc">
+          <h3 id="g-head">➕ Add Weekend Stall / Event Photo</h3>
+          <div class="fgrid">
+            <div class="field"><label>Title *</label><input type="text" id="g-title" placeholder="e.g. Weekend Stall at Vanagaram"/></div>
+            <div class="field"><label>Event Date</label><input type="date" id="g-date"/></div>
+            <div class="field"><label>Location</label><input type="text" id="g-loc" placeholder="e.g. Rajiv Nagar, Pallikuppam"/></div>
+            <div class="field"><label>Photo *</label><input type="file" id="g-img" accept="image/jpeg,image/png,image/webp"/></div>
+            <div class="field full"><label>Photo Detail / Caption</label><textarea id="g-caption" placeholder="What happened here — this text shows over the photo on the customer site..."></textarea></div>
+          </div>
+          <!-- IMAGE PREVIEW -->
+          <div id="cur-gimg-wrap" style="display:none;margin-top:.75rem">
+            <p style="font-size:.72rem;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.07em">Current Photo:</p>
+            <img id="cur-gimg" style="height:110px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border)"/>
+          </div>
+          <div class="fact">
+            <button class="btn-g" onclick="saveGalleryEvent()">💾 Save Photo</button>
+            <button class="btn-gh" onclick="clearGForm()">✕ Clear</button>
+          </div>
+        </div>
+        <div class="tc">
+          <div class="tc-top">
+            <h3>All Weekend Events</h3>
+            <input type="text" id="g-srch" placeholder="🔍 Search..." oninput="filterGallery()"/>
+          </div>
+          <div class="tw">
+            <table><thead><tr><th>Photo</th><th>Title</th><th>Date</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="g-tbody"></tbody></table>
           </div>
         </div>
       </div>
@@ -731,11 +765,12 @@ function showTab(t){
   document.querySelectorAll('.sn').forEach(x=>x.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   document.querySelector(`[data-tab="${t}"]`)?.classList.add('active');
-  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
+  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],gallery:['Weekend Events','Stall & activity photos shown to customers'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
   document.getElementById('tb-title').textContent=titles[t]?.[0]||'';
   document.getElementById('tb-sub').textContent=titles[t]?.[1]||'';
   if(t==='dash')loadDash();
   if(t==='products')loadProds();
+  if(t==='gallery')loadGallery();
   if(t==='orders')loadOrders();
   if(t==='tally')loadTally();
   if(t==='customers')loadCustomers();
@@ -1432,6 +1467,122 @@ function clearPForm(){
   document.getElementById('cur-img-wrap').style.display='none';
   document.getElementById('f-head').textContent='➕ Add New Product';
   editId=null;
+}
+
+/* ── GALLERY / WEEKEND EVENTS ── */
+let allGallery=[];
+let editGId=null;
+
+async function loadGallery(){
+  const res=await fetch(`${API}/gallery?sort=latest`,{headers:{Authorization:`Bearer ${token}`}});
+  const d=await res.json();
+  if(!d.success){toast('❌',d.message);return;}
+  allGallery=d.events;
+  renderGalleryTable(allGallery);
+}
+function filterGallery(){
+  const q=document.getElementById('g-srch').value.toLowerCase();
+  renderGalleryTable(q?allGallery.filter(g=>g.title.toLowerCase().includes(q)):allGallery);
+}
+function renderGalleryTable(list){
+  const tb=document.getElementById('g-tbody');
+  if(!list.length){tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No weekend event photos yet</td></tr>`;return;}
+  tb.innerHTML=list.map(g=>{
+    const url=imgUrl(g.image);
+    const dateStr=g.eventDate?new Date(g.eventDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
+    return `<tr>
+      <td><div class="pimg">${url?`<img src="${url}" alt="${g.title}"/>`:'📸'}</div></td>
+      <td><strong>${g.title}</strong>${g.caption?`<br/><span style="font-size:.72rem;color:var(--muted)">${g.caption.slice(0,60)}${g.caption.length>60?'…':''}</span>`:''}</td>
+      <td>${dateStr}</td>
+      <td>${g.location||'—'}</td>
+      <td><span class="spill ${g.isActive?'delivered':'cancelled'}">${g.isActive?'Live':'Hidden'}</span></td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="editGalleryEvent('${g._id}')">✏️ Edit</button>
+        <button class="abtn tog" onclick="toggleGalleryEvent('${g._id}',${!g.isActive})">${g.isActive?'🙈 Hide':'👁 Show'}</button>
+        <button class="abtn del" onclick="cfDelGallery('${g._id}','${g.title.replace(/'/g,"\\'")}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveGalleryEvent(){
+  const title=document.getElementById('g-title').value.trim();
+  const date=document.getElementById('g-date').value;
+  const loc=document.getElementById('g-loc').value.trim();
+  const caption=document.getElementById('g-caption').value.trim();
+  const file=document.getElementById('g-img').files[0];
+  if(!title){toast('⚠️','Title is required');return;}
+  if(!editGId&&!file){toast('⚠️','Please choose a photo');return;}
+  const fd=new FormData();
+  fd.append('title',title);fd.append('caption',caption);
+  if(date)fd.append('eventDate',date);
+  fd.append('location',loc);
+  if(file)fd.append('image',file);
+  try{
+    const url=editGId?`${API}/gallery/${editGId}`:`${API}/gallery`;
+    const method=editGId?'PUT':'POST';
+    const res=await fetch(url,{method,headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    toast('✅',editGId?'Photo updated!':'Photo added!');
+    clearGForm();loadGallery();
+  }catch(e){toast('❌',e.message);}
+}
+
+function editGalleryEvent(id){
+  const g=allGallery.find(x=>x._id===id);
+  if(!g)return;
+  editGId=id;
+  document.getElementById('g-title').value=g.title;
+  document.getElementById('g-date').value=g.eventDate?new Date(g.eventDate).toISOString().slice(0,10):'';
+  document.getElementById('g-loc').value=g.location||'';
+  document.getElementById('g-caption').value=g.caption||'';
+  document.getElementById('g-head').textContent='✏️ Edit Weekend Event Photo';
+
+  const url=imgUrl(g.image);
+  if(url){
+    document.getElementById('cur-gimg').src=url;
+    document.getElementById('cur-gimg-wrap').style.display='block';
+  } else {
+    document.getElementById('cur-gimg-wrap').style.display='none';
+  }
+  document.getElementById('g-img').onchange=function(){
+    const f=this.files[0];
+    if(f){
+      const r=new FileReader();
+      r.onload=e=>{
+        document.getElementById('cur-gimg').src=e.target.result;
+        document.getElementById('cur-gimg-wrap').style.display='block';
+      };
+      r.readAsDataURL(f);
+    }
+  };
+  document.querySelector('#tab-gallery .fc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function toggleGalleryEvent(id,active){
+  const fd=new FormData();fd.append('isActive',active);
+  const res=await fetch(`${API}/gallery/${id}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:fd});
+  const d=await res.json();
+  if(d.success){toast('✅',active?'Photo is now live on the site':'Photo hidden from customers');loadGallery();}
+}
+
+function cfDelGallery(id,title){
+  showCf(`Delete "${title}"?`,'This will permanently remove this weekend event photo.',async()=>{
+    const res=await fetch(`${API}/gallery/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadGallery();}
+    else toast('❌',d.message);
+  });
+}
+
+function clearGForm(){
+  ['g-title','g-date','g-loc','g-caption'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('g-img').value='';
+  document.getElementById('g-img').onchange=null;
+  document.getElementById('cur-gimg-wrap').style.display='none';
+  document.getElementById('g-head').textContent='➕ Add Weekend Stall / Event Photo';
+  editGId=null;
 }
 
 /* ── PURCHASE ── */
