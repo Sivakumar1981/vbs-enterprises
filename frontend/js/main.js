@@ -352,6 +352,82 @@ async function loadMyOrders(){
   }catch(err){div.innerHTML='<div class="empty"><div class="ei">⚠️</div><h3>'+err.message+'</h3></div>';}
 }
 
+/* ══ WEEKEND STALLS / EVENTS GALLERY ═══════════════════════════ */
+var galleryEvents = [];
+var galleryIdx = 0;
+var galleryTimer = null;
+
+async function loadGallery() {
+  try {
+    var res  = await fetch(API + '/gallery');
+    var data = await res.json();
+    if (!data.success || !data.events || !data.events.length) {
+      document.getElementById('gallery-section').style.display = 'none';
+      return;
+    }
+    galleryEvents = data.events;
+    galleryIdx = 0;
+    renderGallery();
+    document.getElementById('gallery-section').style.display = 'block';
+    startGalleryAuto();
+  } catch (e) {
+    document.getElementById('gallery-section').style.display = 'none';
+  }
+}
+
+function renderGallery() {
+  var track = document.getElementById('gallery-track');
+  var dots  = document.getElementById('gallery-dots');
+  track.innerHTML = galleryEvents.map(function(ev) {
+    var img = imgUrl(ev.image);
+    var dateStr = ev.eventDate ? new Date(ev.eventDate).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '';
+    return '<div class="gallery-slide">'
+      + '<img src="' + img + '" alt="' + (ev.title || '') + '" loading="lazy"/>'
+      + '<div class="gallery-cap">'
+      + (dateStr ? '<span class="gc-date">📅 ' + dateStr + '</span><br/>' : '')
+      + '<h4>' + (ev.title || '') + '</h4>'
+      + (ev.caption ? '<p>' + ev.caption + '</p>' : '')
+      + (ev.location ? '<span class="gc-loc">📍 ' + ev.location + '</span>' : '')
+      + '</div></div>';
+  }).join('');
+  dots.innerHTML = galleryEvents.map(function(_, i) {
+    return '<button class="gallery-dot' + (i === galleryIdx ? ' active' : '') + '" onclick="galleryGoTo(' + i + ')"></button>';
+  }).join('');
+  updateGalleryPosition();
+}
+
+function updateGalleryPosition() {
+  var track = document.getElementById('gallery-track');
+  if (track) track.style.transform = 'translateX(-' + (galleryIdx * 100) + '%)';
+  document.querySelectorAll('.gallery-dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === galleryIdx);
+  });
+}
+
+function galleryNext() {
+  if (!galleryEvents.length) return;
+  galleryIdx = (galleryIdx + 1) % galleryEvents.length;
+  updateGalleryPosition();
+  restartGalleryAuto();
+}
+function galleryPrev() {
+  if (!galleryEvents.length) return;
+  galleryIdx = (galleryIdx - 1 + galleryEvents.length) % galleryEvents.length;
+  updateGalleryPosition();
+  restartGalleryAuto();
+}
+function galleryGoTo(i) {
+  galleryIdx = i;
+  updateGalleryPosition();
+  restartGalleryAuto();
+}
+function startGalleryAuto() {
+  if (galleryEvents.length < 2) return;
+  clearInterval(galleryTimer);
+  galleryTimer = setInterval(galleryNext, 4500);
+}
+function restartGalleryAuto() { startGalleryAuto(); }
+
 /* ══ MODAL & TOAST ═════════════════════════════════════════════ */
 function closeSuccess(){document.getElementById('success-overlay').classList.remove('open');}
 document.getElementById('success-overlay').addEventListener('click',function(e){if(e.target===this)closeSuccess();});
@@ -420,5 +496,6 @@ function ensureTourFab(){
 renderHeader();
 updateBadge();
 loadProducts();
+loadGallery();
 ensureTourFab();
 maybeAutoShowTour();
