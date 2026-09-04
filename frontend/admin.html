@@ -131,7 +131,68 @@ tr:hover td{background:var(--warm)}
 .spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;margin:2rem auto}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media(max-width:768px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:300;transform:translateX(-100%)}.sidebar.open{transform:translateX(0);box-shadow:var(--sh-lg)}.ham-admin{display:block}.fgrid{grid-template-columns:1fr}}
+
+/* ── QUOTATION BUILDER ── */
+.qi-tbl{width:100%;border-collapse:collapse;margin-top:.4rem}
+.qi-tbl th{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:.4rem .5rem;border-bottom:1.5px solid var(--border)}
+.qi-tbl td{padding:.4rem .5rem;vertical-align:top}
+.qi-tbl input,.qi-tbl select{width:100%;border:1.5px solid var(--border);background:#fff;padding:.5rem .6rem;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);outline:none;transition:border .2s}
+.qi-tbl input:focus,.qi-tbl select:focus{border-color:var(--gold)}
+.qi-tbl input.qi-particulars{min-width:200px}
+.qi-tbl input.qi-qty,.qi-tbl input.qi-rate{width:90px}
+.qi-amt{font-weight:700;color:var(--deep);white-space:nowrap;padding-top:.65rem;display:block}
+.qi-rm{background:none;border:1.5px solid #fca5a5;color:#ef4444;border-radius:7px;width:32px;height:32px;font-size:.9rem;flex-shrink:0}
+.qi-rm:hover{background:#fee2e2}
+.qi-add{margin-top:.7rem;background:none;border:1.5px dashed var(--gold);color:var(--gold);padding:.55rem 1rem;border-radius:8px;font-size:.82rem;font-weight:600;width:100%}
+.qi-add:hover{background:rgba(201,150,58,.08)}
+.qterms-box textarea{min-height:110px;font-family:'DM Sans',sans-serif;line-height:1.6}
+.q-actions{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:1.1rem}
+.q-status{font-size:.72rem;padding:.15rem .55rem;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.q-status.saved{background:#d1fae5;color:#065f46}
+.q-status.unsaved{background:#fef3c7;color:#92400e}
+
+/* ── PRINTABLE QUOTATION LETTERHEAD ── */
+#quote-preview-wrap{overflow-x:auto;margin-top:1.5rem}
+#quote-preview{width:794px;min-height:1123px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:var(--sh-lg);position:relative}
+.qp-topbar{height:10px;background:linear-gradient(90deg,var(--deep),var(--gold) 50%,var(--deep))}
+.qp-header{display:flex;align-items:center;gap:1.1rem;padding:1.6rem 2.2rem 1.2rem;border-bottom:3px solid var(--gold)}
+.qp-emblem{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--gold-l),var(--gold) 60%,#8a6b1f);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.25);border:2px solid #fff}
+.qp-emblem span{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.5rem;color:var(--deep);letter-spacing:.02em}
+.qp-hd-txt h1{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--deep);letter-spacing:.02em;line-height:1.15}
+.qp-hd-txt .qp-tag{font-size:.72rem;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-weight:700;margin:.15rem 0 .4rem}
+.qp-hd-txt .qp-addr{font-size:.72rem;color:#555;line-height:1.5}
+.qp-title-bar{display:flex;justify-content:space-between;align-items:flex-end;padding:1.1rem 2.2rem;background:linear-gradient(90deg,#fdf6ec,#fff)}
+.qp-title-bar h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;letter-spacing:.12em;color:var(--deep);text-transform:uppercase}
+.qp-meta{text-align:right;font-size:.76rem;color:#555;line-height:1.6}
+.qp-meta b{color:var(--deep)}
+.qp-bill{padding:0 2.2rem 1rem}
+.qp-bill-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);font-weight:700;margin-bottom:.3rem}
+.qp-bill-name{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--deep)}
+.qp-bill-detail{font-size:.78rem;color:#555;line-height:1.5;margin-top:.15rem}
+.qp-items{padding:0 2.2rem}
+.qp-items table{width:100%;border-collapse:collapse}
+.qp-items th{background:var(--deep);color:var(--gold-l);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;padding:.55rem .6rem;text-align:left}
+.qp-items th.num,.qp-items td.num{text-align:right}
+.qp-items td{padding:.55rem .6rem;font-size:.82rem;border-bottom:1px solid #eee}
+.qp-items tr:nth-child(even) td{background:#fdfaf4}
+.qp-total-row td{font-weight:700;border-top:2px solid var(--deep);background:#fdf6ec!important}
+.qp-gt-row td{font-weight:700;font-size:.95rem;color:var(--deep);background:var(--warm)!important;border-top:2px solid var(--gold)}
+.qp-words{padding:.7rem 2.2rem;font-size:.78rem;font-style:italic;color:#555}
+.qp-words b{color:var(--deep);font-style:normal}
+.qp-terms{padding:.9rem 2.2rem 0}
+.qp-terms h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.4rem;font-weight:700}
+.qp-terms ol{padding-left:1.1rem;font-size:.76rem;color:#444;line-height:1.65}
+.qp-bottom{display:flex;justify-content:space-between;align-items:flex-end;padding:1.3rem 2.2rem 1.8rem;gap:1rem}
+.qp-bank h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.4rem;font-weight:700}
+.qp-bank p{font-size:.76rem;color:#444;line-height:1.55}
+.qp-sign{text-align:center;min-width:170px}
+.qp-sign .qp-sig-line{border-top:1.5px solid #333;margin-top:2.6rem;padding-top:.35rem;font-size:.76rem;color:#333}
+.qp-sign .qp-for{font-size:.72rem;color:#555;margin-bottom:.2rem}
+.qp-footer{text-align:center;padding:.7rem;font-size:.68rem;color:#999;border-top:1px solid #eee}
+@media(max-width:860px){#quote-preview{width:100%;padding:0}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -164,6 +225,7 @@ tr:hover td{background:var(--warm)}
       <button class="sn active" data-tab="dash">📊 Dashboard</button>
       <button class="sn" data-tab="products">📦 Products</button>
       <button class="sn" data-tab="gallery">📸 Weekend Events</button>
+      <button class="sn" data-tab="quote">📝 Quotation</button>
       <button class="sn" data-tab="orders">🧾 Orders</button>
       <button class="sn" data-tab="customers">👥 Customers</button>
       <button class="sn" data-tab="tally">📊 Tally / Reports</button>
@@ -268,6 +330,68 @@ tr:hover td{background:var(--warm)}
           <div class="tw">
             <table><thead><tr><th>Photo</th><th>Title</th><th>Date</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="g-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUOTATION BUILDER -->
+      <div class="tab" id="tab-quote">
+        <div class="fc">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem">
+            <h3 style="margin:0">📝 New Bulk Order Quotation</h3>
+            <span id="q-status-pill" class="q-status unsaved">Not saved yet</span>
+          </div>
+
+          <div class="fgrid">
+            <div class="field"><label>Customer / Company Name *</label><input type="text" id="q-cname" placeholder="e.g. Shree Sai Enterprises"/></div>
+            <div class="field"><label>Quote Date</label><input type="date" id="q-date"/></div>
+            <div class="field full"><label>Customer Address</label><input type="text" id="q-caddr" placeholder="No, Street, City - Pincode"/></div>
+            <div class="field"><label>Phone</label><input type="text" id="q-cphone" placeholder="e.g. 9876543210"/></div>
+            <div class="field"><label>Email</label><input type="text" id="q-cemail" placeholder="e.g. customer@email.com"/></div>
+          </div>
+
+          <div style="margin-top:1.3rem">
+            <label style="display:block;margin-bottom:.4rem">Items</label>
+            <table class="qi-tbl">
+              <thead><tr><th style="width:38px">#</th><th>Particulars</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th style="text-align:right">Amount (₹)</th><th></th></tr></thead>
+              <tbody id="q-items-body"></tbody>
+            </table>
+            <button type="button" class="qi-add" onclick="addQItemRow()">➕ Add Item Row</button>
+          </div>
+
+          <div class="fgrid" style="margin-top:1.1rem">
+            <div class="field"><label>Delivery Cost (₹)</label><input type="number" id="q-delivery" value="0" min="0" oninput="recalcQTotals()"/></div>
+            <div class="field"><label>Grand Total</label><input type="text" id="q-grandtotal" value="₹ 0" disabled style="font-weight:700;background:var(--warm)"/></div>
+          </div>
+
+          <div class="qterms-box" style="margin-top:1.1rem">
+            <label style="display:block;margin-bottom:.4rem">Terms &amp; Conditions <span style="text-transform:none;font-weight:400;color:var(--muted)">(one per line — edit as needed)</span></label>
+            <textarea id="q-terms" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:.7rem .9rem;font-size:.85rem"></textarea>
+          </div>
+
+          <div class="q-actions">
+            <button class="btn-g" onclick="generateQuotePreview()">👁 Preview Quotation</button>
+            <button class="btn-gh" onclick="saveQuotation()">💾 Save Quotation</button>
+            <button class="btn-gh" onclick="downloadQuotePDF()">📄 Download PDF</button>
+            <button class="btn-gh" onclick="downloadQuoteImage()">🖼 Download Image</button>
+            <button class="btn-gh" onclick="clearQForm()">✕ New / Clear</button>
+          </div>
+        </div>
+
+        <!-- LIVE LETTERHEAD PREVIEW -->
+        <div id="quote-preview-wrap">
+          <div id="quote-preview"></div>
+        </div>
+
+        <!-- QUOTATION HISTORY -->
+        <div class="tc" style="margin-top:1.75rem">
+          <div class="tc-top">
+            <h3>Quotation History</h3>
+            <input type="text" id="q-srch" placeholder="🔍 Search customer or quote no..." oninput="filterQHistory()"/>
+          </div>
+          <div class="tw">
+            <table><thead><tr><th>Quote No.</th><th>Customer</th><th>Date</th><th>Total</th><th>Actions</th></tr></thead>
+            <tbody id="q-hist-tbody"></tbody></table>
           </div>
         </div>
       </div>
@@ -765,12 +889,13 @@ function showTab(t){
   document.querySelectorAll('.sn').forEach(x=>x.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   document.querySelector(`[data-tab="${t}"]`)?.classList.add('active');
-  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],gallery:['Weekend Events','Stall & activity photos shown to customers'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
+  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],gallery:['Weekend Events','Stall & activity photos shown to customers'],quote:['Quotation','Create bulk-order quotations for customers'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
   document.getElementById('tb-title').textContent=titles[t]?.[0]||'';
   document.getElementById('tb-sub').textContent=titles[t]?.[1]||'';
   if(t==='dash')loadDash();
   if(t==='products')loadProds();
   if(t==='gallery')loadGallery();
+  if(t==='quote'){initQuoteTab();loadQHistory();}
   if(t==='orders')loadOrders();
   if(t==='tally')loadTally();
   if(t==='customers')loadCustomers();
@@ -1583,6 +1708,398 @@ function clearGForm(){
   document.getElementById('cur-gimg-wrap').style.display='none';
   document.getElementById('g-head').textContent='➕ Add Weekend Stall / Event Photo';
   editGId=null;
+}
+
+/* ── QUOTATION BUILDER ── */
+const QCOMPANY={
+  name:'VBS ENTERPRISES', sub:'(Marachekku Oil)', tagline:'Pure • Fresh • Trusted Oil',
+  addr:'108/7C, 5th Cross Street, Rajiv Nagar, Pallikuppam, Vanagaram, Chennai - 600077',
+  phone:'+91 98400 42290 | +91 98403 57267 | 044-46439408',
+  email:'vbsenterprises7@gmail.com', web:'vbs-enterprises-92sz.onrender.com'
+};
+const QBANK={ accHolder:'VBS Enterprises', name:'Indian Overseas Bank', branch:'Vanagaram', ifsc:'IOBA0002776', acc:'277602000000573' };
+const Q_DEFAULT_TERMS=[
+  'Above Price is Ex-Factory Price',
+  'This Quotation is valid for One Month Only',
+  'Transport Charges is Free above Prices, If Change Price Delivery charges will Applicable',
+  'Payment – 50% Advance Payment Mandatory, 50% Once Delivery your Address',
+  'Delivery within 10 to 15 days above order & Confirmation date'
+];
+const Q_UNITS=['Tin','Liter','Kg','Piece','Box','Bag'];
+
+let qItems=[];
+let qNextNumber='VBS/Q-0001';
+let qSavedQuote=null;
+let allQuotations=[];
+let qInitDone=false;
+
+function escQ(s){ return (s===undefined||s===null)?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function initQuoteTab(){
+  if(qInitDone) return;
+  qInitDone=true;
+  document.getElementById('q-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('q-terms').value=Q_DEFAULT_TERMS.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  qItems=[{particulars:'',qty:1,unit:'Tin',rate:0}];
+  renderQItemsTable();
+  loadQNextNumber();
+}
+
+function loadQNextNumber(){
+  fetch(`${API}/quotations/next-number`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.json()).then(d=>{ if(d.success) qNextNumber=d.quoteNumber; })
+    .catch(()=>{});
+}
+
+function qUnitOptions(sel){
+  return Q_UNITS.map(u=>`<option value="${u}" ${u===sel?'selected':''}>${u}</option>`).join('');
+}
+
+function renderQItemsTable(){
+  const tbody=document.getElementById('q-items-body');
+  tbody.innerHTML=qItems.map((it,i)=>{
+    const amt=(it.qty||0)*(it.rate||0);
+    return `<tr data-idx="${i}">
+      <td style="padding-top:.65rem">${i+1}</td>
+      <td><input type="text" class="qi-particulars" value="${escQ(it.particulars)}" placeholder="e.g. Peanut Oil (One Tin)" oninput="updateQItem(${i},'particulars',this.value)"/></td>
+      <td><input type="number" class="qi-qty" value="${it.qty}" min="0" oninput="updateQItem(${i},'qty',this.value)"/></td>
+      <td><select onchange="updateQItem(${i},'unit',this.value)">${qUnitOptions(it.unit)}</select></td>
+      <td><input type="number" class="qi-rate" value="${it.rate}" min="0" oninput="updateQItem(${i},'rate',this.value)"/></td>
+      <td class="num"><span class="qi-amt">₹${amt.toLocaleString('en-IN')}</span></td>
+      <td><button type="button" class="qi-rm" onclick="removeQItemRow(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  recalcQTotals();
+}
+
+function addQItemRow(){
+  qItems.push({particulars:'',qty:1,unit:'Tin',rate:0});
+  renderQItemsTable();
+}
+function removeQItemRow(idx){
+  if(qItems.length<=1){toast('⚠️','At least one item row is required');return;}
+  qItems.splice(idx,1);
+  renderQItemsTable();
+}
+function updateQItem(idx,field,val){
+  if(field==='qty'||field==='rate') val=parseFloat(val)||0;
+  qItems[idx][field]=val;
+  if(field==='qty'||field==='rate'){
+    const amt=(qItems[idx].qty||0)*(qItems[idx].rate||0);
+    const amtEl=document.querySelector(`#q-items-body tr[data-idx="${idx}"] .qi-amt`);
+    if(amtEl) amtEl.textContent='₹'+amt.toLocaleString('en-IN');
+  }
+  recalcQTotals();
+  markQUnsaved();
+}
+function recalcQTotals(){
+  const subtotal=qItems.reduce((s,it)=>s+(it.qty||0)*(it.rate||0),0);
+  const delivery=parseFloat(document.getElementById('q-delivery').value)||0;
+  const grand=subtotal+delivery;
+  document.getElementById('q-grandtotal').value='₹ '+grand.toLocaleString('en-IN');
+  markQUnsaved();
+  const previewEl=document.getElementById('quote-preview');
+  if(previewEl&&previewEl.innerHTML.trim()){
+    const data=collectQuoteData();
+    if(data.customerName&&data.items.length) previewEl.innerHTML=buildQuotePreviewHTML(data);
+  }
+}
+function markQUnsaved(){
+  if(qSavedQuote){
+    qSavedQuote=null;
+    document.getElementById('q-status-pill').textContent='Not saved yet';
+    document.getElementById('q-status-pill').className='q-status unsaved';
+  }
+}
+
+function numberToWordsIndian(num){
+  num=Math.round(num);
+  if(num===0) return 'Zero';
+  if(num<0) return 'Minus '+numberToWordsIndian(-num);
+  const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function two(n){ if(n===0) return ''; if(n<20) return ones[n]; return tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:''); }
+  function three(n){ let s=''; if(n>=100){ s+=ones[Math.floor(n/100)]+' Hundred'; n%=100; if(n) s+=' '; } s+=two(n); return s; }
+  let crore=Math.floor(num/10000000); num%=10000000;
+  let lakh=Math.floor(num/100000); num%=100000;
+  let thousand=Math.floor(num/1000); num%=1000;
+  let rest=num;
+  let parts=[];
+  if(crore) parts.push(three(crore)+' Crore');
+  if(lakh) parts.push(three(lakh)+' Lakh');
+  if(thousand) parts.push(three(thousand)+' Thousand');
+  if(rest) parts.push(three(rest));
+  return parts.join(' ');
+}
+
+function collectQuoteData(){
+  const cname=document.getElementById('q-cname').value.trim();
+  const cdate=document.getElementById('q-date').value;
+  const caddr=document.getElementById('q-caddr').value.trim();
+  const cphone=document.getElementById('q-cphone').value.trim();
+  const cemail=document.getElementById('q-cemail').value.trim();
+  const delivery=parseFloat(document.getElementById('q-delivery').value)||0;
+  const termsRaw=document.getElementById('q-terms').value.split('\n')
+    .map(t=>t.trim()).filter(Boolean)
+    .map(t=>t.replace(/^\d+[\)\.]\s*/,''));
+  const validItems=qItems.filter(it=>it.particulars&&it.particulars.trim()&&it.qty>0)
+    .map(it=>({particulars:it.particulars.trim(),qty:it.qty,unit:it.unit,rate:it.rate,amount:it.qty*it.rate}));
+  const subtotal=validItems.reduce((s,it)=>s+it.amount,0);
+  const grandTotal=subtotal+delivery;
+  return {
+    quoteNumber: qSavedQuote?qSavedQuote.quoteNumber:qNextNumber,
+    quoteDate: cdate||new Date().toISOString().slice(0,10),
+    customerName:cname, customerAddress:caddr, customerPhone:cphone, customerEmail:cemail,
+    items:validItems, deliveryCost:delivery, subtotal, grandTotal,
+    amountInWords:'Rupees '+numberToWordsIndian(grandTotal)+' Only',
+    terms:termsRaw
+  };
+}
+
+function buildQuotePreviewHTML(d){
+  const dateStr=new Date(d.quoteDate).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const itemsRows=d.items.map((it,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${escQ(it.particulars)}</td>
+      <td class="num">${it.qty} ${escQ(it.unit)}</td>
+      <td class="num">₹${Number(it.rate).toLocaleString('en-IN')}</td>
+      <td class="num">₹${Number(it.amount!==undefined?it.amount:it.qty*it.rate).toLocaleString('en-IN')}</td>
+    </tr>`).join('');
+  const termsList=d.terms&&d.terms.length?d.terms.map(t=>`<li>${escQ(t)}</li>`).join(''):'<li>No special terms specified</li>';
+  const custBlock=`
+    <div class="qp-bill-name">${escQ(d.customerName)}</div>
+    ${d.customerAddress?`<div class="qp-bill-detail">${escQ(d.customerAddress)}</div>`:''}
+    ${(d.customerPhone||d.customerEmail)?`<div class="qp-bill-detail">${d.customerPhone?'Ph: '+escQ(d.customerPhone):''}${d.customerPhone&&d.customerEmail?' &nbsp;|&nbsp; ':''}${d.customerEmail?'Email: '+escQ(d.customerEmail):''}</div>`:''}
+  `;
+  return `
+  <div class="qp-topbar"></div>
+  <div class="qp-header">
+    <div class="qp-emblem"><span>VBS</span></div>
+    <div class="qp-hd-txt">
+      <h1>${QCOMPANY.name} <span style="font-size:1rem;color:#777;font-weight:400">${QCOMPANY.sub}</span></h1>
+      <div class="qp-tag">${QCOMPANY.tagline}</div>
+      <div class="qp-addr">${QCOMPANY.addr}<br/>Phone: ${QCOMPANY.phone}<br/>Email: ${QCOMPANY.email} &nbsp;|&nbsp; Web: ${QCOMPANY.web}</div>
+    </div>
+  </div>
+  <div class="qp-title-bar">
+    <h2>Quotation</h2>
+    <div class="qp-meta"><b>Quote No:</b> ${escQ(d.quoteNumber)}<br/><b>Date:</b> ${dateStr}</div>
+  </div>
+  <div class="qp-bill">
+    <div class="qp-bill-label">Quotation For</div>
+    ${custBlock}
+  </div>
+  <div class="qp-items">
+    <table>
+      <thead><tr><th style="width:32px">No.</th><th>Particulars</th><th class="num" style="width:90px">Qty</th><th class="num" style="width:100px">Rate</th><th class="num" style="width:120px">Amount</th></tr></thead>
+      <tbody>
+        ${itemsRows}
+        <tr class="qp-total-row"><td colspan="4" style="text-align:right">Delivery Cost</td><td class="num">${d.deliveryCost>0?'₹'+Number(d.deliveryCost).toLocaleString('en-IN'):'Free'}</td></tr>
+        <tr class="qp-gt-row"><td colspan="4" style="text-align:right">Grand Total</td><td class="num">₹${Number(d.grandTotal).toLocaleString('en-IN')}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="qp-words">Amount in Words: <b>${escQ(d.amountInWords)}</b></div>
+  <div class="qp-terms">
+    <h4>Terms &amp; Conditions</h4>
+    <ol>${termsList}</ol>
+  </div>
+  <div class="qp-bottom">
+    <div class="qp-bank">
+      <h4>Bank Details</h4>
+      <p><b>${QBANK.accHolder}</b><br/>Bank: ${QBANK.name}<br/>Branch: ${QBANK.branch}<br/>IFSC: ${QBANK.ifsc}<br/>A/c No: ${QBANK.acc}</p>
+    </div>
+    <div class="qp-sign">
+      <div class="qp-for">For ${QCOMPANY.name}</div>
+      <div class="qp-sig-line">Authorized Signature</div>
+    </div>
+  </div>
+  <div class="qp-footer">This is a computer-generated quotation from ${QCOMPANY.web}</div>`;
+}
+
+function generateQuotePreview(){
+  const data=collectQuoteData();
+  if(!data.customerName){ toast('⚠️','Please enter the customer name'); return null; }
+  if(!data.items.length){ toast('⚠️','Please add at least one item with particulars, quantity and rate'); return null; }
+  document.getElementById('quote-preview').innerHTML=buildQuotePreviewHTML(data);
+  document.getElementById('quote-preview').scrollIntoView({behavior:'smooth',block:'start'});
+  return data;
+}
+
+async function saveQuotation(){
+  const data=generateQuotePreview();
+  if(!data) return;
+  try{
+    const res=await fetch(`${API}/quotations`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+      body:JSON.stringify({
+        customerName:data.customerName, customerAddress:data.customerAddress,
+        customerPhone:data.customerPhone, customerEmail:data.customerEmail,
+        items:data.items, deliveryCost:data.deliveryCost, grandTotal:data.grandTotal,
+        amountInWords:data.amountInWords, terms:data.terms, quoteDate:data.quoteDate
+      })
+    });
+    const d=await res.json();
+    if(!d.success) throw new Error(d.message);
+    qSavedQuote=d.quotation;
+    document.getElementById('q-status-pill').textContent='Saved as '+d.quotation.quoteNumber;
+    document.getElementById('q-status-pill').className='q-status saved';
+    document.getElementById('quote-preview').innerHTML=buildQuotePreviewHTML({...data,quoteNumber:d.quotation.quoteNumber});
+    toast('✅','Quotation saved as '+d.quotation.quoteNumber);
+    loadQHistory();
+  }catch(e){ toast('❌',e.message); }
+}
+
+async function exportQuoteAsPDF(filenameBase){
+  const el=document.getElementById('quote-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌','PDF library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing PDF...');
+  try{
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    const imgData=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pdfWidth=pdf.internal.pageSize.getWidth();
+    const pdfHeight=pdf.internal.pageSize.getHeight();
+    const imgProps=pdf.getImageProperties(imgData);
+    const imgHeight=(imgProps.height*pdfWidth)/imgProps.width;
+    let heightLeft=imgHeight, position=0;
+    pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
+    heightLeft-=pdfHeight;
+    while(heightLeft>0){
+      position=heightLeft-imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
+      heightLeft-=pdfHeight;
+    }
+    pdf.save(filenameBase.replace(/\//g,'-')+'-Quotation.pdf');
+    toast('✅','PDF downloaded!');
+  }catch(e){ toast('❌','Could not generate PDF: '+e.message); }
+}
+
+async function exportQuoteAsImage(filenameBase){
+  const el=document.getElementById('quote-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'){ toast('❌','Image library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing image...');
+  try{
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filenameBase.replace(/\//g,'-')+'-Quotation.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('✅','Image downloaded!');
+  }catch(e){ toast('❌','Could not generate image: '+e.message); }
+}
+
+function downloadQuotePDF(){
+  if(!document.getElementById('quote-preview').innerHTML.trim()){ const d=generateQuotePreview(); if(!d) return; }
+  exportQuoteAsPDF(qSavedQuote?qSavedQuote.quoteNumber:qNextNumber);
+}
+function downloadQuoteImage(){
+  if(!document.getElementById('quote-preview').innerHTML.trim()){ const d=generateQuotePreview(); if(!d) return; }
+  exportQuoteAsImage(qSavedQuote?qSavedQuote.quoteNumber:qNextNumber);
+}
+
+function clearQForm(){
+  qItems=[{particulars:'',qty:1,unit:'Tin',rate:0}];
+  document.getElementById('q-cname').value='';
+  document.getElementById('q-caddr').value='';
+  document.getElementById('q-cphone').value='';
+  document.getElementById('q-cemail').value='';
+  document.getElementById('q-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('q-delivery').value=0;
+  document.getElementById('q-terms').value=Q_DEFAULT_TERMS.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  document.getElementById('quote-preview').innerHTML='';
+  document.getElementById('q-status-pill').textContent='Not saved yet';
+  document.getElementById('q-status-pill').className='q-status unsaved';
+  qSavedQuote=null;
+  renderQItemsTable();
+  loadQNextNumber();
+}
+
+async function loadQHistory(){
+  try{
+    const res=await fetch(`${API}/quotations`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allQuotations=d.quotations;
+    renderQHistoryTable(allQuotations);
+  }catch(e){ /* silent — history is a convenience view */ }
+}
+function filterQHistory(){
+  const q=document.getElementById('q-srch').value.toLowerCase();
+  renderQHistoryTable(q?allQuotations.filter(x=>x.customerName.toLowerCase().includes(q)||x.quoteNumber.toLowerCase().includes(q)):allQuotations);
+}
+function renderQHistoryTable(list){
+  const tb=document.getElementById('q-hist-tbody');
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">No quotations created yet</td></tr>`; return; }
+  tb.innerHTML=list.map(q=>{
+    const dateStr=new Date(q.quoteDate||q.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    return `<tr>
+      <td><strong>${q.quoteNumber}</strong></td>
+      <td>${escQ(q.customerName)}</td>
+      <td>${dateStr}</td>
+      <td>₹${q.grandTotal.toLocaleString('en-IN')}</td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="loadQuoteFromHistory('${q._id}')">👁 Load</button>
+        <button class="abtn tog" onclick="downloadHistoryQuote('${q._id}','pdf')">📄 PDF</button>
+        <button class="abtn tog" onclick="downloadHistoryQuote('${q._id}','image')">🖼 Image</button>
+        <button class="abtn del" onclick="cfDelQuotation('${q._id}','${q.quoteNumber}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function loadQuoteFromHistory(id){
+  const q=allQuotations.find(x=>x._id===id);
+  if(!q) return;
+  qSavedQuote=q;
+  document.getElementById('q-cname').value=q.customerName;
+  document.getElementById('q-caddr').value=q.customerAddress||'';
+  document.getElementById('q-cphone').value=q.customerPhone||'';
+  document.getElementById('q-cemail').value=q.customerEmail||'';
+  document.getElementById('q-date').value=new Date(q.quoteDate||q.createdAt).toISOString().slice(0,10);
+  document.getElementById('q-delivery').value=q.deliveryCost||0;
+  document.getElementById('q-terms').value=(q.terms||[]).map((t,i)=>`${i+1}) ${t}`).join('\n');
+  qItems=q.items.map(it=>({particulars:it.particulars,qty:it.qty,unit:it.unit,rate:it.rate}));
+  renderQItemsTable();
+  document.getElementById('q-status-pill').textContent='Saved as '+q.quoteNumber;
+  document.getElementById('q-status-pill').className='q-status saved';
+  generateQuotePreview();
+  document.querySelector('#tab-quote .fc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function downloadHistoryQuote(id,kind){
+  const q=allQuotations.find(x=>x._id===id);
+  if(!q) return;
+  const data={
+    quoteNumber:q.quoteNumber, quoteDate:q.quoteDate||q.createdAt,
+    customerName:q.customerName, customerAddress:q.customerAddress,
+    customerPhone:q.customerPhone, customerEmail:q.customerEmail,
+    items:q.items, deliveryCost:q.deliveryCost, grandTotal:q.grandTotal,
+    amountInWords:q.amountInWords, terms:q.terms||[]
+  };
+  const el=document.getElementById('quote-preview');
+  const prevHTML=el.innerHTML;
+  el.innerHTML=buildQuotePreviewHTML(data);
+  await new Promise(r=>setTimeout(r,60));
+  if(kind==='pdf') await exportQuoteAsPDF(q.quoteNumber);
+  else await exportQuoteAsImage(q.quoteNumber);
+  el.innerHTML=prevHTML;
+}
+
+function cfDelQuotation(id,quoteNumber){
+  showCf(`Delete quotation ${quoteNumber}?`,'This will permanently remove this quotation record. This cannot be undone.',async()=>{
+    const res=await fetch(`${API}/quotations/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadQHistory();}
+    else toast('❌',d.message);
+  });
 }
 
 /* ── PURCHASE ── */
