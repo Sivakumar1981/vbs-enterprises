@@ -156,8 +156,8 @@ tr:hover td{background:var(--warm)}
 #quote-preview{width:794px;min-height:1123px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:var(--sh-lg);position:relative}
 .qp-topbar{height:10px;background:linear-gradient(90deg,var(--deep),var(--gold) 50%,var(--deep))}
 .qp-header{display:flex;align-items:center;gap:1.1rem;padding:1.6rem 2.2rem 1.2rem;border-bottom:3px solid var(--gold)}
-.qp-emblem{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--gold-l),var(--gold) 60%,#8a6b1f);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.25);border:2px solid #fff}
-.qp-emblem span{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.5rem;color:var(--deep);letter-spacing:.02em}
+.qp-emblem{width:72px;height:72px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.25);border:2px solid var(--gold);overflow:hidden}
+.qp-emblem img{width:100%;height:100%;object-fit:contain}
 .qp-hd-txt h1{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--deep);letter-spacing:.02em;line-height:1.15}
 .qp-hd-txt .qp-tag{font-size:.72rem;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-weight:700;margin:.15rem 0 .4rem}
 .qp-hd-txt .qp-addr{font-size:.72rem;color:#555;line-height:1.5}
@@ -188,7 +188,7 @@ tr:hover td{background:var(--warm)}
 .qp-sign{text-align:center;min-width:170px}
 .qp-sign .qp-sig-line{border-top:1.5px solid #333;margin-top:2.6rem;padding-top:.35rem;font-size:.76rem;color:#333}
 .qp-sign .qp-for{font-size:.72rem;color:#555;margin-bottom:.2rem}
-.qp-footer{text-align:center;padding:.7rem;font-size:.68rem;color:#999;border-top:1px solid #eee}
+.qp-sign .qp-sig-note{font-size:.68rem;color:#999;margin-top:.2rem;font-style:italic}
 @media(max-width:860px){#quote-preview{width:100%;padding:0}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1875,7 +1875,7 @@ function buildQuotePreviewHTML(d){
   return `
   <div class="qp-topbar"></div>
   <div class="qp-header">
-    <div class="qp-emblem"><span>VBS</span></div>
+    <div class="qp-emblem"><img src="images/VBS_logo.png" alt="VBS Enterprises"/></div>
     <div class="qp-hd-txt">
       <h1>${QCOMPANY.name} <span style="font-size:1rem;color:#777;font-weight:400">${QCOMPANY.sub}</span></h1>
       <div class="qp-tag">${QCOMPANY.tagline}</div>
@@ -1913,9 +1913,9 @@ function buildQuotePreviewHTML(d){
     <div class="qp-sign">
       <div class="qp-for">For ${QCOMPANY.name}</div>
       <div class="qp-sig-line">Authorized Signature</div>
+      <div class="qp-sig-note">(Computer Generated)</div>
     </div>
-  </div>
-  <div class="qp-footer">This is a computer-generated quotation from ${QCOMPANY.web}</div>`;
+  </div>`;
 }
 
 function generateQuotePreview(){
