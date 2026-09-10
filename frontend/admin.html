@@ -161,6 +161,9 @@ tr:hover td{background:var(--warm)}
 .qp-hd-txt h1{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--deep);letter-spacing:.02em;line-height:1.15}
 .qp-hd-txt .qp-tag{font-size:.72rem;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-weight:700;margin:.15rem 0 .4rem}
 .qp-hd-txt .qp-addr{font-size:.72rem;color:#555;line-height:1.5}
+.qp-reg-row{display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap}
+.qp-reg-badge{font-size:.66rem;background:#fdf6ec;border:1px solid var(--gold);color:var(--deep);padding:.18rem .55rem;border-radius:4px;font-weight:600;white-space:nowrap}
+.qp-reg-badge b{color:var(--gold);font-weight:700;margin-right:.3rem;letter-spacing:.03em}
 .qp-title-bar{display:flex;justify-content:space-between;align-items:flex-end;padding:1.1rem 2.2rem;background:linear-gradient(90deg,#fdf6ec,#fff)}
 .qp-title-bar h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;letter-spacing:.12em;color:var(--deep);text-transform:uppercase}
 .qp-meta{text-align:right;font-size:.76rem;color:#555;line-height:1.6}
@@ -276,6 +279,7 @@ tr:hover td{background:var(--warm)}
             <div class="field"><label>Price (₹) *</label><input type="number" id="p-price" placeholder="250" min="0"/></div>
             <div class="field"><label>Unit</label><input type="text" id="p-unit" placeholder="per litre / per piece / per kg"/></div>
             <div class="field"><label>Stock Quantity</label><input type="number" id="p-stock" placeholder="50" min="0"/></div>
+            <div class="field"><label>Delivery Charge (₹)</label><input type="number" id="p-delivery" placeholder="0" min="0" title="Extra delivery/courier charge added per unit at checkout. Leave 0 for free delivery."/></div>
             <div class="field"><label>Product Photo</label><input type="file" id="p-img" accept="image/jpeg,image/png,image/webp"/></div>
             <div class="field full"><label>Description</label><textarea id="p-desc" placeholder="Brief description of the product..."></textarea></div>
           </div>
@@ -295,7 +299,7 @@ tr:hover td{background:var(--warm)}
             <input type="text" id="p-srch" placeholder="🔍 Search..." oninput="filterProd()"/>
           </div>
           <div class="tw">
-            <table><thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+            <table><thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Delivery</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="p-tbody"></tbody></table>
           </div>
         </div>
@@ -1485,7 +1489,7 @@ const cLabel={saree:'Saree',nighty:'Nighty',chudidhar:'Chudidhar',blouse:'Blouse
 
 function renderProdTable(prods){
   const tb=document.getElementById('p-tbody');
-  if(!prods.length){tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No products found</td></tr>`;return;}
+  if(!prods.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No products found</td></tr>`;return;}
   tb.innerHTML=prods.map(p=>{
     const sc=p.stock===0?'out':p.stock<10?'low':'in';
     const sl=p.stock===0?'Out':p.stock<10?`Low(${p.stock})`:p.stock;
@@ -1496,6 +1500,7 @@ function renderProdTable(prods){
       <td><span class="cat-tag ${p.category}">${cLabel[p.category]||'Other'}</span></td>
       <td><strong>₹${p.price.toLocaleString('en-IN')}</strong><br/><span style="font-size:.72rem;color:var(--muted)">${p.unit}</span></td>
       <td><span class="stk-chip ${sc}">${sl}</span></td>
+      <td>${p.deliveryCharge>0?`<span style="font-size:.78rem;color:#f59e0b;font-weight:600">+₹${p.deliveryCharge}</span>`:`<span style="font-size:.78rem;color:var(--muted)">Free</span>`}</td>
       <td><span class="spill ${p.isActive?'delivered':'cancelled'}">${p.isActive?'Active':'Hidden'}</span></td>
       <td><div class="td-acts">
         <button class="abtn edit" onclick="editProd('${p._id}')">✏️ Edit</button>
@@ -1512,6 +1517,7 @@ async function saveProduct(){
   const price=document.getElementById('p-price').value;
   const unit=document.getElementById('p-unit').value.trim();
   const stock=document.getElementById('p-stock').value;
+  const delivery=document.getElementById('p-delivery').value;
   const desc=document.getElementById('p-desc').value.trim();
   const file=document.getElementById('p-img').files[0];
   if(!name||!price){toast('⚠️','Name and price are required');return;}
@@ -1519,6 +1525,7 @@ async function saveProduct(){
   fd.append('name',name);fd.append('category',cat);fd.append('description',desc);
   fd.append('price',price);fd.append('unit',unit||(cat==='oil'?'per litre':cat==='rice'?'per kg':'per piece'));
   fd.append('stock',stock||0);
+  fd.append('deliveryCharge',delivery||0);
   if(file)fd.append('image',file);
   try{
     const url=editId?`${API}/products/${editId}`:`${API}/products`;
@@ -1540,6 +1547,7 @@ function editProd(id){
   document.getElementById('p-price').value=p.price;
   document.getElementById('p-unit').value=p.unit;
   document.getElementById('p-stock').value=p.stock;
+  document.getElementById('p-delivery').value=p.deliveryCharge||0;
   document.getElementById('p-desc').value=p.description||'';
   document.getElementById('f-head').textContent='✏️ Edit Product';
 
@@ -1585,7 +1593,7 @@ function cfDel(id,name){
 }
 
 function clearPForm(){
-  ['p-name','p-price','p-unit','p-stock','p-desc'].forEach(i=>document.getElementById(i).value='');
+  ['p-name','p-price','p-unit','p-stock','p-delivery','p-desc'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('p-cat').value='saree';
   document.getElementById('p-img').value='';
   document.getElementById('p-img').onchange=null;
@@ -1715,7 +1723,8 @@ const QCOMPANY={
   name:'VBS ENTERPRISES', sub:'(Marachekku Oil)', tagline:'Pure • Fresh • Trusted Oil',
   addr:'108/7C, 5th Cross Street, Rajiv Nagar, Pallikuppam, Vanagaram, Chennai - 600077',
   phone:'+91 98400 42290 | +91 98403 57267 | 044-46439408',
-  email:'vbsenterprises7@gmail.com', web:'vbs-enterprises-92sz.onrender.com'
+  email:'vbsenterprises7@gmail.com', web:'vbs-enterprises-92sz.onrender.com',
+  gstin:'33FCHPS4318R1ZW', fssai:'22426477000262', msme:'UDYAM-TN-24-0183360'
 };
 const QBANK={ accHolder:'VBS Enterprises', name:'Indian Overseas Bank', branch:'Vanagaram', ifsc:'IOBA0002776', acc:'277602000000573' };
 const Q_DEFAULT_TERMS=[
@@ -1880,11 +1889,16 @@ function buildQuotePreviewHTML(d){
       <h1>${QCOMPANY.name} <span style="font-size:1rem;color:#777;font-weight:400">${QCOMPANY.sub}</span></h1>
       <div class="qp-tag">${QCOMPANY.tagline}</div>
       <div class="qp-addr">${QCOMPANY.addr}<br/>Phone: ${QCOMPANY.phone}<br/>Email: ${QCOMPANY.email} &nbsp;|&nbsp; Web: ${QCOMPANY.web}</div>
+      <div class="qp-reg-row">
+        <div class="qp-reg-badge"><b>GSTIN</b>${QCOMPANY.gstin}</div>
+        <div class="qp-reg-badge"><b>FSSAI</b>${QCOMPANY.fssai}</div>
+        <div class="qp-reg-badge"><b>MSME</b>${QCOMPANY.msme}</div>
+      </div>
     </div>
   </div>
   <div class="qp-title-bar">
     <h2>Quotation</h2>
-    <div class="qp-meta"><b>Quote No:</b> ${escQ(d.quoteNumber)}<br/><b>Date:</b> ${dateStr}</div>
+    <div class="qp-meta"><b>Quote No:</b> ${escQ(d.quoteNumber)}<br/><b>Date:</b> ${dateStr}<br/><b>GSTIN:</b> ${QCOMPANY.gstin}</div>
   </div>
   <div class="qp-bill">
     <div class="qp-bill-label">Quotation For</div>
@@ -2601,7 +2615,7 @@ function generateInvoiceHTML(o) {
   <div class="center" style="font-size:9px">Pallikuppam, Vanagaram, Chennai-600077</div>
   <div class="center" style="font-size:9px">Ph: 9840042290 / 9840357267</div>
   <div class="center" style="font-size:8.5px;margin-top:2px">MSME UDYAM-TN-24-0183360</div>
-  <div class="center" style="font-size:8.5px">FSSAI: 22426477000262</div>
+  <div class="center" style="font-size:8.5px">FSSAI: 22426477000262 &nbsp;|&nbsp; GSTIN: 33FCHPS4318R1ZW</div>
   <hr class="divider"/>
   <div class="row"><span class="bold">Order:</span><span>${o.orderId}</span></div>
   <div class="row"><span class="bold">Date:</span><span>${date}</span></div>
@@ -2907,23 +2921,17 @@ function renderCustOrders(orders){
 
 /* ── CONFIRM MODAL ── */
 let cfCb=null;
-function cfDel(id,name){
-  document.getElementById('cf-msg').textContent='Delete "'+name+'"? This cannot be undone.';
-  document.getElementById('cf-overlay').classList.add('open');
-  cfCb=async()=>{
-    try{
-      const res=await fetch(API+'/products/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});
-      const d=await res.json();
-      if(!d.success)throw new Error(d.message);
-      toast('✅','Product deleted');
-      loadProds();
-    }catch(e){toast('❌',e.message);}
-  };
+function showCf(title,msg,onConfirm){
+  document.getElementById('c-title').textContent=title;
+  document.getElementById('c-msg').textContent=msg;
+  document.getElementById('c-ovl').classList.add('open');
+  cfCb=onConfirm;
 }
-function closeCf(){document.getElementById('cf-overlay').classList.remove('open');cfCb=null;}
+function closeCf(){document.getElementById('c-ovl').classList.remove('open');cfCb=null;}
 document.getElementById('c-ok').addEventListener('click',()=>{
-  document.getElementById('cf-overlay').classList.remove('open');
+  document.getElementById('c-ovl').classList.remove('open');
   if(cfCb)cfCb();
+  cfCb=null;
 });
 
 /* ── TOAST ── */
