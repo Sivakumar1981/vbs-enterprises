@@ -58,7 +58,9 @@ async function sendOwnerNotification(order) {
     '<th style="padding:8px 12px;color:#e8c068;text-align:right">Total</th>' +
     '</tr></thead>' +
     '<tbody>' + itemRows + '</tbody>' +
-    '<tfoot><tr style="background:#1a0f00">' +
+    '<tfoot>' +
+    (order.courierCharge ? '<tr><td colspan="3" style="padding:6px 12px;text-align:right;color:#8a7060">Delivery Charge</td><td style="padding:6px 12px;text-align:right">Rs.' + order.courierCharge.toLocaleString('en-IN') + '</td></tr>' : '') +
+    '<tr style="background:#1a0f00">' +
     '<td colspan="3" style="padding:10px 12px;color:#e8c068;font-weight:700;text-align:right">Grand Total</td>' +
     '<td style="padding:10px 12px;color:#e8c068;font-weight:700;text-align:right">Rs.' + order.totalAmount.toLocaleString('en-IN') + '</td>' +
     '</tr></tfoot>' +
@@ -103,7 +105,8 @@ router.post('/', async (req, res) => {
     }
 
     // Validate products and build order items
-    let totalAmount = 0;
+    let itemsAmount = 0;
+    let deliveryTotal = 0;
     const orderItems = [];
 
     for (const item of items) {
@@ -122,17 +125,25 @@ router.post('/', async (req, res) => {
         image: product.image,
         category: product.category
       });
-      totalAmount += product.price * item.quantity;
+      itemsAmount += product.price * item.quantity;
+
+      // Some products (e.g. heavy/bulky items) carry their own per-unit delivery charge
+      if (product.deliveryCharge > 0) {
+        deliveryTotal += product.deliveryCharge * item.quantity;
+      }
 
       // Reduce stock
       product.stock -= item.quantity;
       await product.save();
     }
 
+    const totalAmount = itemsAmount + deliveryTotal;
+
     const order = new Order({
       customer,
       items: orderItems,
       totalAmount,
+      courierCharge: deliveryTotal,
       paymentMethod: paymentMethod || 'cod',
       notes: notes || ''
     });
