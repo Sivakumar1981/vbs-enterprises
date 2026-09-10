@@ -55,7 +55,7 @@ router.get('/:id', async (req, res) => {
 // POST create product
 router.post('/', auth, upload.single('image'), async (req, res) => {
   try {
-    const { name, category, description, price, unit, stock } = req.body;
+    const { name, category, description, price, unit, stock, deliveryCharge } = req.body;
     if (!name || !category || !price)
       return res.status(400).json({ success: false, message: 'Name, category and price required' });
     let imageUrl = null;
@@ -65,6 +65,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       price: parseFloat(price),
       unit:  unit || 'per piece',
       stock: parseInt(stock) || 0,
+      deliveryCharge: parseFloat(deliveryCharge) || 0,
       image: imageUrl
     });
     await product.save();
@@ -77,13 +78,14 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Not found' });
-    const { name, category, description, price, unit, stock, isActive } = req.body;
+    const { name, category, description, price, unit, stock, isActive, deliveryCharge } = req.body;
     if (name)                    product.name        = name;
     if (category)                product.category    = category;
     if (description !== undefined) product.description = description;
     if (price)                   product.price       = parseFloat(price);
     if (unit)                    product.unit        = unit;
     if (stock !== undefined)     product.stock       = parseInt(stock);
+    if (deliveryCharge !== undefined) product.deliveryCharge = parseFloat(deliveryCharge) || 0;
     if (isActive !== undefined)  product.isActive    = isActive === 'true' || isActive === true;
     if (req.file)                product.image       = await uploadToCloudinary(req.file.buffer);
     await product.save();
