@@ -175,6 +175,7 @@ function renderProds(){
       +'<div class="prod-name">'+p.name+'</div>'
       +'<div class="prod-desc">'+(p.description||'Premium quality from VBS Enterprises.')+'</div>'
       +'<div class="prod-price">₹'+p.price.toLocaleString('en-IN')+' <span class="prod-unit">'+(p.unit||'')+'</span></div>'
+      +(p.deliveryCharge>0?'<div style="font-size:.72rem;color:#c8902a;margin:-.15rem 0 .4rem">🚚 +₹'+p.deliveryCharge+' delivery</div>':'')
       +'<div class="prod-actions">'
       +'<button class="btn-add" onclick="addToCart(\''+p._id+'\')" '+(p.stock===0?'disabled':'')+'>'
       +(inCart?'✓ In Cart ('+inCart.qty+')':'+ Add to Cart')
@@ -216,7 +217,7 @@ function addToCart(id){
   if(!p||p.stock===0) return;
   var ex=cart.find(c=>c._id===id);
   if(ex){if(ex.qty<p.stock)ex.qty++;else{showToast('⚠️','Max stock: '+p.stock);return;}}
-  else cart.push({_id:p._id,name:p.name,price:p.price,qty:1,image:p.image,category:p.category,unit:p.unit||''});
+  else cart.push({_id:p._id,name:p.name,price:p.price,qty:1,image:p.image,category:p.category,unit:p.unit||'',deliveryCharge:p.deliveryCharge||0});
   saveCart(); renderProds(); showToast('🛒',p.name+' added!');
 }
 function removeItem(id){cart=cart.filter(c=>c._id!==id);saveCart();renderCart();renderProds();}
@@ -234,6 +235,8 @@ function updateBadge(){
   document.getElementById('cbadge-m').textContent=n;
 }
 function cartTotal(){return cart.reduce((s,i)=>s+i.price*i.qty,0);}
+function cartDelivery(){return cart.reduce((s,i)=>s+(i.deliveryCharge||0)*i.qty,0);}
+function cartGrandTotal(){return cartTotal()+cartDelivery();}
 
 function renderCart(){
   var div=document.getElementById('cart-wrap');
@@ -247,17 +250,23 @@ function renderCart(){
       +'<div class="ci-img">'+(item.image?'<img src="'+imgUrl(item.image)+'" alt="'+item.name+'"/>':icon)+'</div>'
       +'<div class="ci-info"><h4>'+item.name+'</h4>'
       +'<div class="ci-cat">'+icon+' '+(catLabel[item.category]||'Other')+' · '+item.unit+'</div>'
+      +(item.deliveryCharge?'<div class="ci-cat" style="color:#c8902a">🚚 +₹'+item.deliveryCharge+' delivery / unit</div>':'')
       +'<div class="qty-row"><button class="qbtn" onclick="changeQty(\''+item._id+'\',-1)">−</button><span class="qnum">'+item.qty+'</span><button class="qbtn" onclick="changeQty(\''+item._id+'\',1)">+</button></div>'
       +'</div>'
       +'<div class="ci-right"><div class="ci-price">₹'+(item.price*item.qty).toLocaleString('en-IN')+'</div>'
       +'<button class="btn-rm" onclick="removeItem(\''+item._id+'\')">🗑</button></div></div>';
   }).join('');
   var sumRows=cart.map(i=>'<div class="sum-row"><span>'+i.name+' ×'+i.qty+'</span><span>₹'+(i.price*i.qty).toLocaleString('en-IN')+'</span></div>').join('');
-  var total=cartTotal().toLocaleString('en-IN');
+  var subtotal=cartTotal();
+  var delivery=cartDelivery();
+  var grand=subtotal+delivery;
+  var deliveryRow=delivery>0?'<div class="sum-row"><span>🚚 Delivery Charge</span><span>₹'+delivery.toLocaleString('en-IN')+'</span></div>':'<div class="sum-row"><span>🚚 Delivery Charge</span><span style="color:#3a8a4a">Free</span></div>';
+  var total=grand.toLocaleString('en-IN');
   var addr=customerData&&customerData.address?customerData.address:'';
   div.innerHTML='<div class="cart-grid">'
     +'<div>'+items+'</div>'
     +'<div class="o-summary"><h3>Order Summary</h3>'+sumRows
+    +deliveryRow
     +'<div class="sum-row tot"><span>Total</span><span>₹'+total+'</span></div>'
     +'<div class="chk-form">'
     +'<h4 style="color:var(--gold);margin:.5rem 0 .25rem">Delivery Details</h4>'
@@ -309,6 +318,7 @@ async function placeOrder(){
       +'<div class="o-box" style="margin-top:1rem;text-align:left">'
       +'<p><strong>Order ID:</strong> '+o.orderId+'</p>'
       +o.items.map(i=>'<p>• '+i.name+' ×'+i.quantity+' — ₹'+(i.price*i.quantity).toLocaleString('en-IN')+'</p>').join('')
+      +(o.courierCharge?'<p>• Delivery Charge — ₹'+o.courierCharge.toLocaleString('en-IN')+'</p>':'')
       +'<p style="margin-top:.5rem"><strong>Total: ₹'+o.totalAmount.toLocaleString('en-IN')+'</strong></p>'
       +'<p><strong>Payment:</strong> '+(pay==='cod'?'Cash on Delivery':pay.toUpperCase())+'</p>'
       +'</div>'
@@ -319,7 +329,7 @@ async function placeOrder(){
     document.getElementById('success-overlay').classList.add('open');
   }catch(err){
     showToast('❌',err.message);
-    if(btn){btn.disabled=false;btn.textContent='🛍️ Place Order — ₹'+cartTotal().toLocaleString('en-IN');}
+    if(btn){btn.disabled=false;btn.textContent='🛍️ Place Order — ₹'+cartGrandTotal().toLocaleString('en-IN');}
   }
 }
 
