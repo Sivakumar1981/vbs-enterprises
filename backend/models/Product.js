@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema({
   price:       { type: Number, required: true, min: 0 },
   unit:        { type: String, default: 'per piece' },
   stock:       { type: Number, default: 0, min: 0 },
+  deliveryCharge: { type: Number, default: 0, min: 0 }, // per-unit delivery/courier charge for this product (0 = free delivery)
   image:       { type: String, default: null },
   isActive:    { type: Boolean, default: true }
 }, { timestamps: true });
