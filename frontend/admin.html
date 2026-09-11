@@ -193,6 +193,30 @@ tr:hover td{background:var(--warm)}
 .qp-sign .qp-for{font-size:.72rem;color:#555;margin-bottom:.2rem}
 .qp-sign .qp-sig-note{font-size:.68rem;color:#999;margin-top:.2rem;font-style:italic}
 @media(max-width:860px){#quote-preview{width:100%;padding:0}}
+
+/* ── TAX INVOICE (extends .qp-* styles above) ── */
+#invoice-preview-wrap{overflow-x:auto;margin-top:1.5rem}
+#invoice-preview{width:794px;min-height:1123px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:var(--sh-lg);position:relative}
+@media(max-width:860px){#invoice-preview{width:100%;padding:0}}
+.tax-tbl{width:100%;border-collapse:collapse}
+.tax-tbl th,.tax-tbl td{padding:.4rem .35rem;font-size:.68rem;border-bottom:1px solid #eee}
+.tax-tbl thead tr.grp th{background:var(--deep);color:var(--gold-l);text-transform:uppercase;letter-spacing:.04em;text-align:center;border-bottom:none;border-left:1px solid rgba(255,255,255,.15)}
+.tax-tbl thead tr.sub th{background:#2d1a00;color:#e8ddd0;text-align:center;font-size:.62rem;border-left:1px solid rgba(255,255,255,.15)}
+.tax-tbl thead tr.sub th:first-child,.tax-tbl thead tr.grp th:first-child{border-left:none}
+.tax-tbl tbody td.num{text-align:right}
+.tax-tbl tbody tr:nth-child(even) td{background:#fdfaf4}
+.tax-tbl tfoot td{font-weight:700;border-top:2px solid var(--deep);background:#fdf6ec}
+.tax-tbl tfoot tr.gt td{font-size:.85rem;color:var(--deep);background:var(--warm);border-top:2px solid var(--gold)}
+.inv-supply-badge{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.2rem .7rem;border-radius:20px;margin-top:.3rem}
+.inv-supply-badge.intra{background:#d4edda;color:#155724}
+.inv-supply-badge.inter{background:#cce5ff;color:#004085}
+.inv-taxtype-toggle{display:flex;gap:.9rem;margin-top:.35rem;flex-wrap:wrap}
+.inv-taxtype-toggle label{display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--text);cursor:pointer;font-weight:500}
+.inv-taxtype-toggle input{width:auto;accent-color:var(--gold)}
+.inv-ship-same{display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--muted);margin:.3rem 0 .5rem}
+.inv-ship-same input{width:auto;accent-color:var(--gold)}
+.qi-tbl input.qi-hsn{width:80px}
+.qi-tbl input.qi-gst{width:70px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -229,6 +253,7 @@ tr:hover td{background:var(--warm)}
       <button class="sn" data-tab="products">📦 Products</button>
       <button class="sn" data-tab="gallery">📸 Weekend Events</button>
       <button class="sn" data-tab="quote">📝 Quotation</button>
+      <button class="sn" data-tab="invoice">🧾 Tax Invoice</button>
       <button class="sn" data-tab="orders">🧾 Orders</button>
       <button class="sn" data-tab="customers">👥 Customers</button>
       <button class="sn" data-tab="tally">📊 Tally / Reports</button>
@@ -396,6 +421,97 @@ tr:hover td{background:var(--warm)}
           <div class="tw">
             <table><thead><tr><th>Quote No.</th><th>Customer</th><th>Date</th><th>Total</th><th>Actions</th></tr></thead>
             <tbody id="q-hist-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAX INVOICE BUILDER -->
+      <div class="tab" id="tab-invoice">
+        <div class="fc">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem">
+            <h3 style="margin:0">🧾 New GST Tax Invoice</h3>
+            <span id="i-status-pill" class="q-status unsaved">Not saved yet</span>
+          </div>
+
+          <div class="fgrid">
+            <div class="field"><label>Invoice Date</label><input type="date" id="i-date" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Due Date</label><input type="date" id="i-duedate" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Payment Terms</label><input type="text" id="i-terms" placeholder="e.g. Due on Receipt / Net 15" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Place of Supply</label><input type="text" id="i-pos" placeholder="e.g. Tamil Nadu (33)" onchange="markIUnsaved()"/></div>
+          </div>
+
+          <div class="field" style="margin-top:.6rem">
+            <label>Type of Supply</label>
+            <div class="inv-taxtype-toggle">
+              <label><input type="radio" name="i-taxtype" value="intra" checked onchange="onITaxTypeChange()"/> Intra-State (within Tamil Nadu) — CGST + SGST</label>
+              <label><input type="radio" name="i-taxtype" value="inter" onchange="onITaxTypeChange()"/> Inter-State (outside Tamil Nadu) — IGST</label>
+            </div>
+          </div>
+
+          <h4 style="margin:1.2rem 0 .5rem;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.05em">Bill To</h4>
+          <div class="fgrid">
+            <div class="field"><label>Customer / Company Name *</label><input type="text" id="i-bname" placeholder="e.g. Shree Sai Enterprises" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>GSTIN (if registered)</label><input type="text" id="i-bgstin" placeholder="e.g. 33XXXXX0000X1ZX" onchange="markIUnsaved()"/></div>
+            <div class="field full"><label>Billing Address</label><input type="text" id="i-baddr" placeholder="No, Street, City - Pincode" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Phone</label><input type="text" id="i-bphone" placeholder="e.g. 9876543210" onchange="markIUnsaved()"/></div>
+          </div>
+
+          <h4 style="margin:1.2rem 0 .5rem;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.05em">Ship To</h4>
+          <div class="inv-ship-same"><input type="checkbox" id="i-ship-same" checked onchange="toggleIShipSame()"/> <label for="i-ship-same" style="margin:0;cursor:pointer">Same as Billing Address</label></div>
+          <div class="fgrid" id="i-ship-fields" style="display:none">
+            <div class="field"><label>Ship To Name</label><input type="text" id="i-sname" onchange="markIUnsaved()"/></div>
+            <div class="field full"><label>Shipping Address</label><input type="text" id="i-saddr" onchange="markIUnsaved()"/></div>
+          </div>
+
+          <div style="margin-top:1.3rem">
+            <label style="display:block;margin-bottom:.4rem">Items</label>
+            <table class="qi-tbl">
+              <thead><tr><th style="width:32px">#</th><th>Description</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>GST %</th><th style="text-align:right">Taxable Value (₹)</th><th></th></tr></thead>
+              <tbody id="i-items-body"></tbody>
+            </table>
+            <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem">
+              <button type="button" class="qi-add" onclick="addIItemRow()">➕ Add Item Row</button>
+              <button type="button" class="qi-add" onclick="addIDeliveryRow()">🚚 Add Delivery Charge</button>
+            </div>
+          </div>
+
+          <div class="fgrid" style="margin-top:1.1rem">
+            <div class="field"><label>Sub Total (₹)</label><input type="text" id="i-subtotal" value="₹ 0" disabled/></div>
+            <div class="field" id="i-cgst-wrap"><label>CGST Total (₹)</label><input type="text" id="i-cgst" value="₹ 0" disabled/></div>
+            <div class="field" id="i-sgst-wrap"><label>SGST Total (₹)</label><input type="text" id="i-sgst" value="₹ 0" disabled/></div>
+            <div class="field" id="i-igst-wrap" style="display:none"><label>IGST Total (₹)</label><input type="text" id="i-igst" value="₹ 0" disabled/></div>
+            <div class="field"><label>Rounding (₹)</label><input type="text" id="i-rounding" value="₹ 0" disabled/></div>
+            <div class="field"><label>Grand Total</label><input type="text" id="i-grandtotal" value="₹ 0" disabled style="font-weight:700;background:var(--warm)"/></div>
+          </div>
+
+          <div class="qterms-box" style="margin-top:1.1rem">
+            <label style="display:block;margin-bottom:.4rem">Terms &amp; Conditions <span style="text-transform:none;font-weight:400;color:var(--muted)">(one per line — edit as needed)</span></label>
+            <textarea id="i-tc" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:.7rem .9rem;font-size:.85rem"></textarea>
+          </div>
+
+          <div class="q-actions">
+            <button class="btn-g" onclick="generateInvoicePreview()">👁 Preview Invoice</button>
+            <button class="btn-gh" onclick="saveInvoice()">💾 Save Invoice</button>
+            <button class="btn-gh" onclick="downloadInvoicePDF()">📄 Download PDF</button>
+            <button class="btn-gh" onclick="downloadInvoiceImage()">🖼 Download Image</button>
+            <button class="btn-gh" onclick="clearIForm()">✕ New / Clear</button>
+          </div>
+        </div>
+
+        <!-- LIVE INVOICE PREVIEW -->
+        <div id="invoice-preview-wrap">
+          <div id="invoice-preview"></div>
+        </div>
+
+        <!-- INVOICE HISTORY -->
+        <div class="tc" style="margin-top:1.75rem">
+          <div class="tc-top">
+            <h3>Tax Invoice History</h3>
+            <input type="text" id="i-srch" placeholder="🔍 Search customer or invoice no..." oninput="filterIHistory()"/>
+          </div>
+          <div class="tw">
+            <table><thead><tr><th>Invoice No.</th><th>Customer</th><th>Date</th><th>Tax Type</th><th>Total</th><th>Actions</th></tr></thead>
+            <tbody id="i-hist-tbody"></tbody></table>
           </div>
         </div>
       </div>
@@ -893,13 +1009,14 @@ function showTab(t){
   document.querySelectorAll('.sn').forEach(x=>x.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   document.querySelector(`[data-tab="${t}"]`)?.classList.add('active');
-  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],gallery:['Weekend Events','Stall & activity photos shown to customers'],quote:['Quotation','Create bulk-order quotations for customers'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
+  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],gallery:['Weekend Events','Stall & activity photos shown to customers'],quote:['Quotation','Create bulk-order quotations for customers'],invoice:['Tax Invoice','Create GST tax invoices for customers'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
   document.getElementById('tb-title').textContent=titles[t]?.[0]||'';
   document.getElementById('tb-sub').textContent=titles[t]?.[1]||'';
   if(t==='dash')loadDash();
   if(t==='products')loadProds();
   if(t==='gallery')loadGallery();
   if(t==='quote'){initQuoteTab();loadQHistory();}
+  if(t==='invoice'){initInvoiceTab();loadIHistory();}
   if(t==='orders')loadOrders();
   if(t==='tally')loadTally();
   if(t==='customers')loadCustomers();
@@ -2112,6 +2229,480 @@ function cfDelQuotation(id,quoteNumber){
     const res=await fetch(`${API}/quotations/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
     const d=await res.json();
     if(d.success){toast('🗑','Deleted');loadQHistory();}
+    else toast('❌',d.message);
+  });
+}
+
+/* ── TAX INVOICE BUILDER ── */
+const I_DEFAULT_TC=[
+  'Goods once sold will not be taken back or exchanged',
+  'Interest @18% p.a. will be charged if payment is not made within the due date',
+  'All disputes are subject to Chennai jurisdiction only',
+  'This is a computer-generated invoice and does not require a physical signature'
+];
+const I_UNITS=['Nos','Kg','Litre','Tin','Box','Bag','Trip'];
+
+let iItems=[];
+let iNextNumber='VBS/INV-0001';
+let iSavedInvoice=null;
+let allInvoices=[];
+let iInitDone=false;
+
+function initInvoiceTab(){
+  if(iInitDone) return;
+  iInitDone=true;
+  document.getElementById('i-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-duedate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-terms').value='Due on Receipt';
+  document.getElementById('i-pos').value='Tamil Nadu (33)';
+  document.getElementById('i-tc').value=I_DEFAULT_TC.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  iItems=[{description:'',hsn:'',qty:1,unit:'Nos',rate:0,gstPct:5}];
+  renderIItemsTable();
+  loadINextNumber();
+}
+
+function loadINextNumber(){
+  fetch(`${API}/invoices/next-number`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.json()).then(d=>{ if(d.success) iNextNumber=d.invoiceNumber; })
+    .catch(()=>{});
+}
+
+function iUnitOptions(sel){
+  return I_UNITS.map(u=>`<option value="${u}" ${u===sel?'selected':''}>${u}</option>`).join('');
+}
+
+function onITaxTypeChange(){
+  const inter=document.querySelector('input[name="i-taxtype"]:checked').value==='inter';
+  document.getElementById('i-cgst-wrap').style.display=inter?'none':'block';
+  document.getElementById('i-sgst-wrap').style.display=inter?'none':'block';
+  document.getElementById('i-igst-wrap').style.display=inter?'block':'none';
+  recalcITotals();
+  markIUnsaved();
+}
+
+function toggleIShipSame(){
+  const same=document.getElementById('i-ship-same').checked;
+  document.getElementById('i-ship-fields').style.display=same?'none':'grid';
+  markIUnsaved();
+}
+
+function renderIItemsTable(){
+  const tbody=document.getElementById('i-items-body');
+  tbody.innerHTML=iItems.map((it,i)=>{
+    const amt=(it.qty||0)*(it.rate||0);
+    return `<tr data-idx="${i}">
+      <td style="padding-top:.65rem">${i+1}</td>
+      <td><input type="text" class="qi-particulars" value="${escQ(it.description)}" placeholder="e.g. Cold Pressed Groundnut Oil Tins" oninput="updateIItem(${i},'description',this.value)"/></td>
+      <td><input type="text" class="qi-hsn" value="${escQ(it.hsn)}" placeholder="e.g. 1508" oninput="updateIItem(${i},'hsn',this.value)"/></td>
+      <td><input type="number" class="qi-qty" value="${it.qty}" min="0" oninput="updateIItem(${i},'qty',this.value)"/></td>
+      <td><select onchange="updateIItem(${i},'unit',this.value)">${iUnitOptions(it.unit)}</select></td>
+      <td><input type="number" class="qi-rate" value="${it.rate}" min="0" oninput="updateIItem(${i},'rate',this.value)"/></td>
+      <td><input type="number" class="qi-gst" value="${it.gstPct}" min="0" max="100" step="0.5" oninput="updateIItem(${i},'gstPct',this.value)"/></td>
+      <td class="num"><span class="qi-amt">₹${amt.toLocaleString('en-IN')}</span></td>
+      <td><button type="button" class="qi-rm" onclick="removeIItemRow(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  recalcITotals();
+}
+
+function addIItemRow(){
+  iItems.push({description:'',hsn:'',qty:1,unit:'Nos',rate:0,gstPct:5});
+  renderIItemsTable();
+}
+function addIDeliveryRow(){
+  iItems.push({description:'Delivery & Freight Charges',hsn:'996812',qty:1,unit:'Trip',rate:0,gstPct:5});
+  renderIItemsTable();
+}
+function removeIItemRow(idx){
+  if(iItems.length<=1){toast('⚠️','At least one item row is required');return;}
+  iItems.splice(idx,1);
+  renderIItemsTable();
+}
+function updateIItem(idx,field,val){
+  if(field==='qty'||field==='rate'||field==='gstPct') val=parseFloat(val)||0;
+  iItems[idx][field]=val;
+  if(field==='qty'||field==='rate'){
+    const amt=(iItems[idx].qty||0)*(iItems[idx].rate||0);
+    const amtEl=document.querySelector(`#i-items-body tr[data-idx="${idx}"] .qi-amt`);
+    if(amtEl) amtEl.textContent='₹'+amt.toLocaleString('en-IN');
+  }
+  recalcITotals();
+  markIUnsaved();
+}
+
+function recalcITotals(){
+  const inter=document.querySelector('input[name="i-taxtype"]:checked').value==='inter';
+  let subTotal=0,totalCgst=0,totalSgst=0,totalIgst=0;
+  iItems.forEach(it=>{
+    const amt=(it.qty||0)*(it.rate||0);
+    const taxAmt=amt*(it.gstPct||0)/100;
+    subTotal+=amt;
+    if(inter) totalIgst+=taxAmt;
+    else { totalCgst+=taxAmt/2; totalSgst+=taxAmt/2; }
+  });
+  const rawTotal=subTotal+totalCgst+totalSgst+totalIgst;
+  const grandTotal=Math.round(rawTotal);
+  const rounding=grandTotal-rawTotal;
+  document.getElementById('i-subtotal').value='₹ '+subTotal.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-cgst').value='₹ '+totalCgst.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-sgst').value='₹ '+totalSgst.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-igst').value='₹ '+totalIgst.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-rounding').value=(rounding>=0?'₹ ':'-₹ ')+Math.abs(rounding).toFixed(2);
+  document.getElementById('i-grandtotal').value='₹ '+grandTotal.toLocaleString('en-IN');
+  const previewEl=document.getElementById('invoice-preview');
+  if(previewEl&&previewEl.innerHTML.trim()){
+    const data=collectInvoiceData();
+    if(data.billTo.name&&data.items.length) previewEl.innerHTML=buildInvoicePreviewHTML(data);
+  }
+}
+function markIUnsaved(){
+  if(iSavedInvoice){
+    iSavedInvoice=null;
+    document.getElementById('i-status-pill').textContent='Not saved yet';
+    document.getElementById('i-status-pill').className='q-status unsaved';
+  }
+}
+
+function collectInvoiceData(){
+  const inter=document.querySelector('input[name="i-taxtype"]:checked').value==='inter';
+  const invoiceDate=document.getElementById('i-date').value;
+  const dueDate=document.getElementById('i-duedate').value;
+  const terms=document.getElementById('i-terms').value.trim()||'Due on Receipt';
+  const placeOfSupply=document.getElementById('i-pos').value.trim()||'Tamil Nadu (33)';
+  const bname=document.getElementById('i-bname').value.trim();
+  const bgstin=document.getElementById('i-bgstin').value.trim();
+  const baddr=document.getElementById('i-baddr').value.trim();
+  const bphone=document.getElementById('i-bphone').value.trim();
+  const shipSame=document.getElementById('i-ship-same').checked;
+  const sname=shipSame?bname:document.getElementById('i-sname').value.trim();
+  const saddr=shipSame?baddr:document.getElementById('i-saddr').value.trim();
+  const tcRaw=document.getElementById('i-tc').value.split('\n')
+    .map(t=>t.trim()).filter(Boolean)
+    .map(t=>t.replace(/^\d+[\)\.]\s*/,''));
+
+  let subTotal=0,totalCgst=0,totalSgst=0,totalIgst=0;
+  const validItems=iItems.filter(it=>it.description&&it.description.trim()&&it.qty>0).map(it=>{
+    const amount=it.qty*it.rate;
+    const taxAmt=amount*(it.gstPct||0)/100;
+    let cgstAmt=0,sgstAmt=0,igstAmt=0;
+    if(inter) igstAmt=taxAmt; else { cgstAmt=taxAmt/2; sgstAmt=taxAmt/2; }
+    subTotal+=amount; totalCgst+=cgstAmt; totalSgst+=sgstAmt; totalIgst+=igstAmt;
+    return {description:it.description.trim(),hsn:it.hsn||'',qty:it.qty,unit:it.unit,rate:it.rate,gstPct:it.gstPct||0,
+      amount, cgstAmt, sgstAmt, igstAmt, total:amount+taxAmt};
+  });
+  const rawTotal=subTotal+totalCgst+totalSgst+totalIgst;
+  const grandTotal=Math.round(rawTotal);
+  const rounding=grandTotal-rawTotal;
+
+  return {
+    invoiceNumber: iSavedInvoice?iSavedInvoice.invoiceNumber:iNextNumber,
+    invoiceDate: invoiceDate||new Date().toISOString().slice(0,10),
+    dueDate: dueDate||invoiceDate,
+    terms, placeOfSupply, taxType: inter?'inter':'intra',
+    billTo:{name:bname,address:baddr,gstin:bgstin,phone:bphone},
+    shipTo:{name:sname,address:saddr},
+    items:validItems, subTotal, totalCgst, totalSgst, totalIgst, rounding, grandTotal,
+    amountInWords:'Rupees '+numberToWordsIndian(grandTotal)+' Only',
+    termsConditions:tcRaw
+  };
+}
+
+function buildInvoicePreviewHTML(d){
+  const dateStr=new Date(d.invoiceDate).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const dueStr=d.dueDate?new Date(d.dueDate).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}):dateStr;
+  const inter=d.taxType==='inter';
+  const itemsRows=d.items.map((it,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td style="text-align:left">${escQ(it.description)}</td>
+      <td>${escQ(it.hsn)}</td>
+      <td class="num">${it.qty} ${escQ(it.unit)}</td>
+      <td class="num">₹${Number(it.rate).toLocaleString('en-IN')}</td>
+      <td class="num">₹${Number(it.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+      ${inter
+        ?`<td class="num">${it.gstPct}%</td><td class="num">₹${Number(it.igstAmt).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>`
+        :`<td class="num">${(it.gstPct/2).toFixed(1)}%</td><td class="num">₹${Number(it.cgstAmt).toLocaleString('en-IN',{maximumFractionDigits:2})}</td><td class="num">${(it.gstPct/2).toFixed(1)}%</td><td class="num">₹${Number(it.sgstAmt).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>`}
+      <td class="num">₹${Number(it.total).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+    </tr>`).join('');
+  const taxHeadGrp=inter
+    ?`<th style="width:110px" colspan="2">IGST</th>`
+    :`<th style="width:110px" colspan="2">CGST</th><th style="width:110px" colspan="2">SGST</th>`;
+  const taxHeadSub=inter
+    ?`<th>Rate</th><th>Amt</th>`
+    :`<th>Rate</th><th>Amt</th><th>Rate</th><th>Amt</th>`;
+  const taxColspan=inter?2:4;
+  const tcList=d.termsConditions&&d.termsConditions.length?d.termsConditions.map(t=>`<li>${escQ(t)}</li>`).join(''):'<li>No special terms specified</li>';
+  const shipBlock=(d.shipTo.name||d.shipTo.address)?`
+    <div class="qp-bill-label" style="margin-top:.6rem">Ship To</div>
+    <div class="qp-bill-name" style="font-size:.95rem">${escQ(d.shipTo.name)}</div>
+    ${d.shipTo.address?`<div class="qp-bill-detail">${escQ(d.shipTo.address)}</div>`:''}
+  `:'';
+  return `
+  <div class="qp-topbar"></div>
+  <div class="qp-header">
+    <div class="qp-emblem"><img src="images/VBS_logo.png" alt="VBS Enterprises"/></div>
+    <div class="qp-hd-txt">
+      <h1>${QCOMPANY.name} <span style="font-size:1rem;color:#777;font-weight:400">${QCOMPANY.sub}</span></h1>
+      <div class="qp-tag">${QCOMPANY.tagline}</div>
+      <div class="qp-addr">${QCOMPANY.addr}<br/>Phone: ${QCOMPANY.phone}<br/>Email: ${QCOMPANY.email} &nbsp;|&nbsp; Web: ${QCOMPANY.web}</div>
+      <div class="qp-reg-row">
+        <div class="qp-reg-badge"><b>GSTIN</b>${QCOMPANY.gstin}</div>
+        <div class="qp-reg-badge"><b>FSSAI</b>${QCOMPANY.fssai}</div>
+        <div class="qp-reg-badge"><b>MSME</b>${QCOMPANY.msme}</div>
+      </div>
+    </div>
+  </div>
+  <div class="qp-title-bar">
+    <h2>Tax Invoice</h2>
+    <div class="qp-meta">
+      <b>Invoice No:</b> ${escQ(d.invoiceNumber)}<br/>
+      <b>Invoice Date:</b> ${dateStr}<br/>
+      <b>Terms:</b> ${escQ(d.terms)}<br/>
+      <b>Due Date:</b> ${dueStr}<br/>
+      <b>Place of Supply:</b> ${escQ(d.placeOfSupply)}
+    </div>
+  </div>
+  <div class="qp-bill" style="display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap">
+    <div>
+      <div class="qp-bill-label">Bill To</div>
+      <div class="qp-bill-name">${escQ(d.billTo.name)}</div>
+      ${d.billTo.address?`<div class="qp-bill-detail">${escQ(d.billTo.address)}</div>`:''}
+      ${d.billTo.phone?`<div class="qp-bill-detail">Ph: ${escQ(d.billTo.phone)}</div>`:''}
+      ${d.billTo.gstin?`<div class="qp-bill-detail"><b>GSTIN:</b> ${escQ(d.billTo.gstin)}</div>`:''}
+    </div>
+    <div>${shipBlock}</div>
+    <div class="inv-supply-badge ${inter?'inter':'intra'}">${inter?'Inter-State Supply (IGST)':'Intra-State Supply (CGST + SGST)'}</div>
+  </div>
+  <div class="qp-items">
+    <table class="tax-tbl">
+      <thead>
+        <tr class="grp"><th rowspan="2" style="width:26px">No.</th><th rowspan="2" style="text-align:left">Item &amp; Description</th><th rowspan="2" style="width:60px">HSN/SAC</th><th rowspan="2" style="width:60px">Qty</th><th rowspan="2" style="width:70px">Rate</th><th rowspan="2" style="width:85px">Taxable Value</th>${taxHeadGrp}<th rowspan="2" style="width:90px">Amount</th></tr>
+        <tr class="sub">${taxHeadSub}</tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="5" style="text-align:right">Sub Total</td><td class="num">₹${Number(d.subTotal).toLocaleString('en-IN',{maximumFractionDigits:2})}</td><td colspan="${taxColspan}"></td><td></td></tr>
+        ${inter
+          ?`<tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total IGST</td><td class="num">₹${Number(d.totalIgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>`
+          :`<tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total CGST + SGST</td><td class="num">₹${Number(d.totalCgst+d.totalSgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>`}
+        <tr><td colspan="${5+taxColspan+1}" style="text-align:right">Rounding</td><td class="num">${d.rounding>=0?'₹':'-₹'}${Math.abs(d.rounding).toFixed(2)}</td></tr>
+        <tr class="gt"><td colspan="${5+taxColspan+1}" style="text-align:right">Grand Total</td><td class="num">₹${Number(d.grandTotal).toLocaleString('en-IN')}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+  <div class="qp-words">Amount in Words: <b>${escQ(d.amountInWords)}</b></div>
+  <div class="qp-terms">
+    <h4>Terms &amp; Conditions</h4>
+    <ol>${tcList}</ol>
+  </div>
+  <div class="qp-bottom">
+    <div class="qp-bank">
+      <h4>Bank Details</h4>
+      <p><b>${QBANK.accHolder}</b><br/>Bank: ${QBANK.name}<br/>Branch: ${QBANK.branch}<br/>IFSC: ${QBANK.ifsc}<br/>A/c No: ${QBANK.acc}</p>
+    </div>
+    <div class="qp-sign">
+      <div class="qp-for">For ${QCOMPANY.name}</div>
+      <div class="qp-sig-line">Authorized Signature</div>
+      <div class="qp-sig-note">(Computer Generated)</div>
+    </div>
+  </div>`;
+}
+
+function generateInvoicePreview(){
+  const data=collectInvoiceData();
+  if(!data.billTo.name){ toast('⚠️','Please enter the Bill To customer name'); return null; }
+  if(!data.items.length){ toast('⚠️','Please add at least one item with description, quantity and rate'); return null; }
+  document.getElementById('invoice-preview').innerHTML=buildInvoicePreviewHTML(data);
+  document.getElementById('invoice-preview').scrollIntoView({behavior:'smooth',block:'start'});
+  return data;
+}
+
+async function saveInvoice(){
+  const data=generateInvoicePreview();
+  if(!data) return;
+  try{
+    const res=await fetch(`${API}/invoices`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+      body:JSON.stringify(data)
+    });
+    const d=await res.json();
+    if(!d.success) throw new Error(d.message);
+    iSavedInvoice=d.invoice;
+    document.getElementById('i-status-pill').textContent='Saved as '+d.invoice.invoiceNumber;
+    document.getElementById('i-status-pill').className='q-status saved';
+    document.getElementById('invoice-preview').innerHTML=buildInvoicePreviewHTML({...data,invoiceNumber:d.invoice.invoiceNumber});
+    toast('✅','Invoice saved as '+d.invoice.invoiceNumber);
+    loadIHistory();
+  }catch(e){ toast('❌',e.message); }
+}
+
+async function exportInvoiceAsPDF(filenameBase){
+  const el=document.getElementById('invoice-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌','PDF library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing PDF...');
+  try{
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    const imgData=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pdfWidth=pdf.internal.pageSize.getWidth();
+    const pdfHeight=pdf.internal.pageSize.getHeight();
+    const imgProps=pdf.getImageProperties(imgData);
+    const imgHeight=(imgProps.height*pdfWidth)/imgProps.width;
+    let heightLeft=imgHeight, position=0;
+    pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
+    heightLeft-=pdfHeight;
+    while(heightLeft>0){
+      position=heightLeft-imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
+      heightLeft-=pdfHeight;
+    }
+    pdf.save(filenameBase.replace(/\//g,'-')+'-Invoice.pdf');
+    toast('✅','PDF downloaded!');
+  }catch(e){ toast('❌','Could not generate PDF: '+e.message); }
+}
+
+async function exportInvoiceAsImage(filenameBase){
+  const el=document.getElementById('invoice-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'){ toast('❌','Image library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing image...');
+  try{
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filenameBase.replace(/\//g,'-')+'-Invoice.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('✅','Image downloaded!');
+  }catch(e){ toast('❌','Could not generate image: '+e.message); }
+}
+
+function downloadInvoicePDF(){
+  if(!document.getElementById('invoice-preview').innerHTML.trim()){ const d=generateInvoicePreview(); if(!d) return; }
+  exportInvoiceAsPDF(iSavedInvoice?iSavedInvoice.invoiceNumber:iNextNumber);
+}
+function downloadInvoiceImage(){
+  if(!document.getElementById('invoice-preview').innerHTML.trim()){ const d=generateInvoicePreview(); if(!d) return; }
+  exportInvoiceAsImage(iSavedInvoice?iSavedInvoice.invoiceNumber:iNextNumber);
+}
+
+function clearIForm(){
+  iItems=[{description:'',hsn:'',qty:1,unit:'Nos',rate:0,gstPct:5}];
+  document.getElementById('i-bname').value='';
+  document.getElementById('i-bgstin').value='';
+  document.getElementById('i-baddr').value='';
+  document.getElementById('i-bphone').value='';
+  document.getElementById('i-ship-same').checked=true;
+  document.getElementById('i-ship-fields').style.display='none';
+  document.getElementById('i-sname').value='';
+  document.getElementById('i-saddr').value='';
+  document.getElementById('i-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-duedate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-terms').value='Due on Receipt';
+  document.getElementById('i-pos').value='Tamil Nadu (33)';
+  document.querySelector('input[name="i-taxtype"][value="intra"]').checked=true;
+  onITaxTypeChange();
+  document.getElementById('i-tc').value=I_DEFAULT_TC.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  document.getElementById('invoice-preview').innerHTML='';
+  document.getElementById('i-status-pill').textContent='Not saved yet';
+  document.getElementById('i-status-pill').className='q-status unsaved';
+  iSavedInvoice=null;
+  renderIItemsTable();
+  loadINextNumber();
+}
+
+async function loadIHistory(){
+  try{
+    const res=await fetch(`${API}/invoices`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allInvoices=d.invoices;
+    renderIHistoryTable(allInvoices);
+  }catch(e){ /* silent — history is a convenience view */ }
+}
+function filterIHistory(){
+  const q=document.getElementById('i-srch').value.toLowerCase();
+  renderIHistoryTable(q?allInvoices.filter(x=>x.billTo.name.toLowerCase().includes(q)||x.invoiceNumber.toLowerCase().includes(q)):allInvoices);
+}
+function renderIHistoryTable(list){
+  const tb=document.getElementById('i-hist-tbody');
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No invoices created yet</td></tr>`; return; }
+  tb.innerHTML=list.map(inv=>{
+    const dateStr=new Date(inv.invoiceDate||inv.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    return `<tr>
+      <td><strong>${inv.invoiceNumber}</strong></td>
+      <td>${escQ(inv.billTo.name)}</td>
+      <td>${dateStr}</td>
+      <td>${inv.taxType==='inter'?'IGST':'CGST+SGST'}</td>
+      <td>₹${inv.grandTotal.toLocaleString('en-IN')}</td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="loadInvoiceFromHistory('${inv._id}')">👁 Load</button>
+        <button class="abtn tog" onclick="downloadHistoryInvoice('${inv._id}','pdf')">📄 PDF</button>
+        <button class="abtn tog" onclick="downloadHistoryInvoice('${inv._id}','image')">🖼 Image</button>
+        <button class="abtn del" onclick="cfDelInvoice('${inv._id}','${inv.invoiceNumber}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function loadInvoiceFromHistory(id){
+  const inv=allInvoices.find(x=>x._id===id);
+  if(!inv) return;
+  iSavedInvoice=inv;
+  document.getElementById('i-date').value=new Date(inv.invoiceDate||inv.createdAt).toISOString().slice(0,10);
+  document.getElementById('i-duedate').value=inv.dueDate?new Date(inv.dueDate).toISOString().slice(0,10):'';
+  document.getElementById('i-terms').value=inv.terms||'Due on Receipt';
+  document.getElementById('i-pos').value=inv.placeOfSupply||'Tamil Nadu (33)';
+  document.querySelector(`input[name="i-taxtype"][value="${inv.taxType==='inter'?'inter':'intra'}"]`).checked=true;
+  onITaxTypeChange();
+  document.getElementById('i-bname').value=inv.billTo.name||'';
+  document.getElementById('i-bgstin').value=inv.billTo.gstin||'';
+  document.getElementById('i-baddr').value=inv.billTo.address||'';
+  document.getElementById('i-bphone').value=inv.billTo.phone||'';
+  const shipSame=!inv.shipTo||(inv.shipTo.name===inv.billTo.name&&inv.shipTo.address===inv.billTo.address);
+  document.getElementById('i-ship-same').checked=shipSame;
+  document.getElementById('i-ship-fields').style.display=shipSame?'none':'grid';
+  document.getElementById('i-sname').value=(inv.shipTo&&inv.shipTo.name)||'';
+  document.getElementById('i-saddr').value=(inv.shipTo&&inv.shipTo.address)||'';
+  iItems=inv.items.map(it=>({description:it.description,hsn:it.hsn,qty:it.qty,unit:it.unit,rate:it.rate,gstPct:it.gstPct}));
+  renderIItemsTable();
+  document.getElementById('i-tc').value=(inv.termsConditions||[]).map((t,i)=>`${i+1}) ${t}`).join('\n');
+  document.getElementById('i-status-pill').textContent='Saved as '+inv.invoiceNumber;
+  document.getElementById('i-status-pill').className='q-status saved';
+  generateInvoicePreview();
+  document.querySelector('#tab-invoice .fc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function downloadHistoryInvoice(id,kind){
+  const inv=allInvoices.find(x=>x._id===id);
+  if(!inv) return;
+  const data={
+    invoiceNumber:inv.invoiceNumber, invoiceDate:inv.invoiceDate||inv.createdAt, dueDate:inv.dueDate,
+    terms:inv.terms, placeOfSupply:inv.placeOfSupply, taxType:inv.taxType,
+    billTo:inv.billTo, shipTo:inv.shipTo||{},
+    items:inv.items, subTotal:inv.subTotal, totalCgst:inv.totalCgst, totalSgst:inv.totalSgst, totalIgst:inv.totalIgst,
+    rounding:inv.rounding, grandTotal:inv.grandTotal, amountInWords:inv.amountInWords, termsConditions:inv.termsConditions||[]
+  };
+  const el=document.getElementById('invoice-preview');
+  const prevHTML=el.innerHTML;
+  el.innerHTML=buildInvoicePreviewHTML(data);
+  await new Promise(r=>setTimeout(r,60));
+  if(kind==='pdf') await exportInvoiceAsPDF(inv.invoiceNumber);
+  else await exportInvoiceAsImage(inv.invoiceNumber);
+  el.innerHTML=prevHTML;
+}
+
+function cfDelInvoice(id,invoiceNumber){
+  showCf(`Delete invoice ${invoiceNumber}?`,'This will permanently remove this invoice record. This cannot be undone.',async()=>{
+    const res=await fetch(`${API}/invoices/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadIHistory();}
     else toast('❌',d.message);
   });
 }
