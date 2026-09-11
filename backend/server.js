@@ -22,6 +22,7 @@ app.use('/api/purchaseprices', require('./routes/purchaseprices'));
 app.use('/api/purchases', require('./routes/purchases'));
 app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/quotations', require('./routes/quotations'));
+app.use('/api/invoices', require('./routes/invoices'));
 
 // ── Frontend static files AFTER API routes ──
 const FE = path.join(__dirname, '../frontend');
