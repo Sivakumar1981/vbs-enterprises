@@ -188,6 +188,7 @@ tr:hover td{background:var(--warm)}
 .qp-bottom{display:flex;justify-content:space-between;align-items:flex-end;padding:1.3rem 2.2rem 1.8rem;gap:1rem}
 .qp-bank h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.4rem;font-weight:700}
 .qp-bank p{font-size:.76rem;color:#444;line-height:1.55}
+.qp-bank .qp-thanks{margin-top:.5rem;font-style:italic;font-weight:600;color:var(--deep)}
 .qp-sign{text-align:center;min-width:170px}
 .qp-sign .qp-sig-line{border-top:1.5px solid #333;margin-top:2.6rem;padding-top:.35rem;font-size:.76rem;color:#333}
 .qp-sign .qp-for{font-size:.72rem;color:#555;margin-bottom:.2rem}
@@ -1843,7 +1844,7 @@ const QCOMPANY={
   email:'vbsenterprises7@gmail.com', web:'vbs-enterprises-92sz.onrender.com',
   gstin:'33FCHPS4318R1ZW', fssai:'22426477000262', msme:'UDYAM-TN-24-0183360'
 };
-const QBANK={ accHolder:'VBS Enterprises', name:'Indian Overseas Bank', branch:'Vanagaram', ifsc:'IOBA0002776', acc:'277602000000573' };
+const QBANK={ accHolder:'VBS Enterprises', acc:'277602000000573', ifsc:'IOBA0002776', accType:'Current', name:'Indian Overseas Bank', branch:'Vanagaram' };
 const Q_DEFAULT_TERMS=[
   'Above Price is Ex-Factory Price',
   'This Quotation is valid for One Month Only',
@@ -2038,8 +2039,9 @@ function buildQuotePreviewHTML(d){
   </div>
   <div class="qp-bottom">
     <div class="qp-bank">
-      <h4>Bank Details</h4>
-      <p><b>${QBANK.accHolder}</b><br/>Bank: ${QBANK.name}<br/>Branch: ${QBANK.branch}<br/>IFSC: ${QBANK.ifsc}<br/>A/c No: ${QBANK.acc}</p>
+      <h4>Bank &amp; Payment Details</h4>
+      <p>Account Holder Name - <b>${QBANK.accHolder}</b><br/>Account Number - ${QBANK.acc}<br/>IFSC - ${QBANK.ifsc}<br/>Account Type - ${QBANK.accType}<br/>Bank Name - ${QBANK.name}<br/>Branch Name - ${QBANK.branch}</p>
+      <p class="qp-thanks">Thanks for your business.</p>
     </div>
     <div class="qp-sign">
       <div class="qp-for">For ${QCOMPANY.name}</div>
@@ -2238,6 +2240,7 @@ const I_DEFAULT_TC=[
   'Goods once sold will not be taken back or exchanged',
   'Interest @18% p.a. will be charged if payment is not made within the due date',
   'All disputes are subject to Chennai jurisdiction only',
+  'Goods dispatched with E-way bills and delivered to purchase order address',
   'This is a computer-generated invoice and does not require a physical signature'
 ];
 const I_UNITS=['Nos','Kg','Litre','Tin','Box','Bag','Trip'];
@@ -2486,7 +2489,8 @@ function buildInvoicePreviewHTML(d){
         <tr><td colspan="5" style="text-align:right">Sub Total</td><td class="num">₹${Number(d.subTotal).toLocaleString('en-IN',{maximumFractionDigits:2})}</td><td colspan="${taxColspan}"></td><td></td></tr>
         ${inter
           ?`<tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total IGST</td><td class="num">₹${Number(d.totalIgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>`
-          :`<tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total CGST + SGST</td><td class="num">₹${Number(d.totalCgst+d.totalSgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>`}
+          :`<tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total CGST</td><td class="num">₹${Number(d.totalCgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>
+        <tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total SGST</td><td class="num">₹${Number(d.totalSgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>`}
         <tr><td colspan="${5+taxColspan+1}" style="text-align:right">Rounding</td><td class="num">${d.rounding>=0?'₹':'-₹'}${Math.abs(d.rounding).toFixed(2)}</td></tr>
         <tr class="gt"><td colspan="${5+taxColspan+1}" style="text-align:right">Grand Total</td><td class="num">₹${Number(d.grandTotal).toLocaleString('en-IN')}</td></tr>
       </tfoot>
@@ -2499,8 +2503,9 @@ function buildInvoicePreviewHTML(d){
   </div>
   <div class="qp-bottom">
     <div class="qp-bank">
-      <h4>Bank Details</h4>
-      <p><b>${QBANK.accHolder}</b><br/>Bank: ${QBANK.name}<br/>Branch: ${QBANK.branch}<br/>IFSC: ${QBANK.ifsc}<br/>A/c No: ${QBANK.acc}</p>
+      <h4>Bank &amp; Payment Details</h4>
+      <p>Account Holder Name - <b>${QBANK.accHolder}</b><br/>Account Number - ${QBANK.acc}<br/>IFSC - ${QBANK.ifsc}<br/>Account Type - ${QBANK.accType}<br/>Bank Name - ${QBANK.name}<br/>Branch Name - ${QBANK.branch}</p>
+      <p class="qp-thanks">Thanks for your business.</p>
     </div>
     <div class="qp-sign">
       <div class="qp-for">For ${QCOMPANY.name}</div>
