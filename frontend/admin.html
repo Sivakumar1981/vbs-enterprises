@@ -153,42 +153,42 @@ tr:hover td{background:var(--warm)}
 
 /* ── PRINTABLE QUOTATION LETTERHEAD ── */
 #quote-preview-wrap{overflow-x:auto;margin-top:1.5rem}
-#quote-preview{width:794px;min-height:1123px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:var(--sh-lg);position:relative}
-.qp-topbar{height:10px;background:linear-gradient(90deg,var(--deep),var(--gold) 50%,var(--deep))}
-.qp-header{display:flex;align-items:center;gap:1.1rem;padding:1.6rem 2.2rem 1.2rem;border-bottom:3px solid var(--gold)}
-.qp-emblem{width:72px;height:72px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.25);border:2px solid var(--gold);overflow:hidden}
+#quote-preview{width:794px;min-height:1123px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:0 12px 48px rgba(26,15,0,.18);position:relative}
+.qp-topbar{height:10px;background:linear-gradient(90deg,#1a0f00,#c9963a 50%,#1a0f00)}
+.qp-header{display:flex;align-items:center;gap:1.1rem;padding:1.6rem 2.2rem 1.2rem;border-bottom:3px solid #c9963a}
+.qp-emblem{width:72px;height:72px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.25);border:2px solid #c9963a;overflow:hidden}
 .qp-emblem img{width:100%;height:100%;object-fit:contain}
-.qp-hd-txt h1{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--deep);letter-spacing:.02em;line-height:1.15}
-.qp-hd-txt .qp-tag{font-size:.72rem;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-weight:700;margin:.15rem 0 .4rem}
+.qp-hd-txt h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.6rem;color:#1a0f00;line-height:1.15}
+.qp-hd-txt .qp-tag{font-size:.72rem;color:#c9963a;text-transform:uppercase;font-weight:700;margin:.15rem 0 .4rem}
 .qp-hd-txt .qp-addr{font-size:.72rem;color:#555;line-height:1.5}
-.qp-reg-row{display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap}
-.qp-reg-badge{font-size:.66rem;background:#fdf6ec;border:1px solid var(--gold);color:var(--deep);padding:.18rem .55rem;border-radius:4px;font-weight:600;white-space:nowrap}
-.qp-reg-badge b{color:var(--gold);font-weight:700;margin-right:.3rem;letter-spacing:.03em}
+.qp-reg-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.qp-reg-badge{font-size:.66rem;background:#fdf6ec;border:1px solid #c9963a;color:#1a0f00;padding:.24rem .8rem;border-radius:4px;font-weight:600;white-space:nowrap;line-height:1.5}
+.qp-reg-badge b{color:#c9963a;font-weight:700;margin-right:.35rem}
 .qp-title-bar{display:flex;justify-content:space-between;align-items:flex-end;padding:1.1rem 2.2rem;background:linear-gradient(90deg,#fdf6ec,#fff)}
-.qp-title-bar h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;letter-spacing:.12em;color:var(--deep);text-transform:uppercase}
+.qp-title-bar h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.3rem;color:#1a0f00;text-transform:uppercase}
 .qp-meta{text-align:right;font-size:.76rem;color:#555;line-height:1.6}
-.qp-meta b{color:var(--deep)}
+.qp-meta b{color:#1a0f00}
 .qp-bill{padding:0 2.2rem 1rem}
-.qp-bill-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);font-weight:700;margin-bottom:.3rem}
-.qp-bill-name{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--deep)}
+.qp-bill-label{font-size:.65rem;text-transform:uppercase;color:#c9963a;font-weight:700;margin-bottom:.3rem}
+.qp-bill-name{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.15rem;font-weight:700;color:#1a0f00}
 .qp-bill-detail{font-size:.78rem;color:#555;line-height:1.5;margin-top:.15rem}
 .qp-items{padding:0 2.2rem}
 .qp-items table{width:100%;border-collapse:collapse}
-.qp-items th{background:var(--deep);color:var(--gold-l);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;padding:.55rem .6rem;text-align:left}
+.qp-items th{background:#1a0f00;color:#e8c068;font-size:.68rem;text-transform:uppercase;padding:.55rem .6rem;text-align:left}
 .qp-items th.num,.qp-items td.num{text-align:right}
-.qp-items td{padding:.55rem .6rem;font-size:.82rem;border-bottom:1px solid #eee}
+.qp-items td{padding:.55rem .6rem;font-size:.82rem;border-bottom:1px solid #eee;color:#1a1a1a}
 .qp-items tr:nth-child(even) td{background:#fdfaf4}
-.qp-total-row td{font-weight:700;border-top:2px solid var(--deep);background:#fdf6ec!important}
-.qp-gt-row td{font-weight:700;font-size:.95rem;color:var(--deep);background:var(--warm)!important;border-top:2px solid var(--gold)}
+.qp-total-row td{font-weight:700;border-top:2px solid #1a0f00;background:#fdf6ec!important;color:#1a0f00}
+.qp-gt-row td{font-weight:700;font-size:.95rem;color:#1a0f00;background:#f5e6cc!important;border-top:2px solid #c9963a}
 .qp-words{padding:.7rem 2.2rem;font-size:.78rem;font-style:italic;color:#555}
-.qp-words b{color:var(--deep);font-style:normal}
+.qp-words b{color:#1a0f00;font-style:normal}
 .qp-terms{padding:.9rem 2.2rem 0}
-.qp-terms h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.4rem;font-weight:700}
+.qp-terms h4{font-size:.75rem;text-transform:uppercase;color:#c9963a;margin-bottom:.4rem;font-weight:700}
 .qp-terms ol{padding-left:1.1rem;font-size:.76rem;color:#444;line-height:1.65}
 .qp-bottom{display:flex;justify-content:space-between;align-items:flex-end;padding:1.3rem 2.2rem 1.8rem;gap:1rem}
-.qp-bank h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.4rem;font-weight:700}
+.qp-bank h4{font-size:.75rem;text-transform:uppercase;color:#c9963a;margin-bottom:.4rem;font-weight:700}
 .qp-bank p{font-size:.76rem;color:#444;line-height:1.55}
-.qp-bank .qp-thanks{margin-top:.5rem;font-style:italic;font-weight:600;color:var(--deep)}
+.qp-bank .qp-thanks{margin-top:.5rem;font-style:italic;font-weight:600;color:#1a0f00}
 .qp-sign{text-align:center;min-width:170px}
 .qp-sign .qp-sig-line{border-top:1.5px solid #333;margin-top:2.6rem;padding-top:.35rem;font-size:.76rem;color:#333}
 .qp-sign .qp-for{font-size:.72rem;color:#555;margin-bottom:.2rem}
@@ -197,18 +197,18 @@ tr:hover td{background:var(--warm)}
 
 /* ── TAX INVOICE (extends .qp-* styles above) ── */
 #invoice-preview-wrap{overflow-x:auto;margin-top:1.5rem}
-#invoice-preview{width:794px;min-height:1123px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:var(--sh-lg);position:relative}
+#invoice-preview{width:794px;min-height:1123px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:0 12px 48px rgba(26,15,0,.18);position:relative}
 @media(max-width:860px){#invoice-preview{width:100%;padding:0}}
 .tax-tbl{width:100%;border-collapse:collapse}
-.tax-tbl th,.tax-tbl td{padding:.4rem .35rem;font-size:.68rem;border-bottom:1px solid #eee}
-.tax-tbl thead tr.grp th{background:var(--deep);color:var(--gold-l);text-transform:uppercase;letter-spacing:.04em;text-align:center;border-bottom:none;border-left:1px solid rgba(255,255,255,.15)}
+.tax-tbl th,.tax-tbl td{padding:.4rem .35rem;font-size:.68rem;border-bottom:1px solid #eee;color:#1a1a1a}
+.tax-tbl thead tr.grp th{background:#1a0f00;color:#e8c068;text-transform:uppercase;text-align:center;border-bottom:none;border-left:1px solid rgba(255,255,255,.15)}
 .tax-tbl thead tr.sub th{background:#2d1a00;color:#e8ddd0;text-align:center;font-size:.62rem;border-left:1px solid rgba(255,255,255,.15)}
 .tax-tbl thead tr.sub th:first-child,.tax-tbl thead tr.grp th:first-child{border-left:none}
 .tax-tbl tbody td.num{text-align:right}
 .tax-tbl tbody tr:nth-child(even) td{background:#fdfaf4}
-.tax-tbl tfoot td{font-weight:700;border-top:2px solid var(--deep);background:#fdf6ec}
-.tax-tbl tfoot tr.gt td{font-size:.85rem;color:var(--deep);background:var(--warm);border-top:2px solid var(--gold)}
-.inv-supply-badge{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.2rem .7rem;border-radius:20px;margin-top:.3rem}
+.tax-tbl tfoot td{font-weight:700;border-top:2px solid #1a0f00;background:#fdf6ec;color:#1a0f00}
+.tax-tbl tfoot tr.gt td{font-size:.85rem;color:#1a0f00;background:#f5e6cc;border-top:2px solid #c9963a}
+.inv-supply-badge{display:inline-block;font-size:.66rem;font-weight:700;text-transform:uppercase;padding:.25rem .85rem;border-radius:20px;margin-top:.3rem;white-space:nowrap}
 .inv-supply-badge.intra{background:#d4edda;color:#155724}
 .inv-supply-badge.inter{background:#cce5ff;color:#004085}
 .inv-taxtype-toggle{display:flex;gap:.9rem;margin-top:.35rem;flex-wrap:wrap}
@@ -2091,6 +2091,8 @@ async function exportQuoteAsPDF(filenameBase){
   if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌','PDF library failed to load — check your internet connection'); return; }
   toast('⏳','Preparing PDF...');
   try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
     const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
     const imgData=canvas.toDataURL('image/png');
     const {jsPDF}=window.jspdf;
@@ -2098,16 +2100,13 @@ async function exportQuoteAsPDF(filenameBase){
     const pdfWidth=pdf.internal.pageSize.getWidth();
     const pdfHeight=pdf.internal.pageSize.getHeight();
     const imgProps=pdf.getImageProperties(imgData);
-    const imgHeight=(imgProps.height*pdfWidth)/imgProps.width;
-    let heightLeft=imgHeight, position=0;
-    pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
-    heightLeft-=pdfHeight;
-    while(heightLeft>0){
-      position=heightLeft-imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
-      heightLeft-=pdfHeight;
-    }
+    // Scale the whole document to fit on a single page (shrink to fit, never split across pages)
+    const ratio=Math.min(pdfWidth/imgProps.width, pdfHeight/imgProps.height);
+    const imgWidth=imgProps.width*ratio;
+    const imgHeight=imgProps.height*ratio;
+    const x=(pdfWidth-imgWidth)/2;
+    const y=(pdfHeight-imgHeight)/2;
+    pdf.addImage(imgData,'PNG',x,y,imgWidth,imgHeight);
     pdf.save(filenameBase.replace(/\//g,'-')+'-Quotation.pdf');
     toast('✅','PDF downloaded!');
   }catch(e){ toast('❌','Could not generate PDF: '+e.message); }
@@ -2119,6 +2118,8 @@ async function exportQuoteAsImage(filenameBase){
   if(typeof html2canvas==='undefined'){ toast('❌','Image library failed to load — check your internet connection'); return; }
   toast('⏳','Preparing image...');
   try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
     const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
     const url=canvas.toDataURL('image/png');
     const a=document.createElement('a');
@@ -2550,6 +2551,8 @@ async function exportInvoiceAsPDF(filenameBase){
   if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌','PDF library failed to load — check your internet connection'); return; }
   toast('⏳','Preparing PDF...');
   try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
     const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
     const imgData=canvas.toDataURL('image/png');
     const {jsPDF}=window.jspdf;
@@ -2557,16 +2560,13 @@ async function exportInvoiceAsPDF(filenameBase){
     const pdfWidth=pdf.internal.pageSize.getWidth();
     const pdfHeight=pdf.internal.pageSize.getHeight();
     const imgProps=pdf.getImageProperties(imgData);
-    const imgHeight=(imgProps.height*pdfWidth)/imgProps.width;
-    let heightLeft=imgHeight, position=0;
-    pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
-    heightLeft-=pdfHeight;
-    while(heightLeft>0){
-      position=heightLeft-imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData,'PNG',0,position,pdfWidth,imgHeight);
-      heightLeft-=pdfHeight;
-    }
+    // Scale the whole document to fit on a single page (shrink to fit, never split across pages)
+    const ratio=Math.min(pdfWidth/imgProps.width, pdfHeight/imgProps.height);
+    const imgWidth=imgProps.width*ratio;
+    const imgHeight=imgProps.height*ratio;
+    const x=(pdfWidth-imgWidth)/2;
+    const y=(pdfHeight-imgHeight)/2;
+    pdf.addImage(imgData,'PNG',x,y,imgWidth,imgHeight);
     pdf.save(filenameBase.replace(/\//g,'-')+'-Invoice.pdf');
     toast('✅','PDF downloaded!');
   }catch(e){ toast('❌','Could not generate PDF: '+e.message); }
@@ -2578,6 +2578,8 @@ async function exportInvoiceAsImage(filenameBase){
   if(typeof html2canvas==='undefined'){ toast('❌','Image library failed to load — check your internet connection'); return; }
   toast('⏳','Preparing image...');
   try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
     const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
     const url=canvas.toDataURL('image/png');
     const a=document.createElement('a');
