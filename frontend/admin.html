@@ -372,7 +372,7 @@ tr:hover td{background:var(--warm)}
           </div>
 
           <div class="fgrid">
-            <div class="field"><label>Customer / Company Name *</label><input type="text" id="q-cname" placeholder="e.g. Shree Sai Enterprises"/></div>
+            <div class="field"><label>Customer / Company Name *</label><input type="text" id="q-cname" placeholder="Customer / company name"/></div>
             <div class="field"><label>Quote Date</label><input type="date" id="q-date"/></div>
             <div class="field full"><label>Customer Address</label><input type="text" id="q-caddr" placeholder="No, Street, City - Pincode"/></div>
             <div class="field"><label>Phone</label><input type="text" id="q-cphone" placeholder="e.g. 9876543210"/></div>
@@ -450,7 +450,7 @@ tr:hover td{background:var(--warm)}
 
           <h4 style="margin:1.2rem 0 .5rem;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.05em">Bill To</h4>
           <div class="fgrid">
-            <div class="field"><label>Customer / Company Name *</label><input type="text" id="i-bname" placeholder="e.g. Shree Sai Enterprises" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Customer / Company Name *</label><input type="text" id="i-bname" placeholder="Customer / company name" onchange="markIUnsaved()"/></div>
             <div class="field"><label>GSTIN (if registered)</label><input type="text" id="i-bgstin" placeholder="e.g. 33XXXXX0000X1ZX" onchange="markIUnsaved()"/></div>
             <div class="field full"><label>Billing Address</label><input type="text" id="i-baddr" placeholder="No, Street, City - Pincode" onchange="markIUnsaved()"/></div>
             <div class="field"><label>Phone</label><input type="text" id="i-bphone" placeholder="e.g. 9876543210" onchange="markIUnsaved()"/></div>
@@ -2080,6 +2080,7 @@ async function saveQuotation(){
     document.getElementById('q-status-pill').className='q-status saved';
     document.getElementById('quote-preview').innerHTML=buildQuotePreviewHTML({...data,quoteNumber:d.quotation.quoteNumber});
     toast('✅','Quotation saved as '+d.quotation.quoteNumber);
+    loadQNextNumber();
     loadQHistory();
   }catch(e){ toast('❌',e.message); }
 }
@@ -2536,6 +2537,7 @@ async function saveInvoice(){
     document.getElementById('i-status-pill').className='q-status saved';
     document.getElementById('invoice-preview').innerHTML=buildInvoicePreviewHTML({...data,invoiceNumber:d.invoice.invoiceNumber});
     toast('✅','Invoice saved as '+d.invoice.invoiceNumber);
+    loadINextNumber();
     loadIHistory();
   }catch(e){ toast('❌',e.message); }
 }
