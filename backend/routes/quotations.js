@@ -3,12 +3,22 @@ const router     = express.Router();
 const Quotation  = require('../models/Quotation');
 const auth       = require('../middleware/auth');
 
+// Next number = (highest existing number) + 1. Using countDocuments() breaks after any deletion
+// (count+1 can equal a number that already exists -> duplicate key -> save silently fails).
+async function nextQuoteNumber() {
+  const docs = await Quotation.find({}, 'quoteNumber').lean();
+  let max = 0;
+  for (const d of docs) {
+    const m = /(\d+)\s*$/.exec(d.quoteNumber || '');
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `VBS/Q-${String(max + 1).padStart(4, '0')}`;
+}
+
 // GET next quote number (admin only) — used by the admin form to preview the number before saving
 router.get('/next-number', auth, async (req, res) => {
   try {
-    const count = await Quotation.countDocuments();
-    const next  = `VBS/Q-${String(count + 1).padStart(4, '0')}`;
-    res.json({ success: true, quoteNumber: next });
+    res.json({ success: true, quoteNumber: await nextQuoteNumber() });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
@@ -40,23 +50,27 @@ router.post('/', auth, async (req, res) => {
     if (!customerName) return res.status(400).json({ success: false, message: 'Customer name is required' });
     if (!items || !items.length) return res.status(400).json({ success: false, message: 'At least one item is required' });
 
-    const count = await Quotation.countDocuments();
-    const quoteNumber = `VBS/Q-${String(count + 1).padStart(4, '0')}`;
-
-    const quotation = new Quotation({
-      quoteNumber,
-      quoteDate: quoteDate ? new Date(quoteDate) : Date.now(),
-      customerName,
-      customerAddress: customerAddress || '',
-      customerPhone: customerPhone || '',
-      customerEmail: customerEmail || '',
-      items,
-      deliveryCost: deliveryCost || 0,
-      grandTotal,
-      amountInWords: amountInWords || '',
-      terms: terms || []
-    });
-    await quotation.save();
+    // Retry a few times in case two saves race for the same number
+    let quotation, lastErr;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const quoteNumber = await nextQuoteNumber();
+      quotation = new Quotation({
+        quoteNumber,
+        quoteDate: quoteDate ? new Date(quoteDate) : Date.now(),
+        customerName,
+        customerAddress: customerAddress || '',
+        customerPhone: customerPhone || '',
+        customerEmail: customerEmail || '',
+        items,
+        deliveryCost: deliveryCost || 0,
+        grandTotal,
+        amountInWords: amountInWords || '',
+        terms: terms || []
+      });
+      try { await quotation.save(); lastErr = null; break; }
+      catch (e) { if (e.code === 11000) { lastErr = e; continue; } throw e; }
+    }
+    if (lastErr) throw lastErr;
     res.status(201).json({ success: true, message: 'Quotation created', quotation });
   } catch (err) {
     if (err.code === 11000) {
