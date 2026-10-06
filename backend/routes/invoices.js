@@ -3,12 +3,21 @@ const router  = express.Router();
 const Invoice = require('../models/Invoice');
 const auth    = require('../middleware/auth');
 
+// Next number = (highest existing number) + 1 (countDocuments breaks after deletions).
+async function nextInvoiceNumber() {
+  const docs = await Invoice.find({}, 'invoiceNumber').lean();
+  let max = 0;
+  for (const d of docs) {
+    const m = /(\d+)\s*$/.exec(d.invoiceNumber || '');
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `VBS/INV-${String(max + 1).padStart(4, '0')}`;
+}
+
 // GET next invoice number (admin only) — used by the admin form to preview the number before saving
 router.get('/next-number', auth, async (req, res) => {
   try {
-    const count = await Invoice.countDocuments();
-    const next  = `VBS/INV-${String(count + 1).padStart(4, '0')}`;
-    res.json({ success: true, invoiceNumber: next });
+    res.json({ success: true, invoiceNumber: await nextInvoiceNumber() });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
@@ -42,25 +51,28 @@ router.post('/', auth, async (req, res) => {
     if (!billTo || !billTo.name) return res.status(400).json({ success: false, message: 'Bill To name is required' });
     if (!items || !items.length) return res.status(400).json({ success: false, message: 'At least one item is required' });
 
-    const count = await Invoice.countDocuments();
-    const invoiceNumber = `VBS/INV-${String(count + 1).padStart(4, '0')}`;
-
-    const invoice = new Invoice({
-      invoiceNumber,
-      invoiceDate: invoiceDate ? new Date(invoiceDate) : Date.now(),
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      terms: terms || 'Due on Receipt',
-      placeOfSupply: placeOfSupply || 'Tamil Nadu (33)',
-      taxType: taxType === 'inter' ? 'inter' : 'intra',
-      billTo, shipTo: shipTo || {},
-      items,
-      subTotal, totalCgst: totalCgst || 0, totalSgst: totalSgst || 0, totalIgst: totalIgst || 0,
-      rounding: rounding || 0, grandTotal,
-      amountInWords: amountInWords || '',
-      termsConditions: termsConditions || [],
-      notes: notes || ''
-    });
-    await invoice.save();
+    let invoice, lastErr;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const invoiceNumber = await nextInvoiceNumber();
+      invoice = new Invoice({
+        invoiceNumber,
+        invoiceDate: invoiceDate ? new Date(invoiceDate) : Date.now(),
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        terms: terms || 'Due on Receipt',
+        placeOfSupply: placeOfSupply || 'Tamil Nadu (33)',
+        taxType: taxType === 'inter' ? 'inter' : 'intra',
+        billTo, shipTo: shipTo || {},
+        items,
+        subTotal, totalCgst: totalCgst || 0, totalSgst: totalSgst || 0, totalIgst: totalIgst || 0,
+        rounding: rounding || 0, grandTotal,
+        amountInWords: amountInWords || '',
+        termsConditions: termsConditions || [],
+        notes: notes || ''
+      });
+      try { await invoice.save(); lastErr = null; break; }
+      catch (e) { if (e.code === 11000) { lastErr = e; continue; } throw e; }
+    }
+    if (lastErr) throw lastErr;
     res.status(201).json({ success: true, message: 'Invoice created', invoice });
   } catch (err) {
     if (err.code === 11000) {
