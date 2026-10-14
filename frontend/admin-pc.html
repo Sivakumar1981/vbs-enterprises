@@ -1,0 +1,3579 @@
+<!DOCTYPE html><!-- VBS Admin v6 - 04May2026 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VBS Billing Software — PC Version</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--gold:#c9963a;--gold-l:#e8c068;--deep:#1a0f00;--cream:#fdf6ec;--warm:#f5e6cc;--text:#2d1a00;--muted:#8a7060;--card:#fff8f0;--border:#e8d5b8;--sh:0 4px 20px rgba(26,15,0,.10);--sh-lg:0 12px 48px rgba(26,15,0,.18)}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#f0e8d8;color:var(--text);height:100vh;overflow:hidden}
+button{cursor:pointer;font-family:'DM Sans',sans-serif}
+img{max-width:100%;display:block}
+#login-screen{min-height:100vh;background:var(--deep);background-image:radial-gradient(ellipse at 30% 50%,rgba(201,150,58,.18),transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(139,58,15,.2),transparent 60%);display:flex;align-items:center;justify-content:center}
+.lcard{background:var(--card);border-radius:20px;padding:2.5rem;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);border:1.5px solid var(--border)}
+.lcard-logo{height:90px;margin:0 auto 1rem;object-fit:contain}
+.lcard h1{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--deep)}
+.lcard>p{color:var(--muted);font-size:.82rem;margin-bottom:1.75rem;letter-spacing:.06em;text-transform:uppercase}
+.lform{display:flex;flex-direction:column;gap:.85rem;text-align:left}
+.lform label{font-size:.72rem;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;font-weight:500}
+.lform input{border:1.5px solid var(--border);background:#fff;padding:.65rem .9rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border .2s;width:100%}
+.lform input:focus{border-color:var(--gold)}
+.lerr{background:#fee2e2;color:#b91c1c;padding:.6rem .9rem;border-radius:8px;font-size:.82rem;display:none}
+.btn-login{background:var(--gold);color:var(--deep);border:none;padding:.9rem;border-radius:10px;font-size:1rem;font-weight:700;width:100%;transition:all .2s;margin-top:.25rem}
+.btn-login:hover{background:var(--gold-l);transform:translateY(-2px)}
+#admin-app{display:none;height:100vh;overflow:hidden}
+.app-wrap{display:flex;height:100vh}
+.sidebar{width:230px;background:var(--deep);display:flex;flex-direction:column;border-right:2px solid var(--gold);flex-shrink:0;transition:transform .3s}
+.sb-top{padding:1.1rem 1rem;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:.65rem}
+.sb-top img{height:44px;object-fit:contain}
+.sb-top-text h2{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--gold-l);font-weight:700;line-height:1.1}
+.sb-top-text span{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.sb-nav{flex:1;padding:.5rem 0}
+.sn{display:block;width:100%;background:none;border:none;color:#bbb;text-align:left;padding:.72rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:500;border-left:3px solid transparent;transition:all .2s}
+.sn:hover{color:var(--gold-l);background:rgba(201,150,58,.08)}
+.sn.active{color:var(--gold-l);background:rgba(201,150,58,.12);border-left-color:var(--gold);font-weight:700}
+.sb-btns{padding:.75rem 1rem 1.25rem;display:flex;flex-direction:column;gap:.5rem}
+.sb-btns a,.sb-btns button{display:block;text-align:center;padding:.55rem;border-radius:8px;font-size:.8rem;font-weight:600;text-decoration:none;transition:all .2s}
+.btn-logout-sb{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+.btn-logout-sb:hover{background:rgba(239,68,68,.25);color:#fff}
+.btn-visit{background:rgba(201,150,58,.12);border:1px solid rgba(201,150,58,.3);color:var(--gold-l)}
+.btn-visit:hover{background:rgba(201,150,58,.22)}
+.admin-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1.5px solid var(--border);padding:.85rem 1.5rem;display:flex;align-items:center;gap:.75rem;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.topbar h3{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:700;color:var(--deep)}
+.topbar span{font-size:.8rem;color:var(--muted)}
+.ham-admin{display:none;background:none;border:none;font-size:1.4rem;color:var(--text)}
+.tab-content{flex:1;overflow-y:auto;padding:1.5rem}
+.tab{display:none}
+.tab.active{display:block;animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:1.75rem}
+.stat{background:var(--deep);border-radius:13px;padding:1.35rem;text-align:center;border:1.5px solid rgba(201,150,58,.25);box-shadow:var(--sh)}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:var(--gold-l);font-weight:700;line-height:1}
+.stat-l{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:.4rem}
+.fc{background:var(--card);border:1.5px solid var(--border);border-radius:15px;padding:1.5rem;box-shadow:var(--sh);margin-bottom:1.5rem}
+.fc h3{font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--deep);margin-bottom:1.1rem}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.fgrid .full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:.3rem}
+label{font-size:.7rem;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;font-weight:500}
+input,select,textarea{border:1.5px solid var(--border);background:#fff;padding:.62rem .85rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--text);outline:none;transition:border .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+textarea{resize:vertical;min-height:68px}
+input[type=file]{padding:.42rem .85rem}
+.fact{display:flex;gap:.65rem;margin-top:.9rem}
+.tc{background:var(--card);border:1.5px solid var(--border);border-radius:15px;overflow:hidden;box-shadow:var(--sh)}
+.tc-top{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;border-bottom:1.5px solid var(--border);flex-wrap:wrap;gap:.75rem}
+.tc-top h3{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--deep)}
+.tc-top input{max-width:200px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--deep)}
+th{color:var(--gold-l);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;padding:.85rem 1rem;text-align:left;white-space:nowrap}
+td{padding:.85rem 1rem;font-size:.84rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--warm)}
+.pimg{width:52px;height:52px;border-radius:8px;overflow:hidden;background:var(--warm);display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.pimg img{width:100%;height:100%;object-fit:cover}
+.td-acts{display:flex;gap:.4rem;flex-wrap:wrap}
+.oc{background:var(--card);border:1.5px solid var(--border);border-radius:13px;padding:1.25rem;box-shadow:var(--sh);margin-bottom:.9rem}
+.oc-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:.55rem}
+.oc-id{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--deep)}
+.oc-date{font-size:.72rem;color:var(--muted)}
+.oc-cust{display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.83rem;color:var(--muted);margin-bottom:.6rem}
+.oc-cust strong{color:var(--text)}
+.oc-items{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.8rem}
+.ichip{background:var(--warm);border:1px solid var(--border);padding:.2rem .6rem;border-radius:20px;font-size:.76rem;color:var(--text)}
+.oc-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.65rem}
+.oc-total{font-size:1.15rem;font-weight:700;color:var(--gold)}
+.ssel{border:1.5px solid var(--border);background:#fff;padding:.38rem .8rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;outline:none;cursor:pointer}
+.cust-table{margin-top:1rem}
+.spill{display:inline-flex;align-items:center;padding:.2rem .75rem;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.spill.new{background:#fef3c7;color:#92400e}
+.spill.confirmed{background:#dbeafe;color:#1e40af}
+.spill.processing{background:#ede9fe;color:#5b21b6}
+.spill.ready{background:#d1fae5;color:#065f46}
+.spill.delivered{background:#f0fdf4;color:#166534}
+.spill.cancelled{background:#fee2e2;color:#b91c1c}
+.cat-tag{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700}
+.cat-tag.saree{background:#fce7f3;color:#9d174d}.cat-tag.nighty{background:#ede9fe;color:#5b21b6}.cat-tag.chudidhar{background:#fef3c7;color:#92400e}.cat-tag.blouse{background:#fdf2f8;color:#be185d}.cat-tag.ghee{background:#fef9c3;color:#854d0e}.cat-tag.honey{background:#ffedd5;color:#9a3412}.cat-tag.peanut{background:#f3e8d2;color:#7c4a03}
+.cat-tag.oil{background:#fef3c7;color:#92400e}
+.cat-tag.rice{background:#d1fae5;color:#065f46}
+.cat-tag.other{background:#e0e7ff;color:#3730a3}
+.stk-chip{padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600}
+.stk-chip.in{background:#d1fae5;color:#065f46}
+.stk-chip.low{background:#fef3c7;color:#92400e}
+.stk-chip.out{background:#fee2e2;color:#b91c1c}
+.btn-g{background:var(--gold);color:var(--deep);border:none;padding:.65rem 1.3rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:700;transition:all .2s}
+.btn-g:hover{background:var(--gold-l)}
+.btn-gh{background:none;border:1.5px solid var(--border);color:var(--muted);padding:.6rem 1.1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.83rem;transition:all .2s}
+.btn-gh:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:#ef4444;color:#fff;border:none;padding:.6rem 1.1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:600;transition:background .2s}
+.btn-danger:hover{background:#dc2626}
+.abtn{padding:.28rem .7rem;border-radius:6px;font-size:.74rem;font-weight:600;border:1.5px solid;font-family:'DM Sans',sans-serif;transition:all .15s}
+.abtn.edit{color:var(--gold);border-color:var(--gold);background:none}
+.abtn.edit:hover{background:var(--gold);color:var(--deep)}
+.abtn.del{color:#ef4444;border-color:#fca5a5;background:none}
+.abtn.del:hover{background:#fee2e2}
+.abtn.tog{color:#6b7280;border-color:#d1d5db;background:none;font-size:.7rem}
+.abtn.tog:hover{background:#f3f4f6}
+.movl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center;padding:1rem}
+.movl.open{display:flex}
+.mbox{background:var(--card);border-radius:16px;padding:1.6rem;width:100%;max-width:380px;box-shadow:var(--sh-lg)}
+.mbox h3{font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--deep);margin-bottom:.25rem}
+.mbox p{color:var(--muted);font-size:.85rem;margin:.65rem 0 1.35rem}
+.mbox .macts{display:flex;gap:.65rem}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:700;background:var(--deep);color:#fff;border:2px solid var(--gold);border-radius:12px;padding:.8rem 1.2rem;display:flex;align-items:center;gap:.5rem;box-shadow:var(--sh-lg);font-size:.84rem;transform:translateY(120%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.toast.show{transform:translateY(0)}
+.empty{text-align:center;padding:2.5rem 2rem;color:var(--muted)}
+.empty h3{font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--text);margin-top:.5rem}
+.spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;margin:2rem auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:768px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:300;transform:translateX(-100%)}.sidebar.open{transform:translateX(0);box-shadow:var(--sh-lg)}.ham-admin{display:block}.fgrid{grid-template-columns:1fr}}
+
+/* ── QUOTATION BUILDER ── */
+.qi-tbl{width:100%;border-collapse:collapse;margin-top:.4rem}
+.qi-tbl th{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:.4rem .5rem;border-bottom:1.5px solid var(--border)}
+.qi-tbl td{padding:.4rem .5rem;vertical-align:top}
+.qi-tbl input,.qi-tbl select{width:100%;border:1.5px solid var(--border);background:#fff;padding:.5rem .6rem;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);outline:none;transition:border .2s}
+.qi-tbl input:focus,.qi-tbl select:focus{border-color:var(--gold)}
+.qi-tbl input.qi-particulars{min-width:200px}
+.qi-tbl input.qi-qty,.qi-tbl input.qi-rate{width:90px}
+.qi-amt{font-weight:700;color:var(--deep);white-space:nowrap;padding-top:.65rem;display:block}
+.qi-rm{background:none;border:1.5px solid #fca5a5;color:#ef4444;border-radius:7px;width:32px;height:32px;font-size:.9rem;flex-shrink:0}
+.qi-rm:hover{background:#fee2e2}
+.qi-add{margin-top:.7rem;background:none;border:1.5px dashed var(--gold);color:var(--gold);padding:.55rem 1rem;border-radius:8px;font-size:.82rem;font-weight:600;width:100%}
+.qi-add:hover{background:rgba(201,150,58,.08)}
+.qterms-box textarea{min-height:110px;font-family:'DM Sans',sans-serif;line-height:1.6}
+.q-actions{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:1.1rem}
+.q-status{font-size:.72rem;padding:.15rem .55rem;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.q-status.saved{background:#d1fae5;color:#065f46}
+.q-status.unsaved{background:#fef3c7;color:#92400e}
+
+/* ── PRINTABLE QUOTATION LETTERHEAD ── */
+#quote-preview-wrap{overflow-x:auto;margin-top:1.5rem}
+#quote-preview{width:794px;min-height:560px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:0 12px 48px rgba(26,15,0,.18);position:relative}
+.qp-topbar{height:10px;background:linear-gradient(90deg,#1a0f00,#c9963a 50%,#1a0f00)}
+.qp-header{display:flex;align-items:center;gap:1.1rem;padding:1.6rem 2.2rem 1.2rem;border-bottom:3px solid #c9963a}
+.qp-emblem{width:72px;height:72px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.25);border:2px solid #c9963a;overflow:hidden}
+.qp-emblem img{width:100%;height:100%;object-fit:contain}
+.qp-hd-txt h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.6rem;color:#1a0f00;line-height:1.15}
+.qp-hd-txt .qp-tag{font-size:.72rem;color:#c9963a;text-transform:uppercase;font-weight:700;margin:.15rem 0 .4rem}
+.qp-hd-txt .qp-addr{font-size:.72rem;color:#555;line-height:1.5}
+.qp-reg-row{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.qp-reg-badge{font-size:.66rem;background:#fdf6ec;border:1px solid #c9963a;color:#1a0f00;padding:.24rem .8rem;border-radius:4px;font-weight:600;white-space:nowrap;line-height:1.5}
+.qp-reg-badge b{color:#c9963a;font-weight:700;margin-right:.35rem}
+.qp-title-bar{display:flex;justify-content:space-between;align-items:flex-end;padding:1.1rem 2.2rem;background:linear-gradient(90deg,#fdf6ec,#fff)}
+.qp-title-bar h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.3rem;color:#1a0f00;text-transform:uppercase}
+.qp-meta{text-align:right;font-size:.76rem;color:#555;line-height:1.6}
+.qp-meta b{color:#1a0f00}
+.qp-bill{padding:0 2.2rem 1rem}
+.qp-bill-label{font-size:.65rem;text-transform:uppercase;color:#c9963a;font-weight:700;margin-bottom:.3rem}
+.qp-bill-name{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.15rem;font-weight:700;color:#1a0f00}
+.qp-bill-detail{font-size:.78rem;color:#555;line-height:1.5;margin-top:.15rem}
+.qp-items{padding:0 2.2rem}
+.qp-items table{width:100%;border-collapse:collapse}
+.qp-items th{background:#1a0f00;color:#e8c068;font-size:.68rem;text-transform:uppercase;padding:.55rem .6rem;text-align:left}
+.qp-items th.num,.qp-items td.num{text-align:right}
+.qp-items td{padding:.55rem .6rem;font-size:.82rem;border-bottom:1px solid #eee;color:#1a1a1a}
+.qp-items tr:nth-child(even) td{background:#fdfaf4}
+.qp-total-row td{font-weight:700;border-top:2px solid #1a0f00;background:#fdf6ec!important;color:#1a0f00}
+.qp-gt-row td{font-weight:700;font-size:.95rem;color:#1a0f00;background:#f5e6cc!important;border-top:2px solid #c9963a}
+.qp-words{padding:.7rem 2.2rem;font-size:.78rem;font-style:italic;color:#555}
+.qp-words b{color:#1a0f00;font-style:normal}
+.qp-terms{padding:.9rem 2.2rem 0}
+.qp-terms h4{font-size:.75rem;text-transform:uppercase;color:#c9963a;margin-bottom:.4rem;font-weight:700}
+.qp-terms ol{padding-left:1.1rem;font-size:.76rem;color:#444;line-height:1.65}
+.qp-bottom{display:flex;justify-content:space-between;align-items:flex-end;padding:1.3rem 2.2rem 1.8rem;gap:1rem}
+.qp-bank h4{font-size:.75rem;text-transform:uppercase;color:#c9963a;margin-bottom:.4rem;font-weight:700}
+.qp-bank p{font-size:.76rem;color:#444;line-height:1.55}
+.qp-bank .qp-thanks{margin-top:.5rem;font-style:italic;font-weight:600;color:#1a0f00}
+.qp-sign{text-align:center;min-width:170px}
+.qp-sign .qp-sig-line{border-top:1.5px solid #333;margin-top:2.6rem;padding-top:.35rem;font-size:.76rem;color:#333}
+.qp-sign .qp-for{font-size:.72rem;color:#555;margin-bottom:.2rem}
+.qp-sign .qp-sig-note{font-size:.68rem;color:#999;margin-top:.2rem;font-style:italic}
+@media(max-width:860px){#quote-preview{width:100%;padding:0}}
+
+/* ── TAX INVOICE (extends .qp-* styles above) ── */
+#invoice-preview-wrap{overflow-x:auto;margin-top:1.5rem}
+#invoice-preview{width:794px;min-height:560px;background:#fff;margin:0 auto;padding:0;font-family:'DM Sans',sans-serif;color:#1a1a1a;box-shadow:0 12px 48px rgba(26,15,0,.18);position:relative}
+@media(max-width:860px){#invoice-preview{width:100%;padding:0}}
+.tax-tbl{width:100%;border-collapse:collapse}
+.tax-tbl th,.tax-tbl td{padding:.4rem .35rem;font-size:.68rem;border-bottom:1px solid #eee;color:#1a1a1a}
+.tax-tbl thead th{background:#1a0f00;color:#e8c068;text-transform:uppercase;text-align:center;padding:.5rem .35rem;font-size:.62rem;line-height:1.35;border-left:1px solid rgba(255,255,255,.15)}
+.tax-tbl thead th:first-child{border-left:none}
+.tax-tbl tbody td.num{text-align:right}
+.tax-tbl tbody tr:nth-child(even) td{background:#fdfaf4}
+.tax-tbl tfoot td{font-weight:700;border-top:2px solid #1a0f00;background:#fdf6ec;color:#1a0f00}
+.tax-tbl tfoot tr.gt td{font-size:.85rem;color:#1a0f00;background:#f5e6cc;border-top:2px solid #c9963a}
+.inv-supply-badge{display:inline-block;font-size:.66rem;font-weight:700;text-transform:uppercase;padding:.25rem .85rem;border-radius:20px;margin-top:.3rem;white-space:nowrap}
+.inv-supply-badge.intra{background:#d4edda;color:#155724}
+.inv-supply-badge.inter{background:#cce5ff;color:#004085}
+.inv-taxtype-toggle{display:flex;gap:.9rem;margin-top:.35rem;flex-wrap:wrap}
+.inv-taxtype-toggle label{display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--text);cursor:pointer;font-weight:500}
+.inv-taxtype-toggle input{width:auto;accent-color:var(--gold)}
+.inv-ship-same{display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--muted);margin:.3rem 0 .5rem}
+.inv-ship-same input{width:auto;accent-color:var(--gold)}
+.qi-tbl input.qi-hsn{width:80px}
+.qi-tbl input.qi-gst{width:70px}
+
+/* ── PC BILLING WORKSPACE (PC page only; mobile admin.html remains unchanged) ── */
+@media (min-width: 769px) {
+  body { min-width: 1024px; }
+  .sidebar { width: 252px; }
+  .sb-top { padding: 1.35rem 1.15rem; gap: .8rem; }
+  .sb-top img { height: 52px; }
+  .sb-top-text h2 { font-size: 1.15rem; }
+  .sn { padding: .82rem 1.35rem; font-size: .9rem; }
+  .topbar { padding: 1rem 2rem; }
+  .topbar h3 { font-size: 1.45rem; }
+  .tab-content { padding: 1.75rem 2rem 2.5rem; }
+  .fc, .tc { border-radius: 14px; }
+  #tab-invoice .fc { padding: 1.75rem; }
+  #tab-invoice .fgrid { grid-template-columns: repeat(2, minmax(220px, 1fr)); column-gap: 1.25rem; row-gap: 1rem; }
+  #tab-invoice .qi-tbl { min-width: 1050px; }
+  #tab-invoice .qi-tbl th, #tab-invoice .qi-tbl td { padding: .6rem .55rem; }
+  #tab-invoice .qi-tbl input, #tab-invoice .qi-tbl select { min-height: 40px; }
+  #tab-invoice .qi-tbl input.qi-particulars { min-width: 240px; }
+  #tab-invoice .qi-tbl input.qi-qty, #tab-invoice .qi-tbl input.qi-rate { width: 100px; }
+  #tab-invoice .qi-add { width: auto; min-width: 190px; }
+  #tab-invoice .q-actions { position: sticky; bottom: 0; z-index: 5; padding: .85rem; background: rgba(255,248,240,.96); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 -5px 18px rgba(26,15,0,.07); }
+  #invoice-preview-wrap { padding: 1rem; background: #e9dfd0; border-radius: 12px; }
+  #invoice-preview { width: 794px; max-width: none; }
+  #tab-invoice .tc { margin-top: 1.75rem; }
+  .stats { grid-template-columns: repeat(4, minmax(150px, 1fr)); }
+  .tw { overflow-x: auto; }
+  .tc-top { padding: 1.1rem 1.4rem; }
+  th { padding: .95rem 1.1rem; }
+  td { padding: .9rem 1.1rem; }
+}
+@media (min-width: 1400px) {
+  .sidebar { width: 270px; }
+  .tab-content { padding-left: 2.5rem; padding-right: 2.5rem; }
+  #tab-invoice .fc { padding: 2rem; }
+}
+
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="lcard">
+    <img src="images/VBS_logo.png" alt="VBS" class="lcard-logo"/>
+    <h1>Admin Panel</h1>
+    <p>VBS Enterprises</p>
+    <div class="lform">
+      <div><label>Username</label><input type="text" id="l-user" placeholder="Admin username" autocomplete="username"/></div>
+      <div><label>Password</label><input type="password" id="l-pass" placeholder="Password" autocomplete="current-password"/></div>
+      <div class="lerr" id="l-err"></div>
+      <button class="btn-login" id="l-btn" onclick="doLogin()">Login →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app">
+<div class="app-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <img src="images/VBS_logo.png" alt="VBS"/>
+      <div class="sb-top-text"><h2>VBS Enterprises</h2><span>Admin Panel</span></div>
+    </div>
+    <nav class="sb-nav">
+      <button class="sn active" data-tab="dash">📊 Dashboard</button>
+      <button class="sn" data-tab="products">📦 Products</button>
+      <button class="sn" data-tab="gallery">📸 Weekend Events</button>
+      <button class="sn" data-tab="quote">📝 Quotation</button>
+      <button class="sn" data-tab="invoice">🧾 Tax Invoice</button>
+      <button class="sn" data-tab="orders">🧾 Orders</button>
+      <button class="sn" data-tab="customers">👥 Customers</button>
+      <button class="sn" data-tab="tally">📊 Tally / Reports</button>
+      <button class="sn" data-tab="purchase">🛒 Purchase</button>
+    </nav>
+    <div class="sb-btns">
+      <a class="btn-visit" href="/" target="_blank">🛍️ Visit Shop ↗</a>
+      <button class="btn-logout-sb" onclick="logout()">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="admin-main pc-billing-app">
+    <div class="topbar">
+      <button class="ham-admin" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <h3 id="tb-title">Dashboard</h3>
+      <span id="tb-sub">Overview</span>
+    </div>
+    <div class="tab-content">
+
+      <!-- DASHBOARD -->
+      <div class="tab active" id="tab-dash">
+        <div class="stats" id="stats-box"><div class="spin"></div></div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--text);margin-bottom:1rem">📬 Recent Orders</h3>
+        <div id="dash-orders"></div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="tab" id="tab-products">
+        <div class="fc">
+          <h3 id="f-head">➕ Add New Product</h3>
+          <div class="fgrid">
+            <div class="field"><label>Product Name *</label><input type="text" id="p-name" placeholder="e.g. Cold Pressed Groundnut Oil"/></div>
+            <div class="field"><label>Category *</label>
+              <select id="p-cat">
+                <option value="saree">👘 Saree</option>
+                <option value="nighty">🌙 Nighty</option>
+                <option value="chudidhar">👗 Chudidhar</option>
+                <option value="blouse">🪡 Blouse</option>
+                <option value="oil">🫙 Oil</option>
+                <option value="rice">🌾 Rice</option>
+                <option value="ghee">🧈 Ghee</option>
+                <option value="honey">🍯 Honey</option>
+                <option value="peanut">🥜 Peanut</option>
+                <option value="other">📦 Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Price (₹) *</label><input type="number" id="p-price" placeholder="250" min="0"/></div>
+            <div class="field"><label>Unit</label><input type="text" id="p-unit" placeholder="per litre / per piece / per kg"/></div>
+            <div class="field"><label>Stock Quantity</label><input type="number" id="p-stock" placeholder="50" min="0"/></div>
+            <div class="field"><label>Delivery Charge (₹)</label><input type="number" id="p-delivery" placeholder="0" min="0" title="Extra delivery/courier charge added per unit at checkout. Leave 0 for free delivery."/></div>
+            <div class="field"><label>Product Photo</label><input type="file" id="p-img" accept="image/jpeg,image/png,image/webp"/></div>
+            <div class="field full"><label>Description</label><textarea id="p-desc" placeholder="Brief description of the product..."></textarea></div>
+          </div>
+          <!-- IMAGE PREVIEW -->
+          <div id="cur-img-wrap" style="display:none;margin-top:.75rem">
+            <p style="font-size:.72rem;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.07em">Current Image:</p>
+            <img id="cur-img" style="height:110px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border)"/>
+          </div>
+          <div class="fact">
+            <button class="btn-g" onclick="saveProduct()">💾 Save Product</button>
+            <button class="btn-gh" onclick="clearPForm()">✕ Clear</button>
+          </div>
+        </div>
+        <div class="tc">
+          <div class="tc-top">
+            <h3>All Products</h3>
+            <input type="text" id="p-srch" placeholder="🔍 Search..." oninput="filterProd()"/>
+          </div>
+          <div class="tw">
+            <table><thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Delivery</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="p-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GALLERY / WEEKEND EVENTS -->
+      <div class="tab" id="tab-gallery">
+        <div class="fc">
+          <h3 id="g-head">➕ Add Weekend Stall / Event Photo</h3>
+          <div class="fgrid">
+            <div class="field"><label>Title *</label><input type="text" id="g-title" placeholder="e.g. Weekend Stall at Vanagaram"/></div>
+            <div class="field"><label>Event Date</label><input type="date" id="g-date"/></div>
+            <div class="field"><label>Location</label><input type="text" id="g-loc" placeholder="e.g. Rajiv Nagar, Pallikuppam"/></div>
+            <div class="field"><label>Photo *</label><input type="file" id="g-img" accept="image/jpeg,image/png,image/webp"/></div>
+            <div class="field full"><label>Photo Detail / Caption</label><textarea id="g-caption" placeholder="What happened here — this text shows over the photo on the customer site..."></textarea></div>
+          </div>
+          <!-- IMAGE PREVIEW -->
+          <div id="cur-gimg-wrap" style="display:none;margin-top:.75rem">
+            <p style="font-size:.72rem;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.07em">Current Photo:</p>
+            <img id="cur-gimg" style="height:110px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border)"/>
+          </div>
+          <div class="fact">
+            <button class="btn-g" onclick="saveGalleryEvent()">💾 Save Photo</button>
+            <button class="btn-gh" onclick="clearGForm()">✕ Clear</button>
+          </div>
+        </div>
+        <div class="tc">
+          <div class="tc-top">
+            <h3>All Weekend Events</h3>
+            <input type="text" id="g-srch" placeholder="🔍 Search..." oninput="filterGallery()"/>
+          </div>
+          <div class="tw">
+            <table><thead><tr><th>Photo</th><th>Title</th><th>Date</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="g-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUOTATION BUILDER -->
+      <div class="tab" id="tab-quote">
+        <div class="fc">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem">
+            <h3 style="margin:0">📝 New Bulk Order Quotation</h3>
+            <span id="q-status-pill" class="q-status unsaved">Not saved yet</span>
+          </div>
+
+          <div class="fgrid">
+            <div class="field"><label>Customer / Company Name *</label><input type="text" id="q-cname" placeholder="Customer / company name"/></div>
+            <div class="field"><label>Quote Date</label><input type="date" id="q-date"/></div>
+            <div class="field full"><label>Customer Address</label><input type="text" id="q-caddr" placeholder="No, Street, City - Pincode"/></div>
+            <div class="field"><label>Phone</label><input type="text" id="q-cphone" placeholder="e.g. 9876543210"/></div>
+            <div class="field"><label>Email</label><input type="text" id="q-cemail" placeholder="e.g. customer@email.com"/></div>
+          </div>
+
+          <div style="margin-top:1.3rem">
+            <label style="display:block;margin-bottom:.4rem">Items</label>
+            <table class="qi-tbl">
+              <thead><tr><th style="width:38px">#</th><th>Particulars</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th style="text-align:right">Amount (₹)</th><th></th></tr></thead>
+              <tbody id="q-items-body"></tbody>
+            </table>
+            <button type="button" class="qi-add" onclick="addQItemRow()">➕ Add Item Row</button>
+          </div>
+
+          <div class="fgrid" style="margin-top:1.1rem">
+            <div class="field"><label>Delivery Cost (₹)</label><input type="number" id="q-delivery" value="0" min="0" oninput="recalcQTotals()"/></div>
+            <div class="field"><label>Grand Total</label><input type="text" id="q-grandtotal" value="₹ 0" disabled style="font-weight:700;background:var(--warm)"/></div>
+          </div>
+
+          <div class="qterms-box" style="margin-top:1.1rem">
+            <label style="display:block;margin-bottom:.4rem">Terms &amp; Conditions <span style="text-transform:none;font-weight:400;color:var(--muted)">(one per line — edit as needed)</span></label>
+            <textarea id="q-terms" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:.7rem .9rem;font-size:.85rem"></textarea>
+          </div>
+
+          <div class="q-actions">
+            <button class="btn-g" onclick="generateQuotePreview()">👁 Preview Quotation</button>
+            <button class="btn-gh" onclick="saveQuotation()">💾 Save Quotation</button>
+            <button class="btn-gh" onclick="downloadQuotePDF()">📄 Download PDF</button>
+            <button class="btn-gh" onclick="downloadQuoteImage()">🖼 Download Image</button>
+            <button class="btn-gh" onclick="clearQForm()">✕ New / Clear</button>
+          </div>
+        </div>
+
+        <!-- LIVE LETTERHEAD PREVIEW -->
+        <div id="quote-preview-wrap">
+          <div id="quote-preview"></div>
+        </div>
+
+        <!-- QUOTATION HISTORY -->
+        <div class="tc" style="margin-top:1.75rem">
+          <div class="tc-top">
+            <h3>Quotation History</h3>
+            <input type="text" id="q-srch" placeholder="🔍 Search customer or quote no..." oninput="filterQHistory()"/>
+          </div>
+          <div class="tw">
+            <table><thead><tr><th>Quote No.</th><th>Customer</th><th>Date</th><th>Total</th><th>Actions</th></tr></thead>
+            <tbody id="q-hist-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAX INVOICE BUILDER -->
+      <div class="tab" id="tab-invoice">
+        <div class="fc">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem">
+            <h3 style="margin:0">🧾 New GST Tax Invoice</h3>
+            <span id="i-status-pill" class="q-status unsaved">Not saved yet</span>
+          </div>
+
+          <div class="fgrid">
+            <div class="field"><label>Invoice Date</label><input type="date" id="i-date" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Due Date</label><input type="date" id="i-duedate" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Payment Terms</label><input type="text" id="i-terms" placeholder="e.g. Due on Receipt / Net 15" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Place of Supply</label><input type="text" id="i-pos" placeholder="e.g. Tamil Nadu (33)" onchange="markIUnsaved()"/></div>
+          </div>
+
+          <div class="field" style="margin-top:.6rem">
+            <label>Type of Supply</label>
+            <div class="inv-taxtype-toggle">
+              <label><input type="radio" name="i-taxtype" value="intra" checked onchange="onITaxTypeChange()"/> Intra-State (within Tamil Nadu) — CGST + SGST</label>
+              <label><input type="radio" name="i-taxtype" value="inter" onchange="onITaxTypeChange()"/> Inter-State (outside Tamil Nadu) — IGST</label>
+            </div>
+          </div>
+
+          <h4 style="margin:1.2rem 0 .5rem;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.05em">Bill To</h4>
+          <div class="fgrid">
+            <div class="field"><label>Customer / Company Name *</label><input type="text" id="i-bname" placeholder="Customer / company name" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>GSTIN (if registered)</label><input type="text" id="i-bgstin" placeholder="e.g. 33XXXXX0000X1ZX" onchange="markIUnsaved()"/></div>
+            <div class="field full"><label>Billing Address</label><input type="text" id="i-baddr" placeholder="No, Street, City - Pincode" onchange="markIUnsaved()"/></div>
+            <div class="field"><label>Phone</label><input type="text" id="i-bphone" placeholder="e.g. 9876543210" onchange="markIUnsaved()"/></div>
+          </div>
+
+          <h4 style="margin:1.2rem 0 .5rem;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.05em">Ship To</h4>
+          <div class="inv-ship-same"><input type="checkbox" id="i-ship-same" checked onchange="toggleIShipSame()"/> <label for="i-ship-same" style="margin:0;cursor:pointer">Same as Billing Address</label></div>
+          <div class="fgrid" id="i-ship-fields" style="display:none">
+            <div class="field"><label>Ship To Name</label><input type="text" id="i-sname" onchange="markIUnsaved()"/></div>
+            <div class="field full"><label>Shipping Address</label><input type="text" id="i-saddr" onchange="markIUnsaved()"/></div>
+          </div>
+
+          <div style="margin-top:1.3rem">
+            <label style="display:block;margin-bottom:.4rem">Items</label>
+            <table class="qi-tbl">
+              <thead><tr><th style="width:32px">#</th><th>Description</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>GST %</th><th style="text-align:right">Taxable Value (₹)</th><th></th></tr></thead>
+              <tbody id="i-items-body"></tbody>
+            </table>
+            <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem">
+              <button type="button" class="qi-add" onclick="addIItemRow()">➕ Add Item Row</button>
+              <button type="button" class="qi-add" onclick="addIDeliveryRow()">🚚 Add Delivery Charge</button>
+            </div>
+          </div>
+
+          <div class="fgrid" style="margin-top:1.1rem">
+            <div class="field"><label>Sub Total (₹)</label><input type="text" id="i-subtotal" value="₹ 0" disabled/></div>
+            <div class="field" id="i-cgst-wrap"><label>CGST Total (₹)</label><input type="text" id="i-cgst" value="₹ 0" disabled/></div>
+            <div class="field" id="i-sgst-wrap"><label>SGST Total (₹)</label><input type="text" id="i-sgst" value="₹ 0" disabled/></div>
+            <div class="field" id="i-igst-wrap" style="display:none"><label>IGST Total (₹)</label><input type="text" id="i-igst" value="₹ 0" disabled/></div>
+            <div class="field"><label>Rounding (₹)</label><input type="text" id="i-rounding" value="₹ 0" disabled/></div>
+            <div class="field"><label>Grand Total</label><input type="text" id="i-grandtotal" value="₹ 0" disabled style="font-weight:700;background:var(--warm)"/></div>
+          </div>
+
+          <div class="qterms-box" style="margin-top:1.1rem">
+            <label style="display:block;margin-bottom:.4rem">Terms &amp; Conditions <span style="text-transform:none;font-weight:400;color:var(--muted)">(one per line — edit as needed)</span></label>
+            <textarea id="i-tc" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:.7rem .9rem;font-size:.85rem"></textarea>
+          </div>
+
+          <div class="q-actions">
+            <button class="btn-g" onclick="generateInvoicePreview()">👁 Preview Invoice</button>
+            <button class="btn-gh" onclick="saveInvoice()">💾 Save Invoice</button>
+            <button class="btn-gh" onclick="downloadInvoicePDF()">📄 Download PDF</button>
+            <button class="btn-gh" onclick="downloadInvoiceImage()">🖼 Download Image</button>
+            <button class="btn-gh" onclick="clearIForm()">✕ New / Clear</button>
+          </div>
+        </div>
+
+        <!-- LIVE INVOICE PREVIEW -->
+        <div id="invoice-preview-wrap">
+          <div id="invoice-preview"></div>
+        </div>
+
+        <!-- INVOICE HISTORY -->
+        <div class="tc" style="margin-top:1.75rem">
+          <div class="tc-top">
+            <h3>Tax Invoice History</h3>
+            <input type="text" id="i-srch" placeholder="🔍 Search customer or invoice no..." oninput="filterIHistory()"/>
+          </div>
+          <div class="tw">
+            <table><thead><tr><th>Invoice No.</th><th>Customer</th><th>Date</th><th>Tax Type</th><th>Total</th><th>Actions</th></tr></thead>
+            <tbody id="i-hist-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="tab" id="tab-orders">
+        <div style="display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center">
+          <select id="o-filter" onchange="loadOrders()">
+            <option value="">All Orders</option>
+            <option value="new">🆕 New</option>
+            <option value="confirmed">✅ Confirmed</option>
+            <option value="processing">⚙️ Processing</option>
+            <option value="ready">📦 Ready</option>
+            <option value="delivered">🚚 Delivered</option>
+            <option value="cancelled">❌ Cancelled</option>
+          </select>
+          <button class="btn-gh" onclick="loadOrders()">🔄 Refresh</button>
+        </div>
+        <div id="orders-box"></div>
+      </div>
+
+      <!-- TALLY / REPORTS -->
+      <div class="tab" id="tab-tally">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--text)">📊 Tally & Reports</h2>
+            <p style="font-size:.82rem;color:var(--muted)">Monthly breakdown · Item-wise sales · Revenue summary</p>
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <select id="tally-year" onchange="loadTally()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+            </select>
+            <select id="tally-month" onchange="loadTallyMonth()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+              <option value="">All Months</option>
+              <option value="0">January</option><option value="1">February</option>
+              <option value="2">March</option><option value="3">April</option>
+              <option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option>
+              <option value="8">September</option><option value="9">October</option>
+              <option value="10">November</option><option value="11">December</option>
+            </select>
+            <button class="btn-g" onclick="printTally()" style="font-size:.82rem;padding:.45rem 1rem">🖨️ Print Report</button>
+            <button class="btn-g" onclick="showFinalReport()" style="font-size:.82rem;padding:.45rem 1rem;background:var(--deep);border:1.5px solid var(--gold)">📋 Final Report</button>
+            <button class="btn-gh" onclick="downloadFinalReportExcel()" style="font-size:.82rem;padding:.45rem 1rem">⬇️ Download Excel</button>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div id="tally-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
+          <!-- Monthly Table -->
+          <div class="tc" id="tally-monthly-wrap">
+            <div class="tc-top"><h3>📅 Monthly Orders</h3></div>
+            <table>
+              <thead><tr>
+                <th>Month</th><th style="text-align:right">Orders</th>
+                <th style="text-align:right">Items</th><th style="text-align:right">Revenue</th>
+              </tr></thead>
+              <tbody id="tally-monthly"></tbody>
+            </table>
+          </div>
+          <!-- Category Table -->
+          <div class="tc">
+            <div class="tc-top"><h3>🏷️ Category-wise Sales</h3></div>
+            <table>
+              <thead><tr>
+                <th>Category</th><th style="text-align:right">Qty Sold</th><th style="text-align:right">Revenue</th>
+              </tr></thead>
+              <tbody id="tally-category"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="tc" style="margin-bottom:1.25rem">
+          <div class="tc-top"><h3>📊 Monthly Revenue Chart</h3></div>
+          <div style="padding:1rem 1.25rem 1.5rem">
+            <canvas id="monthly-chart" style="width:100%;height:220px"></canvas>
+          </div>
+        </div>
+
+        <!-- Item-wise breakdown -->
+        <div class="tc">
+          <div class="tc-top">
+            <h3>📦 Item-wise Sales</h3>
+            <input type="text" id="tally-item-srch" placeholder="Search item..." oninput="filterTallyItems()" style="width:180px;padding:.4rem .75rem;font-size:.82rem"/>
+          </div>
+          <table>
+            <thead><tr>
+              <th>Product Name</th><th>Category</th>
+              <th style="text-align:center">Orders</th>
+              <th style="text-align:right">Qty Sold</th>
+              <th style="text-align:right">Unit Price</th>
+              <th style="text-align:right">Revenue</th>
+              <th>Last Order Date</th>
+            </tr></thead>
+            <tbody id="tally-items"></tbody>
+          </table>
+        </div>
+
+        <!-- FINAL REPORT TABLE -->
+        <div class="tc" id="final-report-wrap" style="display:none;margin-top:1.25rem">
+          <div class="tc-top" style="flex-wrap:wrap;gap:.75rem">
+            <div>
+              <h3>📋 Final Report — Purchase & Sales</h3>
+              <p style="font-size:.75rem;color:var(--muted);margin-top:.2rem">Product-wise purchase price, sales price, quantity sold, gross & profit</p>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+              <select id="fr-month" onchange="renderFinalReport()" style="padding:.4rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem">
+                <option value="">All Months</option>
+                <option value="0">January</option><option value="1">February</option>
+                <option value="2">March</option><option value="3">April</option>
+                <option value="4">May</option><option value="5">June</option>
+                <option value="6">July</option><option value="7">August</option>
+                <option value="8">September</option><option value="9">October</option>
+                <option value="10">November</option><option value="11">December</option>
+              </select>
+              <button class="btn-g" onclick="downloadFinalReportExcel()" style="font-size:.78rem;padding:.4rem .85rem">⬇️ Excel</button>
+              <button class="btn-gh" onclick="document.getElementById('final-report-wrap').style.display='none'" style="font-size:.78rem;padding:.4rem .85rem">✕ Close</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table id="final-report-table" style="min-width:900px">
+              <thead>
+                <tr style="background:var(--deep)">
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:left;font-size:.78rem">Product Name</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:left;font-size:.78rem">Unit</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Purchase Price (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Sales Price (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Qty Sold</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Purchase Total (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Sales Total (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Difference (₹)</th>
+                  <th style="color:var(--gold-l);padding:10px 12px;text-align:right;font-size:.78rem">Profit (₹)</th>
+                </tr>
+              </thead>
+              <tbody id="final-report-body"></tbody>
+              <tfoot id="final-report-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PURCHASE -->
+      <div class="tab" id="tab-purchase">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+          <div>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--text)">🛒 Purchase</h2>
+            <p style="font-size:.82rem;color:var(--muted)">Track products you've purchased for your company stock</p>
+          </div>
+        </div>
+
+        <div class="fc">
+          <h3 id="pu-form-head">➕ Add New Purchase</h3>
+          <div class="fgrid">
+            <input type="hidden" id="pu-id"/>
+            <div class="field"><label>Purchase Date *</label><input type="date" id="pu-date"/></div>
+            <div class="field"><label>Product Name *</label>
+              <select id="pu-name" onchange="onPuProductChange()">
+                <option value="">Select product...</option>
+              </select>
+            </div>
+            <div class="field"><label>Category *</label>
+              <select id="pu-cat">
+                <option value="saree">👘 Saree</option>
+                <option value="nighty">🌙 Nighty</option>
+                <option value="chudidhar">👗 Chudidhar</option>
+                <option value="blouse">🪡 Blouse</option>
+                <option value="oil">🫙 Oil</option>
+                <option value="rice">🌾 Rice</option>
+                <option value="ghee">🧈 Ghee</option>
+                <option value="honey">🍯 Honey</option>
+                <option value="peanut">🥜 Peanut</option>
+                <option value="other">📦 Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Quantity *</label><input type="number" id="pu-qty" placeholder="e.g. 50" min="0" step="any" oninput="updatePuTotal()"/></div>
+            <div class="field"><label>Unit</label>
+              <select id="pu-unit">
+                <option value="kg">Kg</option>
+                <option value="litre">Litre</option>
+                <option value="gram">Gram</option>
+                <option value="ml">ml</option>
+                <option value="piece">Piece</option>
+                <option value="dozen">Dozen</option>
+                <option value="box">Box</option>
+                <option value="packet">Packet</option>
+                <option value="quintal">Quintal</option>
+              </select>
+            </div>
+            <div class="field"><label>Price per Unit (₹) *</label><input type="number" id="pu-price" placeholder="e.g. 120" min="0" step="any" oninput="updatePuTotal()"/></div>
+            <div class="field"><label>Total Price (₹)</label><input type="text" id="pu-total" placeholder="Auto-calculated" readonly style="background:#f5f0e6"/></div>
+            <div class="field full"><label>Notes</label><textarea id="pu-notes" placeholder="Supplier name, remarks, etc. (optional)"></textarea></div>
+          </div>
+          <div class="fact">
+            <button class="btn-g" onclick="savePurchase()">💾 Save Purchase</button>
+            <button class="btn-gh" onclick="clearPuForm()">✕ Clear</button>
+          </div>
+        </div>
+
+        <!-- Purchase Report -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin:1.75rem 0 1.25rem">
+          <div>
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--text)">📑 Purchase Report</h3>
+            <p style="font-size:.8rem;color:var(--muted)">Filter, print or export your purchase records</p>
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <select id="pu-year" onchange="renderPurchaseReport()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem"></select>
+            <select id="pu-month" onchange="renderPurchaseReport()" style="padding:.45rem .8rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+              <option value="">All Months</option>
+              <option value="0">January</option><option value="1">February</option>
+              <option value="2">March</option><option value="3">April</option>
+              <option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option>
+              <option value="8">September</option><option value="9">October</option>
+              <option value="10">November</option><option value="11">December</option>
+            </select>
+            <button class="btn-g" onclick="printPurchaseReport()" style="font-size:.82rem;padding:.45rem 1rem">🖨️ Print Report</button>
+            <button class="btn-gh" onclick="downloadPurchaseExcel()" style="font-size:.82rem;padding:.45rem 1rem">⬇️ Download Excel</button>
+          </div>
+        </div>
+
+        <div id="pu-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem"></div>
+
+        <!-- Purchase vs Revenue Chart -->
+        <div class="tc" style="margin-bottom:1.25rem">
+          <div class="tc-top"><h3>📊 Purchase vs Revenue</h3></div>
+          <div style="padding:1rem 1.25rem 1.5rem">
+            <canvas id="pr-chart" style="width:100%;height:240px"></canvas>
+          </div>
+        </div>
+
+        <div class="tc">
+          <div class="tc-top">
+            <h3>All Purchases</h3>
+            <input type="text" id="pu-srch" placeholder="🔍 Search..." oninput="filterPurchases()"/>
+          </div>
+          <div class="tw">
+            <table>
+              <thead><tr>
+                <th>Purchase Date</th><th>Purchased Product</th><th>Category</th>
+                <th style="text-align:right">Purchased Quantity</th>
+                <th style="text-align:right">Price (₹)</th>
+                <th style="text-align:right">Total Price (₹)</th>
+                <th>Actions</th>
+              </tr></thead>
+              <tbody id="pu-tbody"></tbody>
+              <tfoot id="pu-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT CUSTOMER MODAL -->
+      <div class="movl" id="edit-cust-modal">
+        <div class="mbox" style="max-width:440px;width:100%">
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:1.25rem">✏️ Edit Customer Details</h3>
+          <input type="hidden" id="ec-phone-orig"/>
+          <div style="margin-bottom:.75rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Full Name *</label>
+            <input type="text" id="ec-name" placeholder="Customer name" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none"/>
+          </div>
+          <div style="margin-bottom:.75rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Phone Number *</label>
+            <input type="tel" id="ec-phone" placeholder="Phone number" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none"/>
+          </div>
+          <div style="margin-bottom:.75rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Email</label>
+            <input type="email" id="ec-email" placeholder="Email address (optional)" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none"/>
+          </div>
+          <div style="margin-bottom:1rem">
+            <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Delivery Address</label>
+            <textarea id="ec-address" rows="3" placeholder="Full delivery address" style="width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none;resize:vertical"></textarea>
+          </div>
+          <div id="ec-err" style="display:none;color:#dc2626;font-size:.8rem;margin-bottom:.75rem;padding:.5rem .75rem;background:#fee2e2;border-radius:6px"></div>
+          <div class="macts">
+            <button class="btn-g" id="ec-save-btn" onclick="saveCustomerEdit()">✅ Save Changes</button>
+            <button class="btn-gh" onclick="document.getElementById('edit-cust-modal').classList.remove('open')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY DRILL-DOWN MODAL -->
+      <div class="movl" id="cat-drill-modal">
+        <div class="mbox" style="max-width:700px;width:100%">
+          <h3 id="cat-drill-title" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem"></h3>
+          <p id="cat-drill-sub" style="font-size:.78rem;color:var(--muted);margin:.25rem 0 1rem"></p>
+          <div style="overflow-y:auto;max-height:420px">
+            <table style="width:100%;border-collapse:collapse">
+              <thead><tr style="background:var(--deep)">
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Order ID</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Date</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Customer</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:left;font-size:.75rem">Item</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Qty</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Price</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Total</th>
+                <th style="color:var(--gold-l);padding:8px 10px;text-align:right;font-size:.75rem">Discount</th>
+              </tr></thead>
+              <tbody id="cat-drill-body"></tbody>
+              <tfoot id="cat-drill-foot"></tfoot>
+            </table>
+          </div>
+          <div style="margin-top:1rem;text-align:right">
+            <button class="btn-gh" onclick="document.getElementById('cat-drill-modal').classList.remove('open')">✕ Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS -->
+      <div class="tab" id="tab-customers">
+        <!-- Search + Filter Bar -->
+        <div class="fc" style="margin-bottom:1.25rem;padding:1rem 1.25rem">
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+            <input type="text" id="cust-srch" placeholder="🔍 Search by name or phone..." oninput="filterCustomers()"
+              style="flex:1;min-width:200px;padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none"/>
+            <select id="cust-sort" onchange="filterCustomers()" style="padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none">
+              <option value="spent">Sort: Most Spent</option>
+              <option value="orders">Sort: Most Orders</option>
+              <option value="recent">Sort: Recent</option>
+              <option value="name">Sort: Name A-Z</option>
+            </select>
+            <button class="btn-gh" onclick="loadCustomers()">🔄 Refresh</button>
+          </div>
+          <div id="cust-count" style="font-size:.78rem;color:var(--muted);margin-top:.5rem"></div>
+        </div>
+
+        <!-- Customers Table -->
+        <div class="tc">
+          <div class="tw">
+            <table>
+              <thead><tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th style="text-align:center">Orders</th>
+                <th style="text-align:right">Total Spent</th>
+                <th>Last Order</th>
+                <th>Actions</th>
+              </tr></thead>
+              <tbody id="c-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Customer Order History + Edit Panel -->
+        <div id="cust-history-wrap" style="display:none;margin-top:1.5rem">
+          <div class="fc">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+              <div>
+                <h3 id="cust-history-title" style="margin:0;font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--deep)">Order History</h3>
+                <div id="cust-history-meta" style="font-size:.78rem;color:var(--muted);margin-top:.15rem"></div>
+              </div>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <input type="text" id="cust-order-srch" placeholder="🔍 Search orders..." oninput="filterCustOrders()"
+                  style="padding:.4rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:'DM Sans',sans-serif;outline:none;width:180px"/>
+                <select id="cust-order-status" onchange="filterCustOrders()" style="padding:.4rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:'DM Sans',sans-serif;outline:none">
+                  <option value="">All Status</option>
+                  <option value="new">New</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="processing">Processing</option>
+                  <option value="ready">Ready</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="btn-gh" onclick="document.getElementById('cust-history-wrap').style.display='none'">✕ Close</button>
+              </div>
+            </div>
+            <div id="cust-history-orders"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="movl" id="c-ovl">
+  <div class="mbox">
+    <h3 id="c-title"></h3>
+    <p id="c-msg"></p>
+    <div class="macts"><button class="btn-danger" id="c-ok">Confirm</button><button class="btn-gh" onclick="closeCf()">Cancel</button></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<!-- EDIT AMOUNT MODAL -->
+<div class="movl" id="edit-amount-modal">
+  <div class="mbox" style="max-width:480px;width:100%">
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem">✏️ Edit Order Amount</h3>
+    <input type="hidden" id="ea-order-id"/>
+    <input type="hidden" id="ea-original"/>
+
+    <!-- Original Amount -->
+    <div style="background:var(--warm);border-radius:8px;padding:.75rem 1rem;margin:.75rem 0">
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Original Total</div>
+      <div id="ea-orig-display" style="font-size:1.2rem;font-weight:700;color:var(--gold);margin-top:.2rem"></div>
+    </div>
+
+    <!-- Items list for specific discount -->
+    <div style="margin-bottom:.75rem">
+      <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.4rem">Select Item to Discount (optional)</label>
+      <select id="ea-item-sel" onchange="calcNewTotal()" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.83rem">
+        <option value="">— Apply discount to whole order —</option>
+      </select>
+    </div>
+
+    <!-- Discount -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Discount (₹)</label>
+        <input type="number" id="ea-discount" placeholder="e.g. 50" min="0" oninput="calcNewTotal()" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem"/>
+      </div>
+      <div>
+        <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Courier Charge (₹)</label>
+        <input type="number" id="ea-courier" placeholder="e.g. 40" min="0" oninput="calcNewTotal()" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem"/>
+      </div>
+    </div>
+
+    <!-- New Total -->
+    <div style="background:var(--warm);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem">
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">New Total</div>
+      <div id="ea-new-total" style="font-size:1.4rem;font-weight:700;color:#16a34a;margin-top:.2rem"></div>
+      <div id="ea-breakdown" style="font-size:.75rem;color:var(--muted);margin-top:.2rem"></div>
+    </div>
+
+    <!-- Reason -->
+    <div style="margin-bottom:.75rem">
+      <label style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.3rem">Reason (optional)</label>
+      <input type="text" id="ea-reason" placeholder="e.g. Loyal customer, courier added" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem"/>
+    </div>
+
+    <div class="macts">
+      <button class="btn-g" onclick="saveOrderAmount()">✅ Save</button>
+      <button class="btn-gh" onclick="document.getElementById('edit-amount-modal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="t-icon">✅</span><span id="t-msg"></span></div>
+
+<script>
+/* VBS Admin v6 - Built 2026-05-04 */
+const API='/api';
+let token=localStorage.getItem('vbs_atoken');
+let allProds=[];
+let editId=null;
+
+/* ── IMAGE HELPER ── */
+function imgUrl(image){
+  if(!image) return null;
+  if(image.startsWith('http')) return image;  // Cloudinary or external
+  return '/uploads/'+image;                   // local
+}
+
+/* ── AUTH ── */
+async function doLogin(){
+  const u=document.getElementById('l-user').value.trim();
+  const p=document.getElementById('l-pass').value;
+  const btn=document.getElementById('l-btn');
+  if(!u||!p){showLErr('Enter username and password');return;}
+  btn.textContent='Logging in...';btn.disabled=true;
+  try{
+    const res=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    token=d.token;localStorage.setItem('vbs_atoken',token);
+    showApp();
+  }catch(e){showLErr(e.message);}
+  finally{btn.textContent='Login →';btn.disabled=false;}
+}
+function showLErr(m){const e=document.getElementById('l-err');e.textContent=m;e.style.display='block';}
+function logout(){localStorage.removeItem('vbs_atoken');token=null;document.getElementById('admin-app').style.display='none';document.getElementById('login-screen').style.display='flex';}
+async function showApp(){
+  try{
+    const res=await fetch(`${API}/auth/verify`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success)throw new Error();
+  }catch{logout();return;}
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('admin-app').style.display='block';
+  showTab('dash');
+}
+document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+if(token)showApp();
+
+/* ── TABS ── */
+document.querySelectorAll('.sn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.sn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelector(`[data-tab="${t}"]`)?.classList.add('active');
+  const titles={dash:['Dashboard','Overview'],products:['Products','Manage products'],gallery:['Weekend Events','Stall & activity photos shown to customers'],quote:['Quotation','Create bulk-order quotations for customers'],invoice:['Tax Invoice','Create GST tax invoices for customers'],orders:['Orders','Manage orders'],customers:['Customers','Registered customers'],purchase:['Purchase','Track purchased stock']};
+  document.getElementById('tb-title').textContent=titles[t]?.[0]||'';
+  document.getElementById('tb-sub').textContent=titles[t]?.[1]||'';
+  if(t==='dash')loadDash();
+  if(t==='products')loadProds();
+  if(t==='gallery')loadGallery();
+  if(t==='quote'){initQuoteTab();loadQHistory();}
+  if(t==='invoice'){initInvoiceTab();loadIHistory();}
+  if(t==='orders')loadOrders();
+  if(t==='tally')loadTally();
+  if(t==='customers')loadCustomers();
+  if(t==='purchase')loadPurchases();
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+/* ── DASHBOARD ── */
+/* ── TALLY ── */
+let allOrdersCache = [];
+let tallyItemsData = [];
+
+async function loadTally() {
+  try {
+    const res = await fetch(`${API}/orders?limit=9999`, {headers:{Authorization:`Bearer ${token}`}});
+    const d   = await res.json();
+    if(!d.success) throw new Error(d.message);
+    allOrdersCache = d.orders.filter(o => o.status !== 'cancelled');
+
+    // Populate year dropdown
+    const years = [...new Set(allOrdersCache.map(o => new Date(o.createdAt).getFullYear()))].sort((a,b)=>b-a);
+    const ySel  = document.getElementById('tally-year');
+    const curY  = ySel.value || new Date().getFullYear();
+    ySel.innerHTML = years.map(y=>`<option value="${y}" ${y==curY?'selected':''}>${y}</option>`).join('');
+
+    renderTally();
+  } catch(e) { toast('❌', e.message); }
+}
+
+function loadTallyMonth() { renderTally(); }
+
+function renderTally() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('tally-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  // Summary stats
+  const totalRev   = orders.reduce((s,o)=>s+o.totalAmount,0);
+  const totalItems = orders.reduce((s,o)=>s+o.items.reduce((ss,i)=>ss+i.quantity,0),0);
+  const avgOrder   = orders.length ? Math.round(totalRev/orders.length) : 0;
+  document.getElementById('tally-stats').innerHTML = `
+    <div class="tally-stat"><div class="tn">${orders.length}</div><div class="tl">Orders</div></div>
+    <div class="tally-stat"><div class="tn">₹${totalRev.toLocaleString('en-IN')}</div><div class="tl">Revenue</div></div>
+    <div class="tally-stat"><div class="tn">${totalItems}</div><div class="tl">Items Sold</div></div>
+    <div class="tally-stat"><div class="tn">₹${avgOrder.toLocaleString('en-IN')}</div><div class="tl">Avg Order</div></div>`;
+
+  // Monthly breakdown
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mMap   = {};
+  allOrdersCache.filter(o=>new Date(o.createdAt).getFullYear()===year).forEach(o=>{
+    const m = new Date(o.createdAt).getMonth();
+    if(!mMap[m]) mMap[m] = {orders:0,items:0,rev:0};
+    mMap[m].orders++;
+    mMap[m].items += o.items.reduce((s,i)=>s+i.quantity,0);
+    mMap[m].rev   += o.totalAmount;
+  });
+  document.getElementById('tally-monthly').innerHTML = Object.keys(mMap).sort((a,b)=>b-a).map(m=>`
+    <tr class="month-row" onclick="selectMonth(${m})">
+      <td><strong>${months[m]}</strong></td>
+      <td style="text-align:right">${mMap[m].orders}</td>
+      <td style="text-align:right">${mMap[m].items}</td>
+      <td style="text-align:right;font-weight:700;color:var(--gold)">₹${mMap[m].rev.toLocaleString('en-IN')}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
+
+  // Category breakdown — use actual received amount (after discount)
+  const catMap = {};
+  orders.forEach(o=>{
+    const oItemTotal = o.items.reduce((s,i)=>s+i.price*i.quantity,0);
+    const oRatio     = oItemTotal > 0 ? o.totalAmount / oItemTotal : 1;
+    o.items.forEach(i=>{
+      const c = i.category||'other';
+      if(!catMap[c]) catMap[c]={qty:0,rev:0};
+      catMap[c].qty += i.quantity;
+      catMap[c].rev += i.price * i.quantity * oRatio;  // rounded at display
+    });
+  });
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',peanut:'🥜 Peanut',other:'📦 Other'};
+  document.getElementById('tally-category').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].rev-a[1].rev).map(([c,v])=>`
+    <tr style="cursor:pointer" onclick="drillCategory('${c}')" title="Click to see all ${c} orders">
+      <td>${cLabel2[c]||c} <span style="font-size:.7rem;color:var(--muted)">↗</span></td>
+      <td style="text-align:right">${v.qty}</td>
+      <td style="text-align:right;font-weight:700;color:var(--gold)">₹${Math.round(v.rev).toLocaleString('en-IN')}</td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
+
+  // Item-wise
+  const itemMap = {};
+  orders.forEach(o=>{
+    const oIT  = o.items.reduce((s,i)=>s+i.price*i.quantity,0);
+    const oR   = oIT > 0 ? o.totalAmount / oIT : 1;
+    o.items.forEach(i=>{
+      const k = i.name+'__'+(i.category||'other')+'__'+i.price;
+      const oDate = new Date(o.createdAt);
+      if(!itemMap[k]) itemMap[k]={name:i.name,cat:i.category||'other',orders:0,qty:0,price:i.price,rev:0,lastDate:oDate};
+      itemMap[k].orders++;
+      itemMap[k].qty += i.quantity;
+      itemMap[k].rev += i.price * i.quantity * oR;
+      if(oDate > itemMap[k].lastDate) itemMap[k].lastDate = oDate;
+    });
+  });
+  tallyItemsData = Object.values(itemMap).sort((a,b)=>b.rev-a.rev).map(i=>({
+    ...i,
+    lastDate: i.lastDate.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+  }));
+  renderTallyItems(tallyItemsData);
+
+  // Draw bar chart
+  drawBarChart(mMap);
+}
+
+function drillCategory(cat) {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('tally-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',peanut:'🥜 Peanut',other:'📦 Other'};
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  // Get all items in this category across all orders
+  const rows = [];
+  orders.forEach(o => {
+    const oIT = o.items.reduce((s,i)=>s+i.price*i.quantity, 0);
+    const oRatio = oIT > 0 ? o.totalAmount / oIT : 1;
+    o.items.filter(i => (i.category||'other') === cat).forEach(i => {
+      const itemOriginal = i.price * i.quantity;
+      const itemActual   = Math.round(itemOriginal * oRatio);
+      rows.push({
+        orderId:  o.orderId,
+        date:     new Date(o.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+        customer: o.customer?.name || '—',
+        name:     i.name,
+        qty:      i.quantity,
+        price:    i.price,
+        total:    itemOriginal,
+        actual:   itemActual,
+        discount: o.discount || 0,
+        orderTotal: o.totalAmount
+      });
+    });
+  });
+
+  rows.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  const grandTotal = rows.reduce((s,r) => s + r.actual, 0);
+  const grandQty   = rows.reduce((s,r) => s + r.qty, 0);
+
+  const periodLabel = mIdx !== null ? months[mIdx] + ' ' + year : 'Year ' + year;
+  document.getElementById('cat-drill-title').textContent = (cLabel2[cat]||cat) + ' — Sales Detail';
+  const discountedOrders = rows.filter(r=>r.discount>0).length;
+  document.getElementById('cat-drill-sub').textContent   = periodLabel + ' · ' + rows.length + ' line items · ' + grandQty + ' qty sold' + (discountedOrders > 0 ? ' · * = discount applied on order' : '');
+
+  document.getElementById('cat-drill-body').innerHTML = rows.length ? rows.map((r,idx) => `
+    <tr style="background:${idx%2===0?'var(--card)':'#fff'}">
+      <td style="padding:7px 10px;font-size:.78rem;font-weight:600;color:var(--gold)">${r.orderId}</td>
+      <td style="padding:7px 10px;font-size:.78rem">${r.date}</td>
+      <td style="padding:7px 10px;font-size:.78rem">${r.customer}</td>
+      <td style="padding:7px 10px;font-size:.78rem">${r.name}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem">${r.qty}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem">₹${r.price.toLocaleString('en-IN')}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem;font-weight:600">₹${r.actual.toLocaleString('en-IN')}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:.78rem;color:${r.discount>0?'#16a34a':'var(--muted)'}">
+        ${r.discount > 0 ? '<span title="Order-level discount applied">*</span>' : '—'}
+      </td>
+    </tr>`).join('')
+  : '<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--muted)">No items</td></tr>';
+
+  document.getElementById('cat-drill-foot').innerHTML = `
+    <tr style="background:var(--deep)">
+      <td colspan="4" style="padding:8px 10px;color:var(--gold-l);font-weight:700;font-size:.82rem">TOTAL (after discount)</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--gold-l);font-weight:700">${grandQty}</td>
+      <td></td>
+      <td style="padding:8px 10px;text-align:right;color:var(--gold-l);font-weight:700">₹${Math.round(grandTotal).toLocaleString('en-IN')}</td>
+      <td></td>
+    </tr>`;
+
+  document.getElementById('cat-drill-modal').classList.add('open');
+}
+
+function drawBarChart(mMap) {
+  const canvas = document.getElementById('monthly-chart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const entries = Object.keys(mMap).sort((a,b)=>parseInt(a)-parseInt(b));
+  if(!entries.length){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+
+  // Set canvas dimensions
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.clientWidth - 40;
+  const H = 220;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const maxRev = Math.max(...entries.map(m=>mMap[m].rev));
+  const pad = {top:20, right:20, bottom:50, left:70};
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+  const barW   = Math.min(50, (chartW / entries.length) - 10);
+
+  ctx.clearRect(0,0,W,H);
+
+  // Y axis gridlines
+  ctx.strokeStyle = '#e8d5b8';
+  ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++){
+    const y = pad.top + chartH - (chartH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+    ctx.fillStyle='#8a7060'; ctx.font='10px DM Sans,sans-serif'; ctx.textAlign='right';
+    ctx.fillText('₹'+(Math.round(maxRev/4*i)).toLocaleString('en-IN'), pad.left-6, y+4);
+  }
+
+  // Bars
+  entries.forEach((m, idx) => {
+    const barH = maxRev > 0 ? (mMap[m].rev / maxRev) * chartH : 0;
+    const x = pad.left + (chartW / entries.length) * idx + (chartW / entries.length - barW) / 2;
+    const y = pad.top + chartH - barH;
+
+    // Gold gradient bar
+    const grad = ctx.createLinearGradient(0, y, 0, pad.top+chartH);
+    grad.addColorStop(0, '#e8c068');
+    grad.addColorStop(1, '#c8902a');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
+    ctx.fill();
+
+    // Value on top
+    ctx.fillStyle='#2d1a00'; ctx.font='bold 10px DM Sans,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('₹'+(mMap[m].rev/1000).toFixed(1)+'k', x+barW/2, y-5);
+
+    // Month label
+    ctx.fillStyle='#2d1a00'; ctx.font='11px DM Sans,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(months[parseInt(m)], x+barW/2, pad.top+chartH+16);
+
+    // Orders count
+    ctx.fillStyle='#8a7060'; ctx.font='9px DM Sans,sans-serif';
+    ctx.fillText(mMap[m].orders+' orders', x+barW/2, pad.top+chartH+28);
+  });
+}
+
+function renderTallyItems(data) {
+  const cLabel2={saree:'👘 Saree',nighty:'🌙 Nighty',chudidhar:'👗 Chudidhar',blouse:'🪡 Blouse',oil:'🫙 Oil',rice:'🌾 Rice',ghee:'🧈 Ghee',honey:'🍯 Honey',peanut:'🥜 Peanut',other:'📦 Other'};
+  document.getElementById('tally-items').innerHTML = data.length ? data.map((item,idx)=>`
+    <tr style="background:${idx%2===0?'var(--card)':'#fff'}">
+      <td><strong>${item.name}</strong></td>
+      <td><span class="cat-tag ${item.cat}">${cLabel2[item.cat]||item.cat}</span></td>
+      <td style="text-align:center">${item.orders}</td>
+      <td style="text-align:right;font-weight:600">${item.qty}</td>
+      <td style="text-align:right">₹${item.price.toLocaleString('en-IN')}</td>
+      <td style="text-align:right;font-weight:700;color:var(--gold)">₹${Math.round(item.rev).toLocaleString('en-IN')}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${item.lastDate}</td>
+    </tr>`).join('')
+  : '<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--muted)">No data</td></tr>';
+}
+
+function filterTallyItems() {
+  const q = document.getElementById('tally-item-srch').value.toLowerCase();
+  renderTallyItems(q ? tallyItemsData.filter(i=>i.name.toLowerCase().includes(q)||i.cat.includes(q)) : tallyItemsData);
+}
+
+function selectMonth(m) {
+  document.getElementById('tally-month').value = m;
+  renderTally();
+}
+
+/* ── FINAL REPORT ── */
+let frPurchasePrices = {}; // { "name||unit||month||year": price }
+
+function showFinalReport() {
+  document.getElementById('final-report-wrap').style.display = 'block';
+  const tallyMonth = document.getElementById('tally-month')?.value;
+  if(tallyMonth !== undefined) document.getElementById('fr-month').value = tallyMonth;
+  loadAndRenderFinalReport();
+  document.getElementById('final-report-wrap').scrollIntoView({behavior:'smooth'});
+}
+
+async function loadAndRenderFinalReport() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('fr-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+
+  // Load from localStorage first (always works)
+  frPurchasePrices = {};
+  // Load all months for the year so switching months works
+  for(let m=0; m<12; m++) {
+    const lsKey = 'vbs_pp_'+m+'_'+year;
+    try {
+      const stored = JSON.parse(localStorage.getItem(lsKey)||'{}');
+      Object.assign(frPurchasePrices, stored);
+    } catch(e) {}
+  }
+
+  // Try backend too (overrides localStorage if available)
+  try {
+    let url = '/api/purchaseprices?year='+year;
+    if(mIdx !== null) url += '&month='+mIdx;
+    const res  = await fetch(url, {headers:{Authorization:'Bearer '+token}});
+    const data = await res.json();
+    if(data.success) {
+      data.prices.forEach(p => {
+        const key = p.productName+'||'+p.unit+'||'+p.month+'||'+p.year;
+        frPurchasePrices[key] = p.price;
+        // Sync to localStorage
+        const lsKey = 'vbs_pp_'+p.month+'_'+p.year;
+        const stored = JSON.parse(localStorage.getItem(lsKey)||'{}');
+        stored[key] = p.price;
+        localStorage.setItem(lsKey, JSON.stringify(stored));
+      });
+    }
+  } catch(e) {}
+  renderFinalReport();
+}
+
+function renderFinalReport() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const month = document.getElementById('fr-month')?.value;
+  const mIdx  = month !== '' && month !== null && month !== undefined ? parseInt(month) : null;
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  const prodMap = {};
+  const useMonth = mIdx !== null ? mIdx : new Date().getMonth();
+  orders.forEach(o => {
+    const oYear = new Date(o.createdAt).getFullYear();
+    // Calculate order-level ratio: if discount applied, spread proportionally
+    const orderItemTotal = o.items.reduce((s,i) => s + i.price * i.quantity, 0);
+    const discountRatio  = orderItemTotal > 0 ? o.totalAmount / orderItemTotal : 1;
+
+    o.items.forEach(i => {
+      const unit   = i.unit || 'per pcs';
+      const key    = i.name + '||' + unit + '||' + i.price;
+      const ppKey  = i.name + '||' + unit + '||' + i.price + '||' + useMonth + '||' + year;
+      const actualItemTotal = i.price * i.quantity * discountRatio;
+      if(!prodMap[key]) {
+        prodMap[key] = {
+          name: i.name, unit: unit,
+          salesPrice: i.price,
+          purchasePrice: frPurchasePrices[ppKey] || 0,
+          month: useMonth, year: year,
+          qty: 0, salesTotal: 0
+        };
+      }
+      prodMap[key].qty        += i.quantity;
+      prodMap[key].salesTotal += actualItemTotal;
+    });
+  });
+
+  const rows = Object.values(prodMap).sort((a,b)=>b.salesTotal-a.salesTotal);
+  const tbody = document.getElementById('final-report-body');
+  const tfoot = document.getElementById('final-report-foot');
+
+  if(!rows.length) {
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:1.5rem;color:var(--muted)">No sales data for this period</td></tr>';
+    tfoot.innerHTML=''; return;
+  }
+
+  let grandPurchase=0, grandSales=0, grandProfit=0;
+
+  tbody.innerHTML = rows.map((p,idx) => {
+    const purchaseTotal = p.purchasePrice * p.qty;
+    const diff   = p.salesPrice - p.purchasePrice;
+    const profit = p.salesTotal - purchaseTotal;
+    grandPurchase += purchaseTotal;
+    grandSales    += p.salesTotal;
+    grandProfit   += profit;
+    const pColor = profit>=0?'#16a34a':'#dc2626';
+    const dColor = diff>=0?'#16a34a':'#dc2626';
+    const safeKey = (p.name+'||'+p.unit+'||'+p.salesPrice).replace(/'/g,"\\'") 
+
+    return `<tr style="background:${idx%2===0?'var(--card)':'#fff'}">
+      <td style="padding:9px 12px;font-weight:600;font-size:.83rem">${p.name}</td>
+      <td style="padding:9px 12px;font-size:.78rem;color:var(--muted)">${p.unit}</td>
+      <td style="padding:9px 12px;text-align:right">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+          <input type="number" id="pp_${idx}" value="${p.purchasePrice||''}" placeholder="Enter ₹" min="0"
+            style="width:85px;padding:4px 6px;border:1.5px solid var(--border);border-radius:5px;font-size:.78rem;text-align:right"/>
+          <button onclick="savePurchasePrice('${safeKey}',${p.month},${p.year},${idx})"
+            style="background:var(--gold);color:var(--deep);border:none;padding:4px 8px;border-radius:5px;font-size:.72rem;font-weight:700;cursor:pointer">Save</button>
+        </div>
+        ${p.purchasePrice>0?`<div style="font-size:.7rem;color:#16a34a;margin-top:2px">Saved: ₹${p.purchasePrice}</div>`:'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">Not set for this month</div>'}
+      </td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;color:var(--gold);font-weight:600">₹${p.salesPrice.toLocaleString('en-IN')}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:600">${p.qty}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem">${purchaseTotal>0?'₹'+Math.round(purchaseTotal).toLocaleString('en-IN'):'—'}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:600">₹${Math.round(p.salesTotal).toLocaleString('en-IN')}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:600;color:${dColor}">${diff!==0?(diff>0?'+':'')+Math.round(diff).toLocaleString('en-IN'):'—'}</td>
+      <td style="padding:9px 12px;text-align:right;font-size:.83rem;font-weight:700;color:${pColor}">${purchaseTotal>0?(Math.round(profit)>=0?'+':'')+Math.round(profit).toLocaleString('en-IN'):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  tfoot.innerHTML=`<tr style="background:var(--deep)">
+    <td colspan="5" style="padding:10px 12px;color:var(--gold-l);font-weight:700;font-size:.85rem">TOTAL</td>
+    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${Math.round(grandPurchase).toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:var(--gold-l);font-weight:700">₹${Math.round(grandSales).toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700">₹${Math.round(grandSales-grandPurchase).toLocaleString('en-IN')}</td>
+    <td style="padding:10px 12px;text-align:right;color:#86efac;font-weight:700;font-size:.95rem">₹${Math.round(grandProfit).toLocaleString('en-IN')}</td>
+  </tr>`;
+}
+
+async function savePurchasePrice(key, month, year, idx) {
+  const parts = key.split('||');
+  const productName = parts[0];
+  const unit = parts[1];
+  const salesPrice = parts[2]; // includes sales price for uniqueness
+  const price = parseFloat(document.getElementById('pp_'+idx)?.value) || 0;
+
+  // Always save to localStorage first (instant, works offline)
+  const ppKey = productName+'||'+unit+'||'+salesPrice+'||'+month+'||'+year;
+  frPurchasePrices[ppKey] = price;
+  const lsKey = 'vbs_pp_'+month+'_'+year;
+  const stored = JSON.parse(localStorage.getItem(lsKey)||'{}');
+  stored[ppKey] = price;
+  localStorage.setItem(lsKey, JSON.stringify(stored));
+
+  // Also try to save to backend
+  try {
+    const res = await fetch('/api/purchaseprices', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({productName, unit: unit+'||'+salesPrice, month, year, price})
+    });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+  } catch(e) {
+    // Backend failed but localStorage saved - still works
+  }
+
+  toast('✅', 'Purchase price saved!');
+  renderFinalReport();
+}
+
+function downloadFinalReportExcel() {
+  const year  = parseInt(document.getElementById('tally-year')?.value || new Date().getFullYear());
+  const frMonth = document.getElementById('fr-month');
+  const mIdx  = frMonth && frMonth.value !== '' ? parseInt(frMonth.value) : null;
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const periodLabel = mIdx !== null ? months[mIdx] + ' ' + year : 'Full Year ' + year;
+
+  let orders = allOrdersCache.filter(o => new Date(o.createdAt).getFullYear() === year);
+  if(mIdx !== null) orders = orders.filter(o => new Date(o.createdAt).getMonth() === mIdx);
+
+  const useMonth2 = mIdx !== null ? mIdx : new Date().getMonth();
+  const prodMap = {};
+  orders.forEach(o => {
+    const orderItemTotal2 = o.items.reduce((s,i) => s + i.price * i.quantity, 0);
+    const discountRatio2  = orderItemTotal2 > 0 ? o.totalAmount / orderItemTotal2 : 1;
+    o.items.forEach(i => {
+      const unit = i.unit || 'per pcs';
+      const key  = i.name + '||' + unit + '||' + i.price;
+      const ppKey = i.name + '||' + unit + '||' + i.price + '||' + useMonth2 + '||' + year;
+      if(!prodMap[key]) {
+        prodMap[key] = {name:i.name, unit:unit, salesPrice:i.price,
+          purchasePrice:frPurchasePrices[ppKey]||0, qty:0, salesTotal:0};
+      }
+      prodMap[key].qty += i.quantity;
+      prodMap[key].salesTotal += i.price * i.quantity * discountRatio2;
+    });
+  });
+
+  const rows = Object.values(prodMap).sort((a,b)=>b.salesTotal-a.salesTotal);
+  let grandPurchase=0, grandSales=0, grandProfit=0;
+
+  // Build CSV content
+  const NL = String.fromCharCode(10);
+  let csv = 'VBS Enterprises - Final Report' + NL;
+  csv += 'Period: ' + periodLabel + NL;
+  csv += 'Generated: ' + new Date().toLocaleString('en-IN') + NL + NL;
+  csv += 'Product Name,Unit,Purchase Price (Rs),Sales Price (Rs),Qty Sold,Purchase Total (Rs),Sales Total (Rs),Difference (Rs),Profit (Rs)' + NL;
+
+  rows.forEach(p => {
+    const purchaseTotal = p.purchasePrice * p.qty;
+    const diff   = p.salesPrice - p.purchasePrice;
+    const profit = p.salesTotal - purchaseTotal;
+    grandPurchase += purchaseTotal;
+    grandSales    += p.salesTotal;
+    grandProfit   += profit;
+    csv += '"'+p.name+'","'+p.unit+'",'+( p.purchasePrice||'')+','+p.salesPrice+','+p.qty+','+(purchaseTotal||'')+','+p.salesTotal+','+(diff||'')+','+(purchaseTotal>0?profit:'') + NL;
+  });
+
+  csv += NL + 'TOTAL,,,,,'+grandPurchase+','+grandSales+','+(grandSales-grandPurchase)+','+grandProfit + NL;
+  csv += NL + 'Note: Enter purchase prices in the admin panel to see accurate profit calculations.' + NL;
+
+  const BOM = '﻿'; // UTF-8 BOM for Excel Tamil text support
+  const blob = new Blob([BOM + csv], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'VBS-FinalReport-' + periodLabel.replace(' ','-') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  toast('✅', 'Excel report downloaded!');
+}
+
+function printTally() {
+  const year  = document.getElementById('tally-year')?.value;
+  const mSel  = document.getElementById('tally-month');
+  const mName = mSel.options[mSel.selectedIndex].text;
+  const statsHTML  = document.getElementById('tally-stats').innerHTML;
+  const monthlyHTML= document.getElementById('tally-monthly').innerHTML;
+  const catHTML    = document.getElementById('tally-category').innerHTML;
+  const itemsHTML  = document.getElementById('tally-items').innerHTML;
+
+  const html = `<!DOCTYPE html><!-- VBS Admin v6 - 04May2026 --><html><head><meta charset="UTF-8"/><title>Tally Report</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
+    h1{font-size:1.4rem;color:#1a0f00;margin-bottom:.25rem}
+    h3{font-size:1rem;margin:1rem 0 .5rem;color:#1a0f00;border-bottom:2px solid #c8902a;padding-bottom:.25rem}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
+    .stat{background:#1a0f00;color:#fff;border-radius:8px;padding:.75rem;text-align:center}
+    .stat .n{font-size:1.4rem;color:#e8c068;font-weight:700}
+    .stat .l{font-size:.65rem;color:#b0a090;text-transform:uppercase;margin-top:.2rem}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+    table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+    th{background:#1a0f00;color:#e8c068;padding:6px 8px;text-align:left;font-size:11px}
+    td{padding:5px 8px;border-bottom:1px solid #e8d5b8;font-size:11px}
+    tr:nth-child(even) td{background:#fff8f0}
+    .gold{color:#c8902a;font-weight:700}
+    @media print{@page{margin:1cm}button{display:none}}
+  </style></head><body>
+  <h1>VBS Enterprises — Tally Report</h1>
+  <p style="color:#7a6652;font-size:.8rem;margin-bottom:1rem">${mName} ${year} · Generated on ${new Date().toLocaleString('en-IN')}</p>
+  <div class="stats">${statsHTML.replace(/class="tally-stat"/g,'class="stat"').replace(/class="tn"/g,'class="n"').replace(/class="tl"/g,'class="l"')}</div>
+  <div class="grid2">
+    <div><h3>📅 Monthly Orders</h3><table><thead><tr><th>Month</th><th>Orders</th><th>Items</th><th>Revenue</th></tr></thead><tbody>${monthlyHTML}</tbody></table></div>
+    <div><h3>🏷️ Category Sales</h3><table><thead><tr><th>Category</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>${catHTML}</tbody></table></div>
+  </div>
+  <h3>📦 Item-wise Sales</h3>
+  <table><thead><tr><th>Product</th><th>Category</th><th>Orders</th><th>Qty</th><th>Price</th><th>Revenue</th></tr></thead><tbody>${itemsHTML}</tbody></table>
+  <button onclick="window.print()" style="background:#c8902a;color:#fff;border:none;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">🖨️ Print / Save PDF</button>
+  </body></html>`;
+
+  const blob = new Blob([html],{type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+
+async function loadDash(){
+  try{
+    const[sr,or]=await Promise.all([
+      fetch(`${API}/orders/stats/summary`,{headers:{Authorization:`Bearer ${token}`}}),
+      fetch(`${API}/orders?limit=5`,{headers:{Authorization:`Bearer ${token}`}})
+    ]);
+    const sd=await sr.json(),od=await or.json();
+    if(sd.success){
+      const s=sd.stats;
+      document.getElementById('stats-box').innerHTML=`
+        <div class="stat"><div class="stat-n">${s.totalProducts}</div><div class="stat-l">Products</div></div>
+        <div class="stat"><div class="stat-n">${s.totalOrders}</div><div class="stat-l">Total Orders</div></div>
+        <div class="stat"><div class="stat-n" style="color:#f87171">${s.newOrders}</div><div class="stat-l">New Orders</div></div>
+        <div class="stat"><div class="stat-n">${s.totalCustomers||0}</div><div class="stat-l">Customers</div></div>
+        <div class="stat"><div class="stat-n">₹${s.totalRevenue.toLocaleString('en-IN')}</div><div class="stat-l">Revenue</div></div>`;
+    }
+    if(od.success){
+      document.getElementById('dash-orders').innerHTML=od.orders.length
+        ?od.orders.map(o=>orderCard(o,false)).join('')
+        :`<div class="empty"><h3>No orders yet</h3></div>`;
+    }
+  }catch(e){toast('❌',e.message);}
+}
+
+/* ── PRODUCTS ── */
+async function loadProds(){
+  const res=await fetch(`${API}/products`,{headers:{Authorization:`Bearer ${token}`}});
+  const d=await res.json();
+  if(!d.success){toast('❌',d.message);return;}
+  allProds=d.products;
+  renderProdTable(allProds);
+}
+function filterProd(){
+  const q=document.getElementById('p-srch').value.toLowerCase();
+  renderProdTable(q?allProds.filter(p=>p.name.toLowerCase().includes(q)):allProds);
+}
+const cIcon={saree:'👘',nighty:'🌙',chudidhar:'👗',blouse:'🪡',oil:'🫙',rice:'🌾',ghee:'🧈',honey:'🍯',peanut:'🥜',other:'📦'};
+const cLabel={saree:'Saree',nighty:'Nighty',chudidhar:'Chudidhar',blouse:'Blouse',oil:'Oil',rice:'Rice',ghee:'Ghee',honey:'Honey',peanut:'Peanut',other:'Other'};
+
+function renderProdTable(prods){
+  const tb=document.getElementById('p-tbody');
+  if(!prods.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No products found</td></tr>`;return;}
+  tb.innerHTML=prods.map(p=>{
+    const sc=p.stock===0?'out':p.stock<10?'low':'in';
+    const sl=p.stock===0?'Out':p.stock<10?`Low(${p.stock})`:p.stock;
+    const url=imgUrl(p.image);
+    return `<tr>
+      <td><div class="pimg">${url?`<img src="${url}" alt="${p.name}" onerror="this.parentNode.innerHTML='${cIcon[p.category]||'📦'}'"/>`:(cIcon[p.category]||'📦')}</div></td>
+      <td><strong>${p.name}</strong></td>
+      <td><span class="cat-tag ${p.category}">${cLabel[p.category]||'Other'}</span></td>
+      <td><strong>₹${p.price.toLocaleString('en-IN')}</strong><br/><span style="font-size:.72rem;color:var(--muted)">${p.unit}</span></td>
+      <td><span class="stk-chip ${sc}">${sl}</span></td>
+      <td>${p.deliveryCharge>0?`<span style="font-size:.78rem;color:#f59e0b;font-weight:600">+₹${p.deliveryCharge}</span>`:`<span style="font-size:.78rem;color:var(--muted)">Free</span>`}</td>
+      <td><span class="spill ${p.isActive?'delivered':'cancelled'}">${p.isActive?'Active':'Hidden'}</span></td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="editProd('${p._id}')">✏️ Edit</button>
+        <button class="abtn tog" onclick="toggleProd('${p._id}',${!p.isActive})">${p.isActive?'🙈 Hide':'👁 Show'}</button>
+        <button class="abtn del" onclick="cfDel('${p._id}','${p.name.replace(/'/g,"\\'")}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveProduct(){
+  const name=document.getElementById('p-name').value.trim();
+  const cat=document.getElementById('p-cat').value;
+  const price=document.getElementById('p-price').value;
+  const unit=document.getElementById('p-unit').value.trim();
+  const stock=document.getElementById('p-stock').value;
+  const delivery=document.getElementById('p-delivery').value;
+  const desc=document.getElementById('p-desc').value.trim();
+  const file=document.getElementById('p-img').files[0];
+  if(!name||!price){toast('⚠️','Name and price are required');return;}
+  const fd=new FormData();
+  fd.append('name',name);fd.append('category',cat);fd.append('description',desc);
+  fd.append('price',price);fd.append('unit',unit||(cat==='oil'?'per litre':cat==='rice'?'per kg':'per piece'));
+  fd.append('stock',stock||0);
+  fd.append('deliveryCharge',delivery||0);
+  if(file)fd.append('image',file);
+  try{
+    const url=editId?`${API}/products/${editId}`:`${API}/products`;
+    const method=editId?'PUT':'POST';
+    const res=await fetch(url,{method,headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    toast('✅',editId?'Product updated!':'Product added!');
+    clearPForm();loadProds();
+  }catch(e){toast('❌',e.message);}
+}
+
+function editProd(id){
+  const p=allProds.find(x=>x._id===id);
+  if(!p)return;
+  editId=id;
+  document.getElementById('p-name').value=p.name;
+  document.getElementById('p-cat').value=p.category;
+  document.getElementById('p-price').value=p.price;
+  document.getElementById('p-unit').value=p.unit;
+  document.getElementById('p-stock').value=p.stock;
+  document.getElementById('p-delivery').value=p.deliveryCharge||0;
+  document.getElementById('p-desc').value=p.description||'';
+  document.getElementById('f-head').textContent='✏️ Edit Product';
+
+  // ── FIXED: show existing image preview ──
+  const url=imgUrl(p.image);
+  if(url){
+    document.getElementById('cur-img').src=url;
+    document.getElementById('cur-img-wrap').style.display='block';
+  } else {
+    document.getElementById('cur-img-wrap').style.display='none';
+  }
+
+  // ── FIXED: live preview when new file selected ──
+  document.getElementById('p-img').onchange=function(){
+    const f=this.files[0];
+    if(f){
+      const r=new FileReader();
+      r.onload=e=>{
+        document.getElementById('cur-img').src=e.target.result;
+        document.getElementById('cur-img-wrap').style.display='block';
+      };
+      r.readAsDataURL(f);
+    }
+  };
+
+  document.querySelector('.fc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function toggleProd(id,active){
+  const fd=new FormData();fd.append('isActive',active);
+  const res=await fetch(`${API}/products/${id}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:fd});
+  const d=await res.json();
+  if(d.success){toast('✅',active?'Product visible':'Product hidden');loadProds();}
+}
+
+function cfDel(id,name){
+  showCf(`Delete "${name}"?`,'This will permanently remove the product.',async()=>{
+    const res=await fetch(`${API}/products/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadProds();}
+    else toast('❌',d.message);
+  });
+}
+
+function clearPForm(){
+  ['p-name','p-price','p-unit','p-stock','p-delivery','p-desc'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('p-cat').value='saree';
+  document.getElementById('p-img').value='';
+  document.getElementById('p-img').onchange=null;
+  document.getElementById('cur-img-wrap').style.display='none';
+  document.getElementById('f-head').textContent='➕ Add New Product';
+  editId=null;
+}
+
+/* ── GALLERY / WEEKEND EVENTS ── */
+let allGallery=[];
+let editGId=null;
+
+async function loadGallery(){
+  const res=await fetch(`${API}/gallery?sort=latest`,{headers:{Authorization:`Bearer ${token}`}});
+  const d=await res.json();
+  if(!d.success){toast('❌',d.message);return;}
+  allGallery=d.events;
+  renderGalleryTable(allGallery);
+}
+function filterGallery(){
+  const q=document.getElementById('g-srch').value.toLowerCase();
+  renderGalleryTable(q?allGallery.filter(g=>g.title.toLowerCase().includes(q)):allGallery);
+}
+function renderGalleryTable(list){
+  const tb=document.getElementById('g-tbody');
+  if(!list.length){tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No weekend event photos yet</td></tr>`;return;}
+  tb.innerHTML=list.map(g=>{
+    const url=imgUrl(g.image);
+    const dateStr=g.eventDate?new Date(g.eventDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
+    return `<tr>
+      <td><div class="pimg">${url?`<img src="${url}" alt="${g.title}"/>`:'📸'}</div></td>
+      <td><strong>${g.title}</strong>${g.caption?`<br/><span style="font-size:.72rem;color:var(--muted)">${g.caption.slice(0,60)}${g.caption.length>60?'…':''}</span>`:''}</td>
+      <td>${dateStr}</td>
+      <td>${g.location||'—'}</td>
+      <td><span class="spill ${g.isActive?'delivered':'cancelled'}">${g.isActive?'Live':'Hidden'}</span></td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="editGalleryEvent('${g._id}')">✏️ Edit</button>
+        <button class="abtn tog" onclick="toggleGalleryEvent('${g._id}',${!g.isActive})">${g.isActive?'🙈 Hide':'👁 Show'}</button>
+        <button class="abtn del" onclick="cfDelGallery('${g._id}','${g.title.replace(/'/g,"\\'")}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveGalleryEvent(){
+  const title=document.getElementById('g-title').value.trim();
+  const date=document.getElementById('g-date').value;
+  const loc=document.getElementById('g-loc').value.trim();
+  const caption=document.getElementById('g-caption').value.trim();
+  const file=document.getElementById('g-img').files[0];
+  if(!title){toast('⚠️','Title is required');return;}
+  if(!editGId&&!file){toast('⚠️','Please choose a photo');return;}
+  const fd=new FormData();
+  fd.append('title',title);fd.append('caption',caption);
+  if(date)fd.append('eventDate',date);
+  fd.append('location',loc);
+  if(file)fd.append('image',file);
+  try{
+    const url=editGId?`${API}/gallery/${editGId}`:`${API}/gallery`;
+    const method=editGId?'PUT':'POST';
+    const res=await fetch(url,{method,headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    toast('✅',editGId?'Photo updated!':'Photo added!');
+    clearGForm();loadGallery();
+  }catch(e){toast('❌',e.message);}
+}
+
+function editGalleryEvent(id){
+  const g=allGallery.find(x=>x._id===id);
+  if(!g)return;
+  editGId=id;
+  document.getElementById('g-title').value=g.title;
+  document.getElementById('g-date').value=g.eventDate?new Date(g.eventDate).toISOString().slice(0,10):'';
+  document.getElementById('g-loc').value=g.location||'';
+  document.getElementById('g-caption').value=g.caption||'';
+  document.getElementById('g-head').textContent='✏️ Edit Weekend Event Photo';
+
+  const url=imgUrl(g.image);
+  if(url){
+    document.getElementById('cur-gimg').src=url;
+    document.getElementById('cur-gimg-wrap').style.display='block';
+  } else {
+    document.getElementById('cur-gimg-wrap').style.display='none';
+  }
+  document.getElementById('g-img').onchange=function(){
+    const f=this.files[0];
+    if(f){
+      const r=new FileReader();
+      r.onload=e=>{
+        document.getElementById('cur-gimg').src=e.target.result;
+        document.getElementById('cur-gimg-wrap').style.display='block';
+      };
+      r.readAsDataURL(f);
+    }
+  };
+  document.querySelector('#tab-gallery .fc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function toggleGalleryEvent(id,active){
+  const fd=new FormData();fd.append('isActive',active);
+  const res=await fetch(`${API}/gallery/${id}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:fd});
+  const d=await res.json();
+  if(d.success){toast('✅',active?'Photo is now live on the site':'Photo hidden from customers');loadGallery();}
+}
+
+function cfDelGallery(id,title){
+  showCf(`Delete "${title}"?`,'This will permanently remove this weekend event photo.',async()=>{
+    const res=await fetch(`${API}/gallery/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadGallery();}
+    else toast('❌',d.message);
+  });
+}
+
+function clearGForm(){
+  ['g-title','g-date','g-loc','g-caption'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('g-img').value='';
+  document.getElementById('g-img').onchange=null;
+  document.getElementById('cur-gimg-wrap').style.display='none';
+  document.getElementById('g-head').textContent='➕ Add Weekend Stall / Event Photo';
+  editGId=null;
+}
+
+/* ── QUOTATION BUILDER ── */
+const QCOMPANY={
+  name:'VBS ENTERPRISES', sub:'(Marachekku Oil)', tagline:'Pure • Fresh • Trusted Oil',
+  addr:'108/7C, 5th Cross Street, Rajiv Nagar, Pallikuppam, Vanagaram, Chennai - 600077',
+  phone:'+91 98400 42290 | +91 98403 57267 | 044-46439408',
+  email:'vbsenterprises7@gmail.com', web:'vbs-enterprises-92sz.onrender.com',
+  gstin:'33FCHPS4318R1ZW', fssai:'22426477000262', msme:'UDYAM-TN-24-0183360'
+};
+const QBANK={ accHolder:'VBS Enterprises', acc:'277602000000573', ifsc:'IOBA0002776', accType:'Current', name:'Indian Overseas Bank', branch:'Vanagaram' };
+const Q_DEFAULT_TERMS=[
+  'Above Price is Ex-Factory Price',
+  'This Quotation is valid for One Month Only',
+  'Transport Charges is Free above Prices, If Change Price Delivery charges will Applicable',
+  'Payment – 50% Advance Payment Mandatory, 50% Once Delivery your Address',
+  'Delivery within 10 to 15 days above order & Confirmation date'
+];
+const Q_UNITS=['Tin','Liter','Kg','Piece','Box','Bag'];
+
+let qItems=[];
+let qNextNumber='VBS/Q-0001';
+let qSavedQuote=null;
+let allQuotations=[];
+let qInitDone=false;
+
+function escQ(s){ return (s===undefined||s===null)?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function initQuoteTab(){
+  if(qInitDone) return;
+  qInitDone=true;
+  document.getElementById('q-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('q-terms').value=Q_DEFAULT_TERMS.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  qItems=[{particulars:'',qty:1,unit:'Tin',rate:0}];
+  renderQItemsTable();
+  loadQNextNumber();
+}
+
+function loadQNextNumber(){
+  fetch(`${API}/quotations/next-number`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.json()).then(d=>{ if(d.success) qNextNumber=d.quoteNumber; })
+    .catch(()=>{});
+}
+
+function qUnitOptions(sel){
+  return Q_UNITS.map(u=>`<option value="${u}" ${u===sel?'selected':''}>${u}</option>`).join('');
+}
+
+function renderQItemsTable(){
+  const tbody=document.getElementById('q-items-body');
+  tbody.innerHTML=qItems.map((it,i)=>{
+    const amt=(it.qty||0)*(it.rate||0);
+    return `<tr data-idx="${i}">
+      <td style="padding-top:.65rem">${i+1}</td>
+      <td><input type="text" class="qi-particulars" value="${escQ(it.particulars)}" placeholder="e.g. Peanut Oil (One Tin)" oninput="updateQItem(${i},'particulars',this.value)"/></td>
+      <td><input type="number" class="qi-qty" value="${it.qty}" min="0" oninput="updateQItem(${i},'qty',this.value)"/></td>
+      <td><select onchange="updateQItem(${i},'unit',this.value)">${qUnitOptions(it.unit)}</select></td>
+      <td><input type="number" class="qi-rate" value="${it.rate}" min="0" oninput="updateQItem(${i},'rate',this.value)"/></td>
+      <td class="num"><span class="qi-amt">₹${amt.toLocaleString('en-IN')}</span></td>
+      <td><button type="button" class="qi-rm" onclick="removeQItemRow(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  recalcQTotals();
+}
+
+function addQItemRow(){
+  qItems.push({particulars:'',qty:1,unit:'Tin',rate:0});
+  renderQItemsTable();
+}
+function removeQItemRow(idx){
+  if(qItems.length<=1){toast('⚠️','At least one item row is required');return;}
+  qItems.splice(idx,1);
+  renderQItemsTable();
+}
+function updateQItem(idx,field,val){
+  if(field==='qty'||field==='rate') val=parseFloat(val)||0;
+  qItems[idx][field]=val;
+  if(field==='qty'||field==='rate'){
+    const amt=(qItems[idx].qty||0)*(qItems[idx].rate||0);
+    const amtEl=document.querySelector(`#q-items-body tr[data-idx="${idx}"] .qi-amt`);
+    if(amtEl) amtEl.textContent='₹'+amt.toLocaleString('en-IN');
+  }
+  recalcQTotals();
+  markQUnsaved();
+}
+function recalcQTotals(){
+  const subtotal=qItems.reduce((s,it)=>s+(it.qty||0)*(it.rate||0),0);
+  const delivery=parseFloat(document.getElementById('q-delivery').value)||0;
+  const grand=subtotal+delivery;
+  document.getElementById('q-grandtotal').value='₹ '+grand.toLocaleString('en-IN');
+  markQUnsaved();
+  const previewEl=document.getElementById('quote-preview');
+  if(previewEl&&previewEl.innerHTML.trim()){
+    const data=collectQuoteData();
+    if(data.customerName&&data.items.length) previewEl.innerHTML=buildQuotePreviewHTML(data);
+  }
+}
+function markQUnsaved(){
+  if(qSavedQuote){
+    qSavedQuote=null;
+    document.getElementById('q-status-pill').textContent='Not saved yet';
+    document.getElementById('q-status-pill').className='q-status unsaved';
+  }
+}
+
+function numberToWordsIndian(num){
+  num=Math.round(num);
+  if(num===0) return 'Zero';
+  if(num<0) return 'Minus '+numberToWordsIndian(-num);
+  const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function two(n){ if(n===0) return ''; if(n<20) return ones[n]; return tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:''); }
+  function three(n){ let s=''; if(n>=100){ s+=ones[Math.floor(n/100)]+' Hundred'; n%=100; if(n) s+=' '; } s+=two(n); return s; }
+  let crore=Math.floor(num/10000000); num%=10000000;
+  let lakh=Math.floor(num/100000); num%=100000;
+  let thousand=Math.floor(num/1000); num%=1000;
+  let rest=num;
+  let parts=[];
+  if(crore) parts.push(three(crore)+' Crore');
+  if(lakh) parts.push(three(lakh)+' Lakh');
+  if(thousand) parts.push(three(thousand)+' Thousand');
+  if(rest) parts.push(three(rest));
+  return parts.join(' ');
+}
+
+function collectQuoteData(){
+  const cname=document.getElementById('q-cname').value.trim();
+  const cdate=document.getElementById('q-date').value;
+  const caddr=document.getElementById('q-caddr').value.trim();
+  const cphone=document.getElementById('q-cphone').value.trim();
+  const cemail=document.getElementById('q-cemail').value.trim();
+  const delivery=parseFloat(document.getElementById('q-delivery').value)||0;
+  const termsRaw=document.getElementById('q-terms').value.split('\n')
+    .map(t=>t.trim()).filter(Boolean)
+    .map(t=>t.replace(/^\d+[\)\.]\s*/,''));
+  const validItems=qItems.filter(it=>it.particulars&&it.particulars.trim()&&it.qty>0)
+    .map(it=>({particulars:it.particulars.trim(),qty:it.qty,unit:it.unit,rate:it.rate,amount:it.qty*it.rate}));
+  const subtotal=validItems.reduce((s,it)=>s+it.amount,0);
+  const grandTotal=subtotal+delivery;
+  return {
+    quoteNumber: qSavedQuote?qSavedQuote.quoteNumber:qNextNumber,
+    quoteDate: cdate||new Date().toISOString().slice(0,10),
+    customerName:cname, customerAddress:caddr, customerPhone:cphone, customerEmail:cemail,
+    items:validItems, deliveryCost:delivery, subtotal, grandTotal,
+    amountInWords:'Rupees '+numberToWordsIndian(grandTotal)+' Only',
+    terms:termsRaw
+  };
+}
+
+function buildQuotePreviewHTML(d){
+  const dateStr=new Date(d.quoteDate).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const itemsRows=d.items.map((it,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${escQ(it.particulars)}</td>
+      <td class="num">${it.qty} ${escQ(it.unit)}</td>
+      <td class="num">₹${Number(it.rate).toLocaleString('en-IN')}</td>
+      <td class="num">₹${Number(it.amount!==undefined?it.amount:it.qty*it.rate).toLocaleString('en-IN')}</td>
+    </tr>`).join('');
+  const termsList=d.terms&&d.terms.length?d.terms.map(t=>`<li>${escQ(t)}</li>`).join(''):'<li>No special terms specified</li>';
+  const custBlock=`
+    <div class="qp-bill-name">${escQ(d.customerName)}</div>
+    ${d.customerAddress?`<div class="qp-bill-detail">${escQ(d.customerAddress)}</div>`:''}
+    ${(d.customerPhone||d.customerEmail)?`<div class="qp-bill-detail">${d.customerPhone?'Ph: '+escQ(d.customerPhone):''}${d.customerPhone&&d.customerEmail?' &nbsp;|&nbsp; ':''}${d.customerEmail?'Email: '+escQ(d.customerEmail):''}</div>`:''}
+  `;
+  return `
+  <div class="qp-topbar"></div>
+  <div class="qp-header">
+    <div class="qp-emblem"><img src="images/VBS_logo.png" alt="VBS Enterprises"/></div>
+    <div class="qp-hd-txt">
+      <h1>${QCOMPANY.name} <span style="font-size:1rem;color:#777;font-weight:400">${QCOMPANY.sub}</span></h1>
+      <div class="qp-tag">${QCOMPANY.tagline}</div>
+      <div class="qp-addr">${QCOMPANY.addr}<br/>Phone: ${QCOMPANY.phone}<br/>Email: ${QCOMPANY.email} &nbsp;|&nbsp; Web: ${QCOMPANY.web}</div>
+      <div class="qp-reg-row">
+        <div class="qp-reg-badge"><b>GSTIN</b>${QCOMPANY.gstin}</div>
+        <div class="qp-reg-badge"><b>FSSAI</b>${QCOMPANY.fssai}</div>
+        <div class="qp-reg-badge"><b>MSME</b>${QCOMPANY.msme}</div>
+      </div>
+    </div>
+  </div>
+  <div class="qp-title-bar">
+    <h2>Quotation</h2>
+    <div class="qp-meta"><b>Quote No:</b> ${escQ(d.quoteNumber)}<br/><b>Date:</b> ${dateStr}<br/><b>GSTIN:</b> ${QCOMPANY.gstin}</div>
+  </div>
+  <div class="qp-bill">
+    <div class="qp-bill-label">Quotation For</div>
+    ${custBlock}
+  </div>
+  <div class="qp-items">
+    <table>
+      <thead><tr><th style="width:32px">No.</th><th>Particulars</th><th class="num" style="width:90px">Qty</th><th class="num" style="width:100px">Rate</th><th class="num" style="width:120px">Amount</th></tr></thead>
+      <tbody>
+        ${itemsRows}
+        <tr class="qp-total-row"><td colspan="4" style="text-align:right">Delivery Cost</td><td class="num">${d.deliveryCost>0?'₹'+Number(d.deliveryCost).toLocaleString('en-IN'):'Free'}</td></tr>
+        <tr class="qp-gt-row"><td colspan="4" style="text-align:right">Grand Total</td><td class="num">₹${Number(d.grandTotal).toLocaleString('en-IN')}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="qp-words">Amount in Words: <b>${escQ(d.amountInWords)}</b></div>
+  <div class="qp-terms">
+    <h4>Terms &amp; Conditions</h4>
+    <ol>${termsList}</ol>
+  </div>
+  <div class="qp-bottom">
+    <div class="qp-bank">
+      <h4>Bank &amp; Payment Details</h4>
+      <p>Account Holder Name - <b>${QBANK.accHolder}</b><br/>Account Number - ${QBANK.acc}<br/>IFSC - ${QBANK.ifsc}<br/>Account Type - ${QBANK.accType}<br/>Bank Name - ${QBANK.name}<br/>Branch Name - ${QBANK.branch}</p>
+      <p class="qp-thanks">Thanks for your business.</p>
+    </div>
+    <div class="qp-sign">
+      <div class="qp-for">For ${QCOMPANY.name}</div>
+      <div class="qp-sig-line">Authorized Signature</div>
+      <div class="qp-sig-note">(Computer Generated)</div>
+    </div>
+  </div>`;
+}
+
+function generateQuotePreview(){
+  const data=collectQuoteData();
+  if(!data.customerName){ toast('⚠️','Please enter the customer name'); return null; }
+  if(!data.items.length){ toast('⚠️','Please add at least one item with particulars, quantity and rate'); return null; }
+  document.getElementById('quote-preview').innerHTML=buildQuotePreviewHTML(data);
+  document.getElementById('quote-preview').scrollIntoView({behavior:'smooth',block:'start'});
+  return data;
+}
+
+async function saveQuotation(){
+  const data=generateQuotePreview();
+  if(!data) return;
+  try{
+    const res=await fetch(`${API}/quotations`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+      body:JSON.stringify({
+        customerName:data.customerName, customerAddress:data.customerAddress,
+        customerPhone:data.customerPhone, customerEmail:data.customerEmail,
+        items:data.items, deliveryCost:data.deliveryCost, grandTotal:data.grandTotal,
+        amountInWords:data.amountInWords, terms:data.terms, quoteDate:data.quoteDate
+      })
+    });
+    const d=await res.json();
+    if(!d.success) throw new Error(d.message);
+    qSavedQuote=d.quotation;
+    document.getElementById('q-status-pill').textContent='Saved as '+d.quotation.quoteNumber;
+    document.getElementById('q-status-pill').className='q-status saved';
+    document.getElementById('quote-preview').innerHTML=buildQuotePreviewHTML({...data,quoteNumber:d.quotation.quoteNumber});
+    toast('✅','Quotation saved as '+d.quotation.quoteNumber);
+    loadQNextNumber();
+    loadQHistory();
+  }catch(e){ toast('❌',e.message); }
+}
+
+async function exportQuoteAsPDF(filenameBase){
+  const el=document.getElementById('quote-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌','PDF library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing PDF...');
+  try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',height:el.scrollHeight,windowHeight:el.scrollHeight});
+    const imgData=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pdfWidth=pdf.internal.pageSize.getWidth();
+    const pdfHeight=pdf.internal.pageSize.getHeight();
+    const imgProps=pdf.getImageProperties(imgData);
+    // Scale the whole document to fit on a single page (shrink to fit, never split across pages)
+    const ratio=Math.min(pdfWidth/imgProps.width, pdfHeight/imgProps.height);
+    const imgWidth=imgProps.width*ratio;
+    const imgHeight=imgProps.height*ratio;
+    const x=(pdfWidth-imgWidth)/2;
+    const y=(pdfHeight-imgHeight)/2;
+    pdf.addImage(imgData,'PNG',x,y,imgWidth,imgHeight);
+    pdf.save(filenameBase.replace(/\//g,'-')+'-Quotation.pdf');
+    toast('✅','PDF downloaded!');
+  }catch(e){ toast('❌','Could not generate PDF: '+e.message); }
+}
+
+async function exportQuoteAsImage(filenameBase){
+  const el=document.getElementById('quote-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'){ toast('❌','Image library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing image...');
+  try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',height:el.scrollHeight,windowHeight:el.scrollHeight});
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filenameBase.replace(/\//g,'-')+'-Quotation.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('✅','Image downloaded!');
+  }catch(e){ toast('❌','Could not generate image: '+e.message); }
+}
+
+function downloadQuotePDF(){
+  if(!document.getElementById('quote-preview').innerHTML.trim()){ const d=generateQuotePreview(); if(!d) return; }
+  exportQuoteAsPDF(qSavedQuote?qSavedQuote.quoteNumber:qNextNumber);
+}
+function downloadQuoteImage(){
+  if(!document.getElementById('quote-preview').innerHTML.trim()){ const d=generateQuotePreview(); if(!d) return; }
+  exportQuoteAsImage(qSavedQuote?qSavedQuote.quoteNumber:qNextNumber);
+}
+
+function clearQForm(){
+  qItems=[{particulars:'',qty:1,unit:'Tin',rate:0}];
+  document.getElementById('q-cname').value='';
+  document.getElementById('q-caddr').value='';
+  document.getElementById('q-cphone').value='';
+  document.getElementById('q-cemail').value='';
+  document.getElementById('q-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('q-delivery').value=0;
+  document.getElementById('q-terms').value=Q_DEFAULT_TERMS.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  document.getElementById('quote-preview').innerHTML='';
+  document.getElementById('q-status-pill').textContent='Not saved yet';
+  document.getElementById('q-status-pill').className='q-status unsaved';
+  qSavedQuote=null;
+  renderQItemsTable();
+  loadQNextNumber();
+}
+
+async function loadQHistory(){
+  try{
+    const res=await fetch(`${API}/quotations`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allQuotations=d.quotations;
+    renderQHistoryTable(allQuotations);
+  }catch(e){ /* silent — history is a convenience view */ }
+}
+function filterQHistory(){
+  const q=document.getElementById('q-srch').value.toLowerCase();
+  renderQHistoryTable(q?allQuotations.filter(x=>x.customerName.toLowerCase().includes(q)||x.quoteNumber.toLowerCase().includes(q)):allQuotations);
+}
+function renderQHistoryTable(list){
+  const tb=document.getElementById('q-hist-tbody');
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">No quotations created yet</td></tr>`; return; }
+  tb.innerHTML=list.map(q=>{
+    const dateStr=new Date(q.quoteDate||q.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    return `<tr>
+      <td><strong>${q.quoteNumber}</strong></td>
+      <td>${escQ(q.customerName)}</td>
+      <td>${dateStr}</td>
+      <td>₹${q.grandTotal.toLocaleString('en-IN')}</td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="loadQuoteFromHistory('${q._id}')">👁 Load</button>
+        <button class="abtn tog" onclick="downloadHistoryQuote('${q._id}','pdf')">📄 PDF</button>
+        <button class="abtn tog" onclick="downloadHistoryQuote('${q._id}','image')">🖼 Image</button>
+        <button class="abtn del" onclick="cfDelQuotation('${q._id}','${q.quoteNumber}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function loadQuoteFromHistory(id){
+  const q=allQuotations.find(x=>x._id===id);
+  if(!q) return;
+  qSavedQuote=q;
+  document.getElementById('q-cname').value=q.customerName;
+  document.getElementById('q-caddr').value=q.customerAddress||'';
+  document.getElementById('q-cphone').value=q.customerPhone||'';
+  document.getElementById('q-cemail').value=q.customerEmail||'';
+  document.getElementById('q-date').value=new Date(q.quoteDate||q.createdAt).toISOString().slice(0,10);
+  document.getElementById('q-delivery').value=q.deliveryCost||0;
+  document.getElementById('q-terms').value=(q.terms||[]).map((t,i)=>`${i+1}) ${t}`).join('\n');
+  qItems=q.items.map(it=>({particulars:it.particulars,qty:it.qty,unit:it.unit,rate:it.rate}));
+  renderQItemsTable();
+  document.getElementById('q-status-pill').textContent='Saved as '+q.quoteNumber;
+  document.getElementById('q-status-pill').className='q-status saved';
+  generateQuotePreview();
+  document.querySelector('#tab-quote .fc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function downloadHistoryQuote(id,kind){
+  const q=allQuotations.find(x=>x._id===id);
+  if(!q) return;
+  const data={
+    quoteNumber:q.quoteNumber, quoteDate:q.quoteDate||q.createdAt,
+    customerName:q.customerName, customerAddress:q.customerAddress,
+    customerPhone:q.customerPhone, customerEmail:q.customerEmail,
+    items:q.items, deliveryCost:q.deliveryCost, grandTotal:q.grandTotal,
+    amountInWords:q.amountInWords, terms:q.terms||[]
+  };
+  const el=document.getElementById('quote-preview');
+  const prevHTML=el.innerHTML;
+  el.innerHTML=buildQuotePreviewHTML(data);
+  await new Promise(r=>setTimeout(r,60));
+  if(kind==='pdf') await exportQuoteAsPDF(q.quoteNumber);
+  else await exportQuoteAsImage(q.quoteNumber);
+  el.innerHTML=prevHTML;
+}
+
+function cfDelQuotation(id,quoteNumber){
+  showCf(`Delete quotation ${quoteNumber}?`,'This will permanently remove this quotation record. This cannot be undone.',async()=>{
+    const res=await fetch(`${API}/quotations/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadQHistory();}
+    else toast('❌',d.message);
+  });
+}
+
+/* ── TAX INVOICE BUILDER ── */
+const I_DEFAULT_TC=[
+  'Goods once sold will not be taken back or exchanged',
+  'Interest @18% p.a. will be charged if payment is not made within the due date',
+  'All disputes are subject to Chennai jurisdiction only',
+  'Goods dispatched with E-way bills and delivered to purchase order address',
+  'This is a computer-generated invoice and does not require a physical signature'
+];
+const I_UNITS=['Nos','Kg','Litre','Tin','Box','Bag','Trip'];
+
+let iItems=[];
+let iNextNumber='VBS/INV-0001';
+let iSavedInvoice=null;
+let allInvoices=[];
+let iInitDone=false;
+
+function initInvoiceTab(){
+  if(iInitDone) return;
+  iInitDone=true;
+  document.getElementById('i-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-duedate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-terms').value='Due on Receipt';
+  document.getElementById('i-pos').value='Tamil Nadu (33)';
+  document.getElementById('i-tc').value=I_DEFAULT_TC.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  iItems=[{description:'',hsn:'',qty:1,unit:'Nos',rate:0,gstPct:5}];
+  renderIItemsTable();
+  loadINextNumber();
+}
+
+function loadINextNumber(){
+  fetch(`${API}/invoices/next-number`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.json()).then(d=>{ if(d.success) iNextNumber=d.invoiceNumber; })
+    .catch(()=>{});
+}
+
+function iUnitOptions(sel){
+  return I_UNITS.map(u=>`<option value="${u}" ${u===sel?'selected':''}>${u}</option>`).join('');
+}
+
+function onITaxTypeChange(){
+  const inter=document.querySelector('input[name="i-taxtype"]:checked').value==='inter';
+  document.getElementById('i-cgst-wrap').style.display=inter?'none':'block';
+  document.getElementById('i-sgst-wrap').style.display=inter?'none':'block';
+  document.getElementById('i-igst-wrap').style.display=inter?'block':'none';
+  recalcITotals();
+  markIUnsaved();
+}
+
+function toggleIShipSame(){
+  const same=document.getElementById('i-ship-same').checked;
+  document.getElementById('i-ship-fields').style.display=same?'none':'grid';
+  markIUnsaved();
+}
+
+function renderIItemsTable(){
+  const tbody=document.getElementById('i-items-body');
+  tbody.innerHTML=iItems.map((it,i)=>{
+    const amt=(it.qty||0)*(it.rate||0);
+    return `<tr data-idx="${i}">
+      <td style="padding-top:.65rem">${i+1}</td>
+      <td><input type="text" class="qi-particulars" value="${escQ(it.description)}" placeholder="e.g. Cold Pressed Groundnut Oil Tins" oninput="updateIItem(${i},'description',this.value)"/></td>
+      <td><input type="text" class="qi-hsn" value="${escQ(it.hsn)}" placeholder="e.g. 1508" oninput="updateIItem(${i},'hsn',this.value)"/></td>
+      <td><input type="number" class="qi-qty" value="${it.qty}" min="0" oninput="updateIItem(${i},'qty',this.value)"/></td>
+      <td><select onchange="updateIItem(${i},'unit',this.value)">${iUnitOptions(it.unit)}</select></td>
+      <td><input type="number" class="qi-rate" value="${it.rate}" min="0" oninput="updateIItem(${i},'rate',this.value)"/></td>
+      <td><input type="number" class="qi-gst" value="${it.gstPct}" min="0" max="100" step="0.5" oninput="updateIItem(${i},'gstPct',this.value)"/></td>
+      <td class="num"><span class="qi-amt">₹${amt.toLocaleString('en-IN')}</span></td>
+      <td><button type="button" class="qi-rm" onclick="removeIItemRow(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  recalcITotals();
+}
+
+function addIItemRow(){
+  iItems.push({description:'',hsn:'',qty:1,unit:'Nos',rate:0,gstPct:5});
+  renderIItemsTable();
+}
+function addIDeliveryRow(){
+  iItems.push({description:'Delivery & Freight Charges',hsn:'996812',qty:1,unit:'Trip',rate:0,gstPct:5});
+  renderIItemsTable();
+}
+function removeIItemRow(idx){
+  if(iItems.length<=1){toast('⚠️','At least one item row is required');return;}
+  iItems.splice(idx,1);
+  renderIItemsTable();
+}
+function updateIItem(idx,field,val){
+  if(field==='qty'||field==='rate'||field==='gstPct') val=parseFloat(val)||0;
+  iItems[idx][field]=val;
+  if(field==='qty'||field==='rate'){
+    const amt=(iItems[idx].qty||0)*(iItems[idx].rate||0);
+    const amtEl=document.querySelector(`#i-items-body tr[data-idx="${idx}"] .qi-amt`);
+    if(amtEl) amtEl.textContent='₹'+amt.toLocaleString('en-IN');
+  }
+  recalcITotals();
+  markIUnsaved();
+}
+
+function recalcITotals(){
+  const inter=document.querySelector('input[name="i-taxtype"]:checked').value==='inter';
+  let subTotal=0,totalCgst=0,totalSgst=0,totalIgst=0;
+  iItems.forEach(it=>{
+    const amt=(it.qty||0)*(it.rate||0);
+    const taxAmt=amt*(it.gstPct||0)/100;
+    subTotal+=amt;
+    if(inter) totalIgst+=taxAmt;
+    else { totalCgst+=taxAmt/2; totalSgst+=taxAmt/2; }
+  });
+  const rawTotal=subTotal+totalCgst+totalSgst+totalIgst;
+  const grandTotal=Math.round(rawTotal);
+  const rounding=grandTotal-rawTotal;
+  document.getElementById('i-subtotal').value='₹ '+subTotal.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-cgst').value='₹ '+totalCgst.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-sgst').value='₹ '+totalSgst.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-igst').value='₹ '+totalIgst.toLocaleString('en-IN',{maximumFractionDigits:2});
+  document.getElementById('i-rounding').value=(rounding>=0?'₹ ':'-₹ ')+Math.abs(rounding).toFixed(2);
+  document.getElementById('i-grandtotal').value='₹ '+grandTotal.toLocaleString('en-IN');
+  const previewEl=document.getElementById('invoice-preview');
+  if(previewEl&&previewEl.innerHTML.trim()){
+    const data=collectInvoiceData();
+    if(data.billTo.name&&data.items.length) previewEl.innerHTML=buildInvoicePreviewHTML(data);
+  }
+}
+function markIUnsaved(){
+  if(iSavedInvoice){
+    iSavedInvoice=null;
+    document.getElementById('i-status-pill').textContent='Not saved yet';
+    document.getElementById('i-status-pill').className='q-status unsaved';
+  }
+}
+
+function collectInvoiceData(){
+  const inter=document.querySelector('input[name="i-taxtype"]:checked').value==='inter';
+  const invoiceDate=document.getElementById('i-date').value;
+  const dueDate=document.getElementById('i-duedate').value;
+  const terms=document.getElementById('i-terms').value.trim()||'Due on Receipt';
+  const placeOfSupply=document.getElementById('i-pos').value.trim()||'Tamil Nadu (33)';
+  const bname=document.getElementById('i-bname').value.trim();
+  const bgstin=document.getElementById('i-bgstin').value.trim();
+  const baddr=document.getElementById('i-baddr').value.trim();
+  const bphone=document.getElementById('i-bphone').value.trim();
+  const shipSame=document.getElementById('i-ship-same').checked;
+  const sname=shipSame?bname:document.getElementById('i-sname').value.trim();
+  const saddr=shipSame?baddr:document.getElementById('i-saddr').value.trim();
+  const tcRaw=document.getElementById('i-tc').value.split('\n')
+    .map(t=>t.trim()).filter(Boolean)
+    .map(t=>t.replace(/^\d+[\)\.]\s*/,''));
+
+  let subTotal=0,totalCgst=0,totalSgst=0,totalIgst=0;
+  const validItems=iItems.filter(it=>it.description&&it.description.trim()&&it.qty>0).map(it=>{
+    const amount=it.qty*it.rate;
+    const taxAmt=amount*(it.gstPct||0)/100;
+    let cgstAmt=0,sgstAmt=0,igstAmt=0;
+    if(inter) igstAmt=taxAmt; else { cgstAmt=taxAmt/2; sgstAmt=taxAmt/2; }
+    subTotal+=amount; totalCgst+=cgstAmt; totalSgst+=sgstAmt; totalIgst+=igstAmt;
+    return {description:it.description.trim(),hsn:it.hsn||'',qty:it.qty,unit:it.unit,rate:it.rate,gstPct:it.gstPct||0,
+      amount, cgstAmt, sgstAmt, igstAmt, total:amount+taxAmt};
+  });
+  const rawTotal=subTotal+totalCgst+totalSgst+totalIgst;
+  const grandTotal=Math.round(rawTotal);
+  const rounding=grandTotal-rawTotal;
+
+  return {
+    invoiceNumber: iSavedInvoice?iSavedInvoice.invoiceNumber:iNextNumber,
+    invoiceDate: invoiceDate||new Date().toISOString().slice(0,10),
+    dueDate: dueDate||invoiceDate,
+    terms, placeOfSupply, taxType: inter?'inter':'intra',
+    billTo:{name:bname,address:baddr,gstin:bgstin,phone:bphone},
+    shipTo:{name:sname,address:saddr},
+    items:validItems, subTotal, totalCgst, totalSgst, totalIgst, rounding, grandTotal,
+    amountInWords:'Rupees '+numberToWordsIndian(grandTotal)+' Only',
+    termsConditions:tcRaw
+  };
+}
+
+function buildInvoicePreviewHTML(d){
+  const dateStr=new Date(d.invoiceDate).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const dueStr=d.dueDate?new Date(d.dueDate).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}):dateStr;
+  const inter=d.taxType==='inter';
+  const itemsRows=d.items.map((it,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td style="text-align:left">${escQ(it.description)}</td>
+      <td>${escQ(it.hsn)}</td>
+      <td class="num">${it.qty} ${escQ(it.unit)}</td>
+      <td class="num">₹${Number(it.rate).toLocaleString('en-IN')}</td>
+      <td class="num">₹${Number(it.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+      ${inter
+        ?`<td class="num">${it.gstPct}%</td><td class="num">₹${Number(it.igstAmt).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>`
+        :`<td class="num">${(it.gstPct/2).toFixed(1)}%</td><td class="num">₹${Number(it.cgstAmt).toLocaleString('en-IN',{maximumFractionDigits:2})}</td><td class="num">${(it.gstPct/2).toFixed(1)}%</td><td class="num">₹${Number(it.sgstAmt).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>`}
+      <td class="num">₹${Number(it.total).toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+    </tr>`).join('');
+  const taxHead=inter
+    ?`<th style="width:60px">IGST<br/>Rate</th><th style="width:75px">IGST<br/>Amt</th>`
+    :`<th style="width:55px">CGST<br/>Rate</th><th style="width:70px">CGST<br/>Amt</th><th style="width:55px">SGST<br/>Rate</th><th style="width:70px">SGST<br/>Amt</th>`;
+  const taxColspan=inter?2:4;
+  const tcList=d.termsConditions&&d.termsConditions.length?d.termsConditions.map(t=>`<li>${escQ(t)}</li>`).join(''):'<li>No special terms specified</li>';
+  const shipBlock=(d.shipTo.name||d.shipTo.address)?`
+    <div class="qp-bill-label" style="margin-top:.6rem">Ship To</div>
+    <div class="qp-bill-name" style="font-size:.95rem">${escQ(d.shipTo.name)}</div>
+    ${d.shipTo.address?`<div class="qp-bill-detail">${escQ(d.shipTo.address)}</div>`:''}
+  `:'';
+  return `
+  <div class="qp-topbar"></div>
+  <div class="qp-header">
+    <div class="qp-emblem"><img src="images/VBS_logo.png" alt="VBS Enterprises"/></div>
+    <div class="qp-hd-txt">
+      <h1>${QCOMPANY.name} <span style="font-size:1rem;color:#777;font-weight:400">${QCOMPANY.sub}</span></h1>
+      <div class="qp-tag">${QCOMPANY.tagline}</div>
+      <div class="qp-addr">${QCOMPANY.addr}<br/>Phone: ${QCOMPANY.phone}<br/>Email: ${QCOMPANY.email} &nbsp;|&nbsp; Web: ${QCOMPANY.web}</div>
+      <div class="qp-reg-row">
+        <div class="qp-reg-badge"><b>GSTIN</b>${QCOMPANY.gstin}</div>
+        <div class="qp-reg-badge"><b>FSSAI</b>${QCOMPANY.fssai}</div>
+        <div class="qp-reg-badge"><b>MSME</b>${QCOMPANY.msme}</div>
+      </div>
+    </div>
+  </div>
+  <div class="qp-title-bar">
+    <h2>Tax Invoice</h2>
+    <div class="qp-meta">
+      <b>Invoice No:</b> ${escQ(d.invoiceNumber)}<br/>
+      <b>Invoice Date:</b> ${dateStr}<br/>
+      <b>Terms:</b> ${escQ(d.terms)}<br/>
+      <b>Due Date:</b> ${dueStr}<br/>
+      <b>Place of Supply:</b> ${escQ(d.placeOfSupply)}
+    </div>
+  </div>
+  <div class="qp-bill" style="display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap">
+    <div>
+      <div class="qp-bill-label">Bill To</div>
+      <div class="qp-bill-name">${escQ(d.billTo.name)}</div>
+      ${d.billTo.address?`<div class="qp-bill-detail">${escQ(d.billTo.address)}</div>`:''}
+      ${d.billTo.phone?`<div class="qp-bill-detail">Ph: ${escQ(d.billTo.phone)}</div>`:''}
+      ${d.billTo.gstin?`<div class="qp-bill-detail"><b>GSTIN:</b> ${escQ(d.billTo.gstin)}</div>`:''}
+    </div>
+    <div>${shipBlock}</div>
+    <div class="inv-supply-badge ${inter?'inter':'intra'}">${inter?'Inter-State Supply (IGST)':'Intra-State Supply (CGST + SGST)'}</div>
+  </div>
+  <div class="qp-items">
+    <table class="tax-tbl">
+      <thead>
+        <tr><th style="width:26px">No.</th><th style="text-align:left">Item &amp; Description</th><th style="width:60px">HSN/SAC</th><th style="width:60px">Qty</th><th style="width:65px">Rate</th><th style="width:80px">Taxable<br/>Value</th>${taxHead}<th style="width:85px">Amount</th></tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="5" style="text-align:right">Sub Total</td><td class="num">₹${Number(d.subTotal).toLocaleString('en-IN',{maximumFractionDigits:2})}</td><td colspan="${taxColspan}"></td><td></td></tr>
+        ${inter
+          ?`<tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total IGST</td><td class="num">₹${Number(d.totalIgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>`
+          :`<tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total CGST</td><td class="num">₹${Number(d.totalCgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>
+        <tr><td colspan="${5+taxColspan+1}" style="text-align:right">Total SGST</td><td class="num">₹${Number(d.totalSgst).toLocaleString('en-IN',{maximumFractionDigits:2})}</td></tr>`}
+        <tr><td colspan="${5+taxColspan+1}" style="text-align:right">Rounding</td><td class="num">${d.rounding>=0?'₹':'-₹'}${Math.abs(d.rounding).toFixed(2)}</td></tr>
+        <tr class="gt"><td colspan="${5+taxColspan+1}" style="text-align:right">Grand Total</td><td class="num">₹${Number(d.grandTotal).toLocaleString('en-IN')}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+  <div class="qp-words">Amount in Words: <b>${escQ(d.amountInWords)}</b></div>
+  <div class="qp-terms">
+    <h4>Terms &amp; Conditions</h4>
+    <ol>${tcList}</ol>
+  </div>
+  <div class="qp-bottom">
+    <div class="qp-bank">
+      <h4>Bank &amp; Payment Details</h4>
+      <p>Account Holder Name - <b>${QBANK.accHolder}</b><br/>Account Number - ${QBANK.acc}<br/>IFSC - ${QBANK.ifsc}<br/>Account Type - ${QBANK.accType}<br/>Bank Name - ${QBANK.name}<br/>Branch Name - ${QBANK.branch}</p>
+      <p class="qp-thanks">Thanks for your business.</p>
+    </div>
+    <div class="qp-sign">
+      <div class="qp-for">For ${QCOMPANY.name}</div>
+      <div class="qp-sig-line">Authorized Signature</div>
+      <div class="qp-sig-note">(Computer Generated)</div>
+    </div>
+  </div>`;
+}
+
+function generateInvoicePreview(){
+  const data=collectInvoiceData();
+  if(!data.billTo.name){ toast('⚠️','Please enter the Bill To customer name'); return null; }
+  if(!data.items.length){ toast('⚠️','Please add at least one item with description, quantity and rate'); return null; }
+  document.getElementById('invoice-preview').innerHTML=buildInvoicePreviewHTML(data);
+  document.getElementById('invoice-preview').scrollIntoView({behavior:'smooth',block:'start'});
+  return data;
+}
+
+async function saveInvoice(){
+  const data=generateInvoicePreview();
+  if(!data) return;
+  try{
+    const res=await fetch(`${API}/invoices`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+      body:JSON.stringify(data)
+    });
+    const d=await res.json();
+    if(!d.success) throw new Error(d.message);
+    iSavedInvoice=d.invoice;
+    document.getElementById('i-status-pill').textContent='Saved as '+d.invoice.invoiceNumber;
+    document.getElementById('i-status-pill').className='q-status saved';
+    document.getElementById('invoice-preview').innerHTML=buildInvoicePreviewHTML({...data,invoiceNumber:d.invoice.invoiceNumber});
+    toast('✅','Invoice saved as '+d.invoice.invoiceNumber);
+    loadINextNumber();
+    loadIHistory();
+  }catch(e){ toast('❌',e.message); }
+}
+
+async function exportInvoiceAsPDF(filenameBase){
+  const el=document.getElementById('invoice-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){ toast('❌','PDF library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing PDF...');
+  try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',height:el.scrollHeight,windowHeight:el.scrollHeight});
+    const imgData=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pdfWidth=pdf.internal.pageSize.getWidth();
+    const pdfHeight=pdf.internal.pageSize.getHeight();
+    const imgProps=pdf.getImageProperties(imgData);
+    // Scale the whole document to fit on a single page (shrink to fit, never split across pages)
+    const ratio=Math.min(pdfWidth/imgProps.width, pdfHeight/imgProps.height);
+    const imgWidth=imgProps.width*ratio;
+    const imgHeight=imgProps.height*ratio;
+    const x=(pdfWidth-imgWidth)/2;
+    const y=(pdfHeight-imgHeight)/2;
+    pdf.addImage(imgData,'PNG',x,y,imgWidth,imgHeight);
+    pdf.save(filenameBase.replace(/\//g,'-')+'-Invoice.pdf');
+    toast('✅','PDF downloaded!');
+  }catch(e){ toast('❌','Could not generate PDF: '+e.message); }
+}
+
+async function exportInvoiceAsImage(filenameBase){
+  const el=document.getElementById('invoice-preview');
+  if(!el.innerHTML.trim()){ toast('⚠️','Nothing to export yet — click Preview first'); return; }
+  if(typeof html2canvas==='undefined'){ toast('❌','Image library failed to load — check your internet connection'); return; }
+  toast('⏳','Preparing image...');
+  try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,80));
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',height:el.scrollHeight,windowHeight:el.scrollHeight});
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filenameBase.replace(/\//g,'-')+'-Invoice.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('✅','Image downloaded!');
+  }catch(e){ toast('❌','Could not generate image: '+e.message); }
+}
+
+function downloadInvoicePDF(){
+  if(!document.getElementById('invoice-preview').innerHTML.trim()){ const d=generateInvoicePreview(); if(!d) return; }
+  exportInvoiceAsPDF(iSavedInvoice?iSavedInvoice.invoiceNumber:iNextNumber);
+}
+function downloadInvoiceImage(){
+  if(!document.getElementById('invoice-preview').innerHTML.trim()){ const d=generateInvoicePreview(); if(!d) return; }
+  exportInvoiceAsImage(iSavedInvoice?iSavedInvoice.invoiceNumber:iNextNumber);
+}
+
+function clearIForm(){
+  iItems=[{description:'',hsn:'',qty:1,unit:'Nos',rate:0,gstPct:5}];
+  document.getElementById('i-bname').value='';
+  document.getElementById('i-bgstin').value='';
+  document.getElementById('i-baddr').value='';
+  document.getElementById('i-bphone').value='';
+  document.getElementById('i-ship-same').checked=true;
+  document.getElementById('i-ship-fields').style.display='none';
+  document.getElementById('i-sname').value='';
+  document.getElementById('i-saddr').value='';
+  document.getElementById('i-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-duedate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('i-terms').value='Due on Receipt';
+  document.getElementById('i-pos').value='Tamil Nadu (33)';
+  document.querySelector('input[name="i-taxtype"][value="intra"]').checked=true;
+  onITaxTypeChange();
+  document.getElementById('i-tc').value=I_DEFAULT_TC.map((t,i)=>`${i+1}) ${t}`).join('\n');
+  document.getElementById('invoice-preview').innerHTML='';
+  document.getElementById('i-status-pill').textContent='Not saved yet';
+  document.getElementById('i-status-pill').className='q-status unsaved';
+  iSavedInvoice=null;
+  renderIItemsTable();
+  loadINextNumber();
+}
+
+async function loadIHistory(){
+  try{
+    const res=await fetch(`${API}/invoices`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allInvoices=d.invoices;
+    renderIHistoryTable(allInvoices);
+  }catch(e){ /* silent — history is a convenience view */ }
+}
+function filterIHistory(){
+  const q=document.getElementById('i-srch').value.toLowerCase();
+  renderIHistoryTable(q?allInvoices.filter(x=>x.billTo.name.toLowerCase().includes(q)||x.invoiceNumber.toLowerCase().includes(q)):allInvoices);
+}
+function renderIHistoryTable(list){
+  const tb=document.getElementById('i-hist-tbody');
+  if(!list.length){ tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No invoices created yet</td></tr>`; return; }
+  tb.innerHTML=list.map(inv=>{
+    const dateStr=new Date(inv.invoiceDate||inv.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    return `<tr>
+      <td><strong>${inv.invoiceNumber}</strong></td>
+      <td>${escQ(inv.billTo.name)}</td>
+      <td>${dateStr}</td>
+      <td>${inv.taxType==='inter'?'IGST':'CGST+SGST'}</td>
+      <td>₹${inv.grandTotal.toLocaleString('en-IN')}</td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="loadInvoiceFromHistory('${inv._id}')">👁 Load</button>
+        <button class="abtn tog" onclick="downloadHistoryInvoice('${inv._id}','pdf')">📄 PDF</button>
+        <button class="abtn tog" onclick="downloadHistoryInvoice('${inv._id}','image')">🖼 Image</button>
+        <button class="abtn del" onclick="cfDelInvoice('${inv._id}','${inv.invoiceNumber}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function loadInvoiceFromHistory(id){
+  const inv=allInvoices.find(x=>x._id===id);
+  if(!inv) return;
+  iSavedInvoice=inv;
+  document.getElementById('i-date').value=new Date(inv.invoiceDate||inv.createdAt).toISOString().slice(0,10);
+  document.getElementById('i-duedate').value=inv.dueDate?new Date(inv.dueDate).toISOString().slice(0,10):'';
+  document.getElementById('i-terms').value=inv.terms||'Due on Receipt';
+  document.getElementById('i-pos').value=inv.placeOfSupply||'Tamil Nadu (33)';
+  document.querySelector(`input[name="i-taxtype"][value="${inv.taxType==='inter'?'inter':'intra'}"]`).checked=true;
+  onITaxTypeChange();
+  document.getElementById('i-bname').value=inv.billTo.name||'';
+  document.getElementById('i-bgstin').value=inv.billTo.gstin||'';
+  document.getElementById('i-baddr').value=inv.billTo.address||'';
+  document.getElementById('i-bphone').value=inv.billTo.phone||'';
+  const shipSame=!inv.shipTo||(inv.shipTo.name===inv.billTo.name&&inv.shipTo.address===inv.billTo.address);
+  document.getElementById('i-ship-same').checked=shipSame;
+  document.getElementById('i-ship-fields').style.display=shipSame?'none':'grid';
+  document.getElementById('i-sname').value=(inv.shipTo&&inv.shipTo.name)||'';
+  document.getElementById('i-saddr').value=(inv.shipTo&&inv.shipTo.address)||'';
+  iItems=inv.items.map(it=>({description:it.description,hsn:it.hsn,qty:it.qty,unit:it.unit,rate:it.rate,gstPct:it.gstPct}));
+  renderIItemsTable();
+  document.getElementById('i-tc').value=(inv.termsConditions||[]).map((t,i)=>`${i+1}) ${t}`).join('\n');
+  document.getElementById('i-status-pill').textContent='Saved as '+inv.invoiceNumber;
+  document.getElementById('i-status-pill').className='q-status saved';
+  generateInvoicePreview();
+  document.querySelector('#tab-invoice .fc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function downloadHistoryInvoice(id,kind){
+  const inv=allInvoices.find(x=>x._id===id);
+  if(!inv) return;
+  const data={
+    invoiceNumber:inv.invoiceNumber, invoiceDate:inv.invoiceDate||inv.createdAt, dueDate:inv.dueDate,
+    terms:inv.terms, placeOfSupply:inv.placeOfSupply, taxType:inv.taxType,
+    billTo:inv.billTo, shipTo:inv.shipTo||{},
+    items:inv.items, subTotal:inv.subTotal, totalCgst:inv.totalCgst, totalSgst:inv.totalSgst, totalIgst:inv.totalIgst,
+    rounding:inv.rounding, grandTotal:inv.grandTotal, amountInWords:inv.amountInWords, termsConditions:inv.termsConditions||[]
+  };
+  const el=document.getElementById('invoice-preview');
+  const prevHTML=el.innerHTML;
+  el.innerHTML=buildInvoicePreviewHTML(data);
+  await new Promise(r=>setTimeout(r,60));
+  if(kind==='pdf') await exportInvoiceAsPDF(inv.invoiceNumber);
+  else await exportInvoiceAsImage(inv.invoiceNumber);
+  el.innerHTML=prevHTML;
+}
+
+function cfDelInvoice(id,invoiceNumber){
+  showCf(`Delete invoice ${invoiceNumber}?`,'This will permanently remove this invoice record. This cannot be undone.',async()=>{
+    const res=await fetch(`${API}/invoices/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadIHistory();}
+    else toast('❌',d.message);
+  });
+}
+
+/* ── PURCHASE ── */
+let allPurchases=[];
+let editPuId=null;
+let puProductsCache=[];
+
+function updatePuTotal(){
+  const qty=parseFloat(document.getElementById('pu-qty').value)||0;
+  const price=parseFloat(document.getElementById('pu-price').value)||0;
+  document.getElementById('pu-total').value=qty&&price?'₹'+(qty*price).toLocaleString('en-IN',{maximumFractionDigits:2}):'';
+}
+
+async function populatePuProductDropdown(){
+  try{
+    const res=await fetch(`${API}/products`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success)return;
+    puProductsCache=d.products;
+    const sel=document.getElementById('pu-name');
+    const current=sel.value;
+    sel.innerHTML='<option value="">Select product...</option>'+
+      puProductsCache.map(p=>`<option value="${p.name.replace(/"/g,'&quot;')}" data-cat="${p.category}" data-unit="${(p.unit||'').replace(/"/g,'&quot;')}">${p.name}</option>`).join('');
+    if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
+  }catch(e){}
+}
+
+function onPuProductChange(){
+  const sel=document.getElementById('pu-name');
+  const opt=sel.options[sel.selectedIndex];
+  if(!opt||!opt.value)return;
+  const cat=opt.dataset.cat;
+  const unitRaw=(opt.dataset.unit||'').toLowerCase();
+  if(cat)document.getElementById('pu-cat').value=cat;
+  const unitSel=document.getElementById('pu-unit');
+  if(unitRaw.includes('litre')||unitRaw.includes('liter'))unitSel.value='litre';
+  else if(unitRaw.includes('kg')||unitRaw.includes('kilo'))unitSel.value='kg';
+  else if(unitRaw.includes('quintal'))unitSel.value='quintal';
+  else if(unitRaw.includes('gram')||unitRaw.includes('gm'))unitSel.value='gram';
+  else if(unitRaw.includes('ml')||unitRaw.includes('millilitre'))unitSel.value='ml';
+  else if(unitRaw.includes('dozen'))unitSel.value='dozen';
+  else if(unitRaw.includes('box'))unitSel.value='box';
+  else if(unitRaw.includes('packet')||unitRaw.includes('pack'))unitSel.value='packet';
+  else unitSel.value='piece';
+}
+
+async function ensureOrdersCache(){
+  try{
+    const res=await fetch(`${API}/orders?limit=9999`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success)allOrdersCache=d.orders.filter(o=>o.status!=='cancelled');
+  }catch(e){}
+}
+
+async function loadPurchases(){
+  try{
+    await populatePuProductDropdown();
+    if(!document.getElementById('pu-name').value)document.getElementById('pu-cat').value='saree';
+    const res=await fetch(`${API}/purchases`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allPurchases=d.purchases;
+    populatePuYearFilter();
+    await ensureOrdersCache();
+    renderPurchaseReport();
+  }catch(e){toast('❌',e.message);}
+}
+
+function populatePuYearFilter(){
+  const curYear=new Date().getFullYear();
+  const years=[...new Set(allPurchases.map(p=>new Date(p.purchaseDate).getFullYear()))];
+  if(!years.includes(curYear))years.push(curYear);
+  years.sort((a,b)=>b-a);
+  const ySel=document.getElementById('pu-year');
+  const curVal=ySel.value||curYear;
+  ySel.innerHTML=years.map(y=>`<option value="${y}" ${y==curVal?'selected':''}>${y}</option>`).join('');
+}
+
+function loadPuMonth(){renderPurchaseReport();}
+
+function getFilteredPurchases(){
+  const year=parseInt(document.getElementById('pu-year')?.value||new Date().getFullYear());
+  const month=document.getElementById('pu-month')?.value;
+  const mIdx=(month!==''&&month!==undefined&&month!==null)?parseInt(month):null;
+  return allPurchases.filter(p=>{
+    const d=new Date(p.purchaseDate);
+    if(d.getFullYear()!==year)return false;
+    if(mIdx!==null&&d.getMonth()!==mIdx)return false;
+    return true;
+  });
+}
+
+function renderPurchaseReport(){
+  const filtered=getFilteredPurchases();
+  const totalQty=filtered.reduce((s,p)=>s+p.quantity,0);
+  const totalAmt=filtered.reduce((s,p)=>s+p.totalPrice,0);
+  const avg=filtered.length?Math.round(totalAmt/filtered.length):0;
+  document.getElementById('pu-stats').innerHTML=`
+    <div class="tally-stat"><div class="tn">${filtered.length}</div><div class="tl">Purchases</div></div>
+    <div class="tally-stat"><div class="tn">${totalQty}</div><div class="tl">Total Qty</div></div>
+    <div class="tally-stat"><div class="tn">₹${totalAmt.toLocaleString('en-IN')}</div><div class="tl">Amount Spent</div></div>
+    <div class="tally-stat"><div class="tn">₹${avg.toLocaleString('en-IN')}</div><div class="tl">Avg / Purchase</div></div>`;
+  filterPurchases();
+  drawPurchaseVsRevenueChart();
+}
+
+function filterPurchases(){
+  const q=document.getElementById('pu-srch').value.toLowerCase();
+  const base=getFilteredPurchases();
+  renderPurchaseTable(q?base.filter(p=>p.productName.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)):base);
+}
+
+function renderPurchaseTable(list){
+  const tb=document.getElementById('pu-tbody');
+  const tf=document.getElementById('pu-tfoot');
+  if(!list.length){
+    tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No purchases recorded for this period</td></tr>`;
+    tf.innerHTML='';
+    return;
+  }
+  tb.innerHTML=list.map(p=>{
+    const d=new Date(p.purchaseDate);
+    const dstr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    return `<tr>
+      <td>${dstr}</td>
+      <td><strong>${p.productName}</strong>${p.notes?`<br/><span style="font-size:.7rem;color:var(--muted)">${p.notes}</span>`:''}</td>
+      <td><span class="cat-tag ${p.category}">${cLabel[p.category]||'Other'}</span></td>
+      <td style="text-align:right">${p.quantity}${p.unit?' '+p.unit:''}</td>
+      <td style="text-align:right">₹${p.price.toLocaleString('en-IN')}</td>
+      <td style="text-align:right"><strong>₹${p.totalPrice.toLocaleString('en-IN')}</strong></td>
+      <td><div class="td-acts">
+        <button class="abtn edit" onclick="editPurchase('${p._id}')">✏️ Edit</button>
+        <button class="abtn del" onclick="cfDelPurchase('${p._id}','${p.productName.replace(/'/g,"\\'")}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  const grandTotal=list.reduce((s,p)=>s+p.totalPrice,0);
+  tf.innerHTML=`<tr style="font-weight:700;background:var(--warm)">
+    <td colspan="5" style="text-align:right;padding:.7rem">Total Purchase Amount</td>
+    <td style="text-align:right;padding:.7rem">₹${grandTotal.toLocaleString('en-IN')}</td>
+    <td></td>
+  </tr>`;
+}
+
+function drawPurchaseVsRevenueChart(){
+  const canvas=document.getElementById('pr-chart');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const year=parseInt(document.getElementById('pu-year')?.value||new Date().getFullYear());
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const purchaseByMonth=new Array(12).fill(0);
+  allPurchases.filter(p=>new Date(p.purchaseDate).getFullYear()===year).forEach(p=>{
+    purchaseByMonth[new Date(p.purchaseDate).getMonth()]+=p.totalPrice;
+  });
+  const revenueByMonth=new Array(12).fill(0);
+  (allOrdersCache||[]).filter(o=>new Date(o.createdAt).getFullYear()===year).forEach(o=>{
+    revenueByMonth[new Date(o.createdAt).getMonth()]+=o.totalAmount;
+  });
+
+  const activeMonths=[...Array(12).keys()].filter(m=>purchaseByMonth[m]>0||revenueByMonth[m]>0);
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-40;
+  const H=240;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  if(!activeMonths.length){
+    ctx.fillStyle='#8a7060';ctx.font='13px DM Sans,sans-serif';ctx.textAlign='center';
+    ctx.fillText('No purchase or revenue data for '+year,W/2,H/2);
+    return;
+  }
+
+  const maxVal=Math.max(...activeMonths.map(m=>Math.max(purchaseByMonth[m],revenueByMonth[m])),1);
+  const pad={top:20,right:20,bottom:56,left:70};
+  const chartW=W-pad.left-pad.right;
+  const chartH=H-pad.top-pad.bottom;
+  const groupW=chartW/activeMonths.length;
+  const barW=Math.min(28,(groupW-16)/2);
+
+  ctx.strokeStyle='#e8d5b8';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.top+chartH-(chartH/4)*i;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();
+    ctx.fillStyle='#8a7060';ctx.font='10px DM Sans,sans-serif';ctx.textAlign='right';
+    ctx.fillText('₹'+Math.round(maxVal/4*i/1000)+'k',pad.left-6,y+4);
+  }
+
+  activeMonths.forEach((m,idx)=>{
+    const gx=pad.left+groupW*idx+groupW/2;
+    const pH=(purchaseByMonth[m]/maxVal)*chartH;
+    const px=gx-barW-3;
+    const py=pad.top+chartH-pH;
+    ctx.fillStyle='#c0392b';
+    ctx.beginPath();ctx.roundRect(px,py,barW,pH,[3,3,0,0]);ctx.fill();
+
+    const rH=(revenueByMonth[m]/maxVal)*chartH;
+    const rx=gx+3;
+    const ry=pad.top+chartH-rH;
+    const grad=ctx.createLinearGradient(0,ry,0,pad.top+chartH);
+    grad.addColorStop(0,'#e8c068');grad.addColorStop(1,'#c8902a');
+    ctx.fillStyle=grad;
+    ctx.beginPath();ctx.roundRect(rx,ry,barW,rH,[3,3,0,0]);ctx.fill();
+
+    ctx.fillStyle='#2d1a00';ctx.font='11px DM Sans,sans-serif';ctx.textAlign='center';
+    ctx.fillText(months[m],gx,pad.top+chartH+18);
+  });
+
+  ctx.fillStyle='#c0392b';ctx.fillRect(pad.left,H-14,10,10);
+  ctx.fillStyle='#2d1a00';ctx.font='10px DM Sans,sans-serif';ctx.textAlign='left';
+  ctx.fillText('Purchase',pad.left+14,H-5);
+  ctx.fillStyle='#c8902a';ctx.fillRect(pad.left+90,H-14,10,10);
+  ctx.fillStyle='#2d1a00';ctx.fillText('Revenue',pad.left+104,H-5);
+}
+
+async function savePurchase(){
+  const purchaseDate=document.getElementById('pu-date').value;
+  const productName=document.getElementById('pu-name').value.trim();
+  const category=document.getElementById('pu-cat').value;
+  const quantity=document.getElementById('pu-qty').value;
+  const unit=document.getElementById('pu-unit').value.trim();
+  const price=document.getElementById('pu-price').value;
+  const notes=document.getElementById('pu-notes').value.trim();
+  if(!purchaseDate||!productName||!quantity||!price){toast('⚠️','Date, product, quantity and price are required');return;}
+  try{
+    const url=editPuId?`${API}/purchases/${editPuId}`:`${API}/purchases`;
+    const method=editPuId?'PUT':'POST';
+    const res=await fetch(url,{
+      method,
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+      body:JSON.stringify({purchaseDate,productName,category,quantity,unit,price,notes})
+    });
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    toast('✅',editPuId?'Purchase updated!':'Purchase added!');
+    clearPuForm();loadPurchases();
+  }catch(e){toast('❌',e.message);}
+}
+
+function editPurchase(id){
+  const p=allPurchases.find(x=>x._id===id);
+  if(!p)return;
+  editPuId=id;
+  document.getElementById('pu-date').value=new Date(p.purchaseDate).toISOString().slice(0,10);
+  const sel=document.getElementById('pu-name');
+  if(![...sel.options].some(o=>o.value===p.productName)){
+    sel.insertAdjacentHTML('beforeend',`<option value="${p.productName.replace(/"/g,'&quot;')}">${p.productName} (not in product list)</option>`);
+  }
+  sel.value=p.productName;
+  document.getElementById('pu-cat').value=p.category;
+  document.getElementById('pu-qty').value=p.quantity;
+  document.getElementById('pu-unit').value=p.unit||'piece';
+  document.getElementById('pu-price').value=p.price;
+  document.getElementById('pu-notes').value=p.notes||'';
+  updatePuTotal();
+  document.getElementById('pu-form-head').textContent='✏️ Edit Purchase';
+  document.querySelectorAll('#tab-purchase .fc')[0].scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cfDelPurchase(id,name){
+  showCf(`Delete purchase of "${name}"?`,'This will permanently remove this purchase record.',async()=>{
+    const res=await fetch(`${API}/purchases/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(d.success){toast('🗑','Deleted');loadPurchases();}
+    else toast('❌',d.message);
+  });
+}
+
+function clearPuForm(){
+  ['pu-qty','pu-price','pu-total','pu-notes','pu-date'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('pu-name').value='';
+  document.getElementById('pu-cat').value='saree';
+  document.getElementById('pu-unit').value='kg';
+  document.getElementById('pu-form-head').textContent='➕ Add New Purchase';
+  editPuId=null;
+}
+
+function printPurchaseReport(){
+  const year=document.getElementById('pu-year')?.value;
+  const mSel=document.getElementById('pu-month');
+  const mName=mSel.options[mSel.selectedIndex].text;
+  const statsHTML=document.getElementById('pu-stats').innerHTML;
+  const filtered=getFilteredPurchases();
+  const rowsHTML=filtered.map(p=>{
+    const d=new Date(p.purchaseDate);
+    const dstr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    return `<tr><td>${dstr}</td><td>${p.productName}</td><td>${cLabel[p.category]||p.category}</td>
+      <td style="text-align:right">${p.quantity}${p.unit?' '+p.unit:''}</td>
+      <td style="text-align:right">₹${p.price.toLocaleString('en-IN')}</td>
+      <td style="text-align:right">₹${p.totalPrice.toLocaleString('en-IN')}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1rem">No data</td></tr>';
+  const grandTotal=filtered.reduce((s,p)=>s+p.totalPrice,0);
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Purchase Report</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;padding:1.5rem;color:#1a0f00;font-size:12px}
+    h1{font-size:1.4rem;color:#1a0f00;margin-bottom:.25rem}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
+    .stat{background:#1a0f00;color:#fff;border-radius:8px;padding:.75rem;text-align:center}
+    .stat .n{font-size:1.4rem;color:#e8c068;font-weight:700}
+    .stat .l{font-size:.65rem;color:#b0a090;text-transform:uppercase;margin-top:.2rem}
+    table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+    th{background:#1a0f00;color:#e8c068;padding:6px 8px;text-align:left;font-size:11px}
+    td{padding:5px 8px;border-bottom:1px solid #e8d5b8;font-size:11px}
+    tr:nth-child(even) td{background:#fff8f0}
+    @media print{@page{margin:1cm}button{display:none}}
+  </style></head><body>
+  <h1>VBS Enterprises — Purchase Report</h1>
+  <p style="color:#7a6652;font-size:.8rem;margin-bottom:1rem">${mName} ${year} · Generated on ${new Date().toLocaleString('en-IN')}</p>
+  <div class="stats">${statsHTML.replace(/class="tally-stat"/g,'class="stat"').replace(/class="tn"/g,'class="n"').replace(/class="tl"/g,'class="l"')}</div>
+  <table><thead><tr><th>Date</th><th>Product</th><th>Category</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+  <tbody>${rowsHTML}</tbody>
+  <tfoot><tr><td colspan="5" style="text-align:right;font-weight:700;padding:6px 8px">Grand Total</td><td style="text-align:right;font-weight:700;padding:6px 8px">₹${grandTotal.toLocaleString('en-IN')}</td></tr></tfoot>
+  </table>
+  <button onclick="window.print()" style="background:#c8902a;color:#fff;border:none;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">🖨️ Print / Save PDF</button>
+  </body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+
+function downloadPurchaseExcel(){
+  const year=document.getElementById('pu-year')?.value;
+  const mSel=document.getElementById('pu-month');
+  const mIdx=mSel&&mSel.value!==''?parseInt(mSel.value):null;
+  const monthsFull=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const periodLabel=mIdx!==null?monthsFull[mIdx]+' '+year:'Full Year '+year;
+  const filtered=getFilteredPurchases();
+
+  const NL=String.fromCharCode(10);
+  let csv='VBS Enterprises - Purchase Report'+NL;
+  csv+='Period: '+periodLabel+NL;
+  csv+='Generated: '+new Date().toLocaleString('en-IN')+NL+NL;
+  csv+='Purchase Date,Purchased Product,Category,Purchased Quantity,Price (Rs),Total Price (Rs)'+NL;
+
+  let grandTotal=0;
+  filtered.forEach(p=>{
+    const d=new Date(p.purchaseDate);
+    const dstr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    grandTotal+=p.totalPrice;
+    csv+='"'+dstr+'","'+p.productName+'","'+(cLabel[p.category]||p.category)+'","'+p.quantity+(p.unit?' '+p.unit:'')+'",'+p.price+','+p.totalPrice+NL;
+  });
+  csv+=NL+'TOTAL,,,,,'+grandTotal+NL;
+
+  const BOM='﻿';
+  const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='VBS-PurchaseReport-'+periodLabel.replace(' ','-')+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  toast('✅','Excel report downloaded!');
+}
+
+/* ── ORDERS ── */
+async function loadOrders(){
+  const status=document.getElementById('o-filter')?.value||'';
+  try{
+    const res=await fetch(`${API}/orders?limit=9999${status?'&status='+status:''}`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    const box=document.getElementById('orders-box');
+    window._allOrders = d.orders;
+    box.innerHTML=d.orders.length?d.orders.map(o=>orderCard(o,true)).join(''):`<div class="empty"><h3>No orders found</h3></div>`;
+  }catch(e){toast('❌',e.message);}
+}
+
+function orderCard(o,isAdmin){
+  const catIcon=c=>cIcon[c]||'📦';
+  return `<div class="oc">
+    <div class="oc-top">
+      <div><div class="oc-id">${o.orderId}</div><div class="oc-date">📅 ${new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}</div></div>
+      <span class="spill ${o.status}">${o.status}</span>
+    </div>
+    <div class="oc-cust">
+      <span>👤 <strong>${o.customer.name}</strong></span>
+      <span>📞 <strong>${o.customer.phone}</strong></span>
+      <span>💳 <strong>${o.paymentMethod==='cod'?'Cash on Delivery':o.paymentMethod.toUpperCase()}</strong></span>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:.65rem">📍 ${o.customer.address}</div>
+    <div class="oc-items">${o.items.map(i=>`<span class="ichip">${catIcon(i.category)} ${i.name} ×${i.quantity}</span>`).join('')}</div>
+    ${o.notes?`<div style="font-size:.78rem;color:var(--muted);margin-bottom:.65rem">📝 ${o.notes}</div>`:''}
+    <div class="oc-foot">
+      <div>
+        <div class="oc-total">₹${o.totalAmount.toLocaleString('en-IN')}
+          ${o.discount ? `<span style="font-size:.72rem;color:#22c55e;margin-left:.4rem">(-₹${o.discount}${o.discountedItem?' on '+o.discountedItem:''})</span>` : ''}
+          ${o.courierCharge ? `<span style="font-size:.72rem;color:#f59e0b;margin-left:.4rem">(+₹${o.courierCharge} courier)</span>` : ''}
+        </div>
+        ${o.originalAmount && o.originalAmount !== o.totalAmount ? `<div style="font-size:.75rem;color:var(--muted);text-decoration:line-through">₹${o.originalAmount.toLocaleString('en-IN')}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        ${isAdmin ? `<button class="btn-gh" onclick="editOrderAmount('${o._id}',${o.totalAmount},${o.discount||0})" style="font-size:.78rem;padding:.38rem .85rem">✏️ Edit Amount</button>` : ''}
+        <button class="btn-gh" onclick="viewInvoice('${o._id}')" style="font-size:.78rem;padding:.38rem .85rem">👁 View</button>
+        <button class="btn-g" onclick="downloadInvoice('${o._id}')" style="font-size:.78rem;padding:.38rem .85rem">⬇️ Download</button>
+        ${isAdmin?`<select class="ssel" onchange="updateStatus('${o._id}',this.value)">
+        <option value="new"        ${o.status==='new'?'selected':''}>🆕 New</option>
+        <option value="confirmed"  ${o.status==='confirmed'?'selected':''}>✅ Confirmed</option>
+        <option value="processing" ${o.status==='processing'?'selected':''}>⚙️ Processing</option>
+        <option value="ready"      ${o.status==='ready'?'selected':''}>📦 Ready</option>
+        <option value="delivered"  ${o.status==='delivered'?'selected':''}>🚚 Delivered</option>
+        <option value="cancelled"  ${o.status==='cancelled'?'selected':''}>❌ Cancelled</option>
+      </select>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+
+function viewInvoice(orderId) {
+  fetch(`${API}/orders`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      window.open(url,'_blank');
+      setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    }).catch(()=>toast('❌','Could not load order'));
+}
+
+function downloadInvoice(orderId) {
+  fetch(`${API}/orders`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'Invoice-' + o.orderId + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      toast('✅','Invoice downloaded!');
+    }).catch(()=>toast('❌','Could not load order'));
+}
+
+function generateInvoiceHTML(o) {
+  const date      = new Date(o.createdAt).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+  const discount  = o.discount      || 0;
+  const courier   = o.courierCharge || 0;
+  const discItem  = o.discountedItem|| '';
+  const itemsTotal= o.items.reduce((s,i)=>s+i.price*i.quantity,0);
+
+  const items = o.items.map(i=>
+    `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #ccc;font-size:11px">
+      <div style="flex:1;padding-right:4px">${i.name}<br/><span style="color:#666;font-size:10px">x${i.quantity} @ Rs.${i.price}</span></div>
+      <div style="font-weight:700;white-space:nowrap">Rs.${(i.price*i.quantity).toLocaleString('en-IN')}</div>
+    </div>`
+  ).join('');
+
+  const discountRow = discount > 0
+    ? `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#006600">
+        <span>Discount${discItem?' ('+discItem+')':''}</span>
+        <span style="font-weight:700">- Rs.${discount.toLocaleString('en-IN')}</span>
+      </div>` : '';
+
+  const courierRow = courier > 0
+    ? `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#cc6600">
+        <span>Courier Charge</span>
+        <span style="font-weight:700">+ Rs.${courier.toLocaleString('en-IN')}</span>
+      </div>` : '';
+
+  const subtotalRow = (discount > 0 || courier > 0)
+    ? `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;color:#555">
+        <span>Sub Total</span><span>Rs.${itemsTotal.toLocaleString('en-IN')}</span>
+      </div>` : '';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Receipt ${o.orderId}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Courier New',monospace;width:80mm;max-width:80mm;margin:0 auto;padding:6px;font-size:11px;color:#000;background:#fff}
+    .center{text-align:center}
+    .bold{font-weight:700}
+    .divider{border:none;border-top:1px dashed #000;margin:5px 0}
+    .row{display:flex;justify-content:space-between;padding:2px 0;font-size:11px}
+    .shop-name{font-size:15px;font-weight:700;text-align:center;letter-spacing:.05em}
+    .total-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:4px 0;border-top:2px solid #000;border-bottom:2px solid #000;margin:4px 0}
+    .thank{text-align:center;font-size:10px;margin-top:6px;padding-top:4px;border-top:1px dashed #000}
+    @media print{@page{margin:0;size:80mm auto}body{padding:4px}.no-print{display:none}}
+  </style></head><body>
+  <div class="shop-name">VBS ENTERPRISES</div>
+  <div class="center" style="font-size:9px;margin-top:1px;color:#555">(Marachekku Oil)</div>
+  <div class="center" style="font-size:9px;margin-top:2px">108/7C, 5th Cross St, Rajiv Nagar</div>
+  <div class="center" style="font-size:9px">Pallikuppam, Vanagaram, Chennai-600077</div>
+  <div class="center" style="font-size:9px">Ph: 9840042290 / 9840357267</div>
+  <div class="center" style="font-size:8.5px;margin-top:2px">MSME UDYAM-TN-24-0183360</div>
+  <div class="center" style="font-size:8.5px">FSSAI: 22426477000262 &nbsp;|&nbsp; GSTIN: 33FCHPS4318R1ZW</div>
+  <hr class="divider"/>
+  <div class="row"><span class="bold">Order:</span><span>${o.orderId}</span></div>
+  <div class="row"><span class="bold">Date:</span><span>${date}</span></div>
+  <div class="row"><span class="bold">Status:</span><span>${o.status.toUpperCase()}</span></div>
+  <hr class="divider"/>
+  <div class="bold" style="font-size:10px;margin-bottom:3px">CUSTOMER</div>
+  <div style="font-size:11px">${o.customer.name}</div>
+  <div style="font-size:10px;color:#333">${o.customer.phone}</div>
+  <div style="font-size:10px;color:#333">${o.customer.address}</div>
+  <hr class="divider"/>
+  <div class="bold" style="font-size:10px;margin-bottom:3px">ITEMS</div>
+  ${items}
+  <hr class="divider"/>
+  ${subtotalRow}
+  ${discountRow}
+  ${courierRow}
+  <div class="total-row"><span>TOTAL</span><span>Rs.${o.totalAmount.toLocaleString('en-IN')}</span></div>
+  <div class="row"><span>Payment:</span><span>${o.paymentMethod==='cod'?'Cash on Delivery':o.paymentMethod.toUpperCase()}</span></div>
+  ${o.notes?'<div class="row"><span>Notes:</span><span style="text-align:right;flex:1;padding-left:4px">'+o.notes+'</span></div>':''}
+  <hr class="divider"/>
+  <div class="center" style="font-size:9.5px;font-weight:700;margin-top:2px">💳 We Accept All Types of</div>
+  <div class="center" style="font-size:9.5px;font-weight:700">Credit/Debit Cards &amp; UPI Payments</div>
+  <div class="thank">
+    Thank you for shopping!<br/>Quality You Can Trust<br/>
+    <button onclick="window.print()" class="no-print" style="margin-top:6px;background:#000;color:#fff;border:none;padding:5px 20px;border-radius:4px;cursor:pointer;font-size:11px">Print</button>
+  </div>
+  </body></html>`;
+  return html;
+}
+function viewInvoice(orderId) {
+  fetch(API+'/orders?limit=9999',{headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      window.open(url,'_blank');
+      setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    }).catch(()=>toast('❌','Could not load order'));
+}
+
+function downloadInvoice(orderId) {
+  fetch(API+'/orders?limit=9999',{headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json())
+    .then(d=>{
+      const o = d.orders ? d.orders.find(x=>x._id===orderId) : null;
+      if(!o){toast('❌','Order not found');return;}
+      const html = generateInvoiceHTML(o);
+      const blob = new Blob([html], {type:'text/html'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = 'Invoice-' + o.orderId + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      toast('✅','Invoice downloaded!');
+    }).catch(()=>toast('❌','Could not load order'));
+}
+
+let eaOrderItems = [];
+
+function editOrderAmount(id, currentTotal, currentDiscount) {
+  const origTotal = currentTotal + (currentDiscount||0);
+  document.getElementById('ea-order-id').value = id;
+  document.getElementById('ea-original').value = origTotal;
+  document.getElementById('ea-orig-display').textContent = 'Rs.' + origTotal.toLocaleString('en-IN');
+
+  // Populate item dropdown from _allOrders cache
+  const order = (window._allOrders||[]).find(o=>o._id===id);
+  eaOrderItems = order ? order.items : [];
+  const sel = document.getElementById('ea-item-sel');
+  if(sel) {
+    sel.innerHTML = '<option value="">— Apply to whole order —</option>';
+    eaOrderItems.forEach((item,idx)=>{
+      sel.innerHTML += '<option value="'+idx+'">'+item.name+' x'+item.quantity+' (Rs '+(item.price*item.quantity)+')</option>';
+    });
+  }
+
+  document.getElementById('ea-discount').value = currentDiscount || '';
+  document.getElementById('ea-courier').value  = order ? (order.courierCharge||'') : '';
+  document.getElementById('ea-reason').value   = order ? (order.discountReason||'') : '';
+  calcNewTotal();
+  document.getElementById('edit-amount-modal').classList.add('open');
+}
+
+function calcNewTotal() {
+  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
+  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
+  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
+  const itemSel  = document.getElementById('ea-item-sel') ? document.getElementById('ea-item-sel').value : '';
+  const newTotal = Math.max(0, orig - discount + courier);
+  document.getElementById('ea-new-total').textContent = 'Rs.' + newTotal.toLocaleString('en-IN');
+  let parts = [];
+  if(discount > 0) {
+    if(itemSel !== '' && eaOrderItems[parseInt(itemSel)]) {
+      parts.push('Discount -Rs'+discount+' on "'+eaOrderItems[parseInt(itemSel)].name+'"');
+    } else { parts.push('Discount -Rs'+discount+' (whole order)'); }
+  }
+  if(courier > 0) parts.push('Courier +Rs'+courier);
+  const bd = document.getElementById('ea-breakdown');
+  if(bd) bd.textContent = parts.join(' · ');
+}
+
+async function saveOrderAmount() {
+  const id       = document.getElementById('ea-order-id').value;
+  const orig     = parseFloat(document.getElementById('ea-original').value) || 0;
+  const discount = parseFloat(document.getElementById('ea-discount').value) || 0;
+  const courier  = parseFloat(document.getElementById('ea-courier').value)  || 0;
+  const reason   = document.getElementById('ea-reason').value.trim();
+  const itemSel  = document.getElementById('ea-item-sel') ? document.getElementById('ea-item-sel').value : '';
+  const discountedItem = (itemSel !== '' && eaOrderItems[parseInt(itemSel)]) ? eaOrderItems[parseInt(itemSel)].name : null;
+  const newTotal = Math.max(0, orig - discount + courier);
+  try {
+    const res = await fetch(API+'/orders/'+id+'/amount', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({ totalAmount: newTotal, discount, originalAmount: orig,
+        discountReason: reason, discountedItem, courierCharge: courier })
+    });
+    const d = await res.json();
+    if(!d.success) throw new Error(d.message);
+    document.getElementById('edit-amount-modal').classList.remove('open');
+    toast('✅', 'Amount updated to Rs.'+newTotal.toLocaleString('en-IN'));
+    loadOrders();
+  } catch(e) { toast('❌', e.message); }
+}
+
+async function updateStatus(id,status){
+  try{
+    const res=await fetch(API+'/orders/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({status})});
+    const d=await res.json();
+    if(!d.success)throw new Error(d.message);
+    toast('✅','Status updated to '+status);
+    loadOrders();
+  }catch(e){toast('❌',e.message);}
+}
+
+let allCustomersCache = [];
+let custOrdersCache   = [];
+
+async function loadCustomers(){
+  try{
+    const res = await fetch(API+'/orders/customers',{headers:{Authorization:'Bearer '+token}});
+    const d   = await res.json();
+    if(!d.success){toast('❌',d.message);return;}
+    allCustomersCache = d.customers || [];
+    filterCustomers();
+  }catch(e){toast('❌',e.message);}
+}
+
+function editCustomer(phone) {
+  // Find customer from cache
+  const c = allCustomersCache.find(x => x.phone === phone);
+  if (!c) { toast('❌', 'Customer not found'); return; }
+
+  document.getElementById('ec-phone-orig').value = phone;
+  document.getElementById('ec-name').value        = c.name || '';
+  document.getElementById('ec-phone').value       = c.phone || '';
+  document.getElementById('ec-email').value       = c.email || '';
+  document.getElementById('ec-address').value     = c.address || '';
+  document.getElementById('ec-err').style.display = 'none';
+  document.getElementById('edit-cust-modal').classList.add('open');
+}
+
+async function saveCustomerEdit() {
+  const origPhone = document.getElementById('ec-phone-orig').value;
+  const name      = document.getElementById('ec-name').value.trim();
+  const phone     = document.getElementById('ec-phone').value.trim();
+  const email     = document.getElementById('ec-email').value.trim();
+  const address   = document.getElementById('ec-address').value.trim();
+  const errEl     = document.getElementById('ec-err');
+  const btn       = document.getElementById('ec-save-btn');
+
+  if (!name) { errEl.textContent = 'Name is required'; errEl.style.display = 'block'; return; }
+  if (!phone) { errEl.textContent = 'Phone is required'; errEl.style.display = 'block'; return; }
+
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  errEl.style.display = 'none';
+
+  try {
+    const res  = await fetch(API + '/auth/customer/' + encodeURIComponent(origPhone), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ name, phone, email, address })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+
+    // Update local cache
+    const idx = allCustomersCache.findIndex(x => x.phone === origPhone);
+    if (idx >= 0) { allCustomersCache[idx].name = name; allCustomersCache[idx].phone = phone; allCustomersCache[idx].address = address; allCustomersCache[idx].email = email; }
+
+    document.getElementById('edit-cust-modal').classList.remove('open');
+    toast('✅', 'Customer updated successfully!');
+    filterCustomers(); // re-render list
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = '✅ Save Changes'; btn.disabled = false;
+  }
+}
+
+function filterCustomers(){
+  const q    = (document.getElementById('cust-srch')?.value||'').toLowerCase();
+  const sort = document.getElementById('cust-sort')?.value || 'spent';
+
+  let list = allCustomersCache.filter(c =>
+    !q || c.name.toLowerCase().includes(q) || c.phone.includes(q) || (c.address||'').toLowerCase().includes(q)
+  );
+
+  if(sort==='spent')  list.sort((a,b)=>b.totalSpent-a.totalSpent);
+  if(sort==='orders') list.sort((a,b)=>b.orders-a.orders);
+  if(sort==='recent') list.sort((a,b)=>new Date(b.lastOrder)-new Date(a.lastOrder));
+  if(sort==='name')   list.sort((a,b)=>a.name.localeCompare(b.name));
+
+  const tb = document.getElementById('c-tbody');
+  const count = document.getElementById('cust-count');
+  count.textContent = list.length + ' of ' + allCustomersCache.length + ' customers';
+
+  if(!list.length){
+    tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted)">No customers found</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map((c,i)=>`<tr>
+    <td style="padding:.8rem 1rem;font-size:.82rem">${i+1}</td>
+    <td style="padding:.8rem 1rem"><strong>${c.name}</strong></td>
+    <td style="padding:.8rem 1rem;font-size:.83rem">${c.phone}</td>
+    <td style="padding:.8rem 1rem;font-size:.78rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.address||''}">${c.address||'—'}</td>
+    <td style="padding:.8rem 1rem;text-align:center">${c.orders}</td>
+    <td style="padding:.8rem 1rem;text-align:right;color:var(--gold);font-weight:700">₹${c.totalSpent.toLocaleString('en-IN')}</td>
+    <td style="padding:.8rem 1rem;font-size:.8rem">${new Date(c.lastOrder).toLocaleDateString('en-IN',{dateStyle:'medium'})}</td>
+    <td style="padding:.8rem 1rem">
+    <button class="abtn edit" onclick="showCustHistory('${c.phone}',this.dataset.name)" data-name="${c.name}">📋 Orders</button>
+      <button class="abtn" style="background:rgba(201,150,58,.15);color:var(--gold)" onclick="editCustomer('${c.phone}')" data-name="${c.name}" data-address="${c.address||''}">✏️ Edit</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function showCustHistory(phone, name){
+  const wrap = document.getElementById('cust-history-wrap');
+  wrap.style.display = 'block';
+  document.getElementById('cust-history-title').textContent = (name||phone) + ' — Orders';
+  document.getElementById('cust-history-meta').textContent  = phone;
+  document.getElementById('cust-history-orders').innerHTML  = '<div class="empty"><div class="ei">⏳</div><h3>Loading...</h3></div>';
+  wrap.scrollIntoView({behavior:'smooth'});
+
+  try{
+    const res = await fetch(API+'/orders/customers/'+phone,{headers:{Authorization:'Bearer '+token}});
+    const d   = await res.json();
+    if(!d.success) throw new Error(d.message);
+    custOrdersCache = d.orders || [];
+    window._custHistoryPhone = phone;
+    renderCustOrders(custOrdersCache);
+  }catch(e){toast('❌',e.message);}
+}
+
+function filterCustOrders(){
+  const q      = (document.getElementById('cust-order-srch')?.value||'').toLowerCase();
+  const status = document.getElementById('cust-order-status')?.value||'';
+  let list = custOrdersCache.filter(o=>{
+    const matchQ = !q || o.orderId.toLowerCase().includes(q) ||
+      o.items.some(i=>i.name.toLowerCase().includes(q));
+    const matchS = !status || o.status === status;
+    return matchQ && matchS;
+  });
+  renderCustOrders(list);
+}
+
+function renderCustOrders(orders){
+  const div = document.getElementById('cust-history-orders');
+  if(!orders.length){
+    div.innerHTML='<div class="empty"><div class="ei">📦</div><h3>No orders found</h3></div>';
+    return;
+  }
+  // Show summary stats
+  const totalSpent = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+o.totalAmount,0);
+  const statHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem;margin-bottom:1rem">
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--gold-l)">${orders.length}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Orders</div>
+    </div>
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--gold-l)">₹${totalSpent.toLocaleString('en-IN')}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Total Spent</div>
+    </div>
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:var(--gold-l)">${orders.filter(o=>o.status==='delivered').length}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Delivered</div>
+    </div>
+    <div style="background:var(--deep);border-radius:10px;padding:.9rem;text-align:center;border:1px solid rgba(201,150,58,.2)">
+      <div style="font-size:1.4rem;font-weight:700;color:#f87171">${orders.filter(o=>o.status==='cancelled').length}</div>
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Cancelled</div>
+    </div>
+  </div>`;
+
+  div.innerHTML = statHtml + orders.map(o=>orderCard(o,true)).join('');
+}
+
+/* ── CONFIRM MODAL ── */
+let cfCb=null;
+function showCf(title,msg,onConfirm){
+  document.getElementById('c-title').textContent=title;
+  document.getElementById('c-msg').textContent=msg;
+  document.getElementById('c-ovl').classList.add('open');
+  cfCb=onConfirm;
+}
+function closeCf(){document.getElementById('c-ovl').classList.remove('open');cfCb=null;}
+document.getElementById('c-ok').addEventListener('click',()=>{
+  document.getElementById('c-ovl').classList.remove('open');
+  if(cfCb)cfCb();
+  cfCb=null;
+});
+
+/* ── TOAST ── */
+let tt;
+function toast(icon,msg){
+  document.getElementById('t-icon').textContent=icon;
+  document.getElementById('t-msg').textContent=msg;
+  const t=document.getElementById('toast');t.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3500);
+}
+</script>
+</body>
+</html>
