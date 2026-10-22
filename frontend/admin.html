@@ -1561,7 +1561,7 @@ function printTally() {
 
   const blob = new Blob([html],{type:'text/html'});
   const url  = URL.createObjectURL(blob);
-  window.open(url,'_blank');
+  openDocOverlay(html);
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 
@@ -3031,7 +3031,7 @@ function printPurchaseReport(){
 
   const blob=new Blob([html],{type:'text/html'});
   const url=URL.createObjectURL(blob);
-  window.open(url,'_blank');
+  openDocOverlay(html);
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 
@@ -3134,7 +3134,7 @@ function viewInvoice(orderId) {
       const html = generateInvoiceHTML(o);
       const blob = new Blob([html], {type:'text/html'});
       const url  = URL.createObjectURL(blob);
-      window.open(url,'_blank');
+      openDocOverlay(html);
       setTimeout(()=>URL.revokeObjectURL(url), 30000);
     }).catch(()=>toast('❌','Could not load order'));
 }
@@ -3249,7 +3249,7 @@ function viewInvoice(orderId) {
       const html = generateInvoiceHTML(o);
       const blob = new Blob([html], {type:'text/html'});
       const url  = URL.createObjectURL(blob);
-      window.open(url,'_blank');
+      openDocOverlay(html);
       setTimeout(()=>URL.revokeObjectURL(url), 30000);
     }).catch(()=>toast('❌','Could not load order'));
 }
@@ -3538,5 +3538,6 @@ function toast(icon,msg){
   clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3500);
 }
 </script>
+<script src="js/thermal-print.js"></script>
 </body>
 </html>
