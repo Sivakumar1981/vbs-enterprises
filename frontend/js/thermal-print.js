@@ -35,7 +35,7 @@
     var itemsTotal = items.reduce(function (s, i) { return s + i.price * i.quantity; }, 0);
     var totalQty = items.reduce(function (s, i) { return s + (Number(i.quantity) || 0); }, 0);
     var disc = o.discount || 0, cour = o.courierCharge || 0;
-    var pay = o.paymentMethod === 'cod' ? 'CASH ON DELIVERY' : String(o.paymentMethod || '').toUpperCase();
+    var pay = o.billType || (o.paymentMethod === 'cod' ? 'CASH ON DELIVERY' : String(o.paymentMethod || '').toUpperCase());
 
     function pass(ctx, draw) {
       var y = px(14);
@@ -104,10 +104,14 @@
       dash();
 
       /* customer (Tamil supported) */
-      if (o.customer) {
-        left('Name : ' + (o.customer.name || ''), 26);
-        if (o.customer.phone) left('Ph : ' + o.customer.phone, 24);
-        if (o.customer.address) left(o.customer.address, 24);
+      var cu = o.customer || {};
+      var cName = (cu.name || '').trim(), cPhone = (cu.phone || '').trim(), cAddr = (cu.address || '').trim();
+      if (cPhone === '-') cPhone = ''; if (cAddr === '-') cAddr = '';
+      if (cName.toLowerCase() === 'walk-in' || cName === '-') cName = '';
+      if (cName || cPhone || cAddr) {
+        if (cName) left('Name : ' + cName, 26);
+        if (cPhone) left('Ph : ' + cPhone, 24);
+        if (cAddr) left(cAddr, 24);
         dash();
       }
 
@@ -299,9 +303,11 @@
   }
 
   /* receipt viewer */
-  function openReceipt(o) {
+  function openReceipt(o, opts) {
+    opts = opts || {};
     lastOrder = o;
     var bar = openShell();
+    if (opts.onNew) bar.appendChild(btn('➕ New Bill', '#0a7d33', function () { closeOverlay(); opts.onNew(); }));
     bar.appendChild(btn('🔵 Bluetooth Print', '#0a7d33', function () { printBluetooth(o, false); }));
     bar.appendChild(btn('📲 RawBT Print', '#c8902a', function () { printRawBT(o); }));
     bar.appendChild(btn('🖨️ System Print', '#2a62c8', function () { systemPrintReceipt(o); }));
@@ -375,5 +381,8 @@
     if (o) printBluetooth(o, false); else window.viewInvoice(orderId);
   };
 
+  window.vbsOpenReceipt = openReceipt;
+  window.vbsPrintRawBT = printRawBT;
+  window.vbsPrintBluetooth = printBluetooth;
   window.__vbsPrint = { renderReceiptCanvas: renderReceiptCanvas, canvasToEscPos: canvasToEscPos, version: VERSION };
 })();
