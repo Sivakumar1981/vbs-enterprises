@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
   name:        { type: String, required: true, trim: true },
+  shortName:   { type: String, default: '', trim: true },   // short English name printed on quick bills
+  tamilName:   { type: String, default: '', trim: true },   // Tamil name printed on quick bills
   category:    { type: String, required: true, trim: true },
   description: { type: String, default: '' },
   price:       { type: Number, required: true, min: 0 },
