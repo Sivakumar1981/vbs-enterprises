@@ -23,11 +23,13 @@ app.use('/api/purchases', require('./routes/purchases'));
 app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/quotations', require('./routes/quotations'));
 app.use('/api/invoices', require('./routes/invoices'));
+app.use('/api/bills', require('./routes/bills'));
 
 // ── Frontend static files AFTER API routes ──
 const FE = path.join(__dirname, '../frontend');
 app.use(express.static(FE));
 app.get('/admin', (req, res) => res.sendFile(path.join(FE, 'admin.html')));
+app.get('/quickbill', (req, res) => res.sendFile(path.join(FE, 'quickbill.html')));
 app.get('*',      (req, res) => res.sendFile(path.join(FE, 'index.html')));
 
 mongoose.connect(process.env.MONGO_URI)
