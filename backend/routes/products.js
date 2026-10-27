@@ -78,8 +78,10 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Not found' });
-    const { name, category, description, price, unit, stock, isActive, deliveryCharge } = req.body;
+    const { name, category, description, price, unit, stock, isActive, deliveryCharge, shortName, tamilName } = req.body;
     if (name)                    product.name        = name;
+    if (shortName !== undefined) product.shortName   = String(shortName).trim();
+    if (tamilName !== undefined) product.tamilName   = String(tamilName).trim();
     if (category)                product.category    = category;
     if (description !== undefined) product.description = description;
     if (price)                   product.price       = parseFloat(price);
