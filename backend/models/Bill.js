@@ -15,6 +15,7 @@ const billSchema = new mongoose.Schema({
   billNo:     { type: String, required: true, index: true },
   billDate:   { type: Date, default: Date.now },
   items:      { type: [billItemSchema], required: true },
+  paymentType:{ type: String, enum: ['cash', 'upi', 'card'], default: 'cash' },
   itemsTotal: { type: Number, required: true },               // sum of item amounts
   adjustment: { type: Number, default: 0 },                   // (typed final total) - itemsTotal
   gstRate:    { type: Number, default: 5 },                   // total GST %, split equally CGST/SGST
