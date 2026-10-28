@@ -1,189 +1,687 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
-<meta name="theme-color" content="#1a0f00"/>
-<link rel="manifest" href="/manifest.json"/>
-<link rel="icon" href="/images/VBS_logo.png"/>
-<title>VBS Quick Bill</title>
-<style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:#f6efe4;color:#1a0f00;font-family:'Noto Sans Tamil','Noto Sans',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:15px}
-body{display:flex;flex-direction:column;overflow:hidden}
-button{font-family:inherit;cursor:pointer}
-input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
+/* ============================================================
+   VBS Enterprises – Quick Bill (Android phone + thermal printer)
+   - Tap products -> tap PRINT. No customer details, no stock check.
+   - GST (CGST 2.5% + SGST 2.5%) is taken OUT of the total you enter,
+     so the bill total never goes above what you typed.
+   - Tamil + English via raster printing; English-only uses the
+     printer's own text mode, which is the fastest.
+   - Prints FIRST, saves to the server in the background (works offline).
+   ============================================================ */
+(function () {
+  'use strict';
+  var API = '/api';
 
-/* top bar */
-.top{background:#1a0f00;color:#e8c068;padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.brand{font-weight:800;font-size:1.05rem;letter-spacing:.3px;flex:1;min-width:120px}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#888}
-.dot.on{background:#3ddc84}.dot.off{background:#ff6b5e}
-.pill{border:1px solid #6b5230;background:#2a1a05;color:#e8c068;border-radius:999px;padding:6px 11px;font-size:.8rem;font-weight:600}
-.pill.ok{background:#0a7d33;border-color:#0a7d33;color:#fff}
-.sync{display:none;background:#c8902a;color:#1a0f00;border:none;border-radius:999px;padding:6px 11px;font-size:.78rem;font-weight:700}
-.ic{background:none;border:none;color:#e8c068;font-size:1.25rem;padding:4px 6px}
+  /* ---------- shop details printed on the bill (edit here) ---------- */
+  var SHOP = {
+    name:  'VBS ENTERPRISES',
+    tag:   '(Marachekku Oil)',
+    addr1: '108/7C, 5th Cross St, Rajiv Nagar',
+    addr2: 'Pallikuppam, Vanagaram, Chennai-600077',
+    phone: 'Ph: 9840042290 / 9840357267',
+    msme:  'MSME UDYAM-TN-24-0183360',
+    fssai: 'FSSAI: 22426477000262',
+    gstin: 'GSTIN: 33FCHPS4318R1ZW'
+  };
+  var PAY = { cash: 'CASH', upi: 'UPI', card: 'CARD' };
+  var ICONS = { saree: '👘', nighty: '🌙', chudidhar: '👗', blouse: '🪡', oil: '🫙', rice: '🌾', ghee: '🧈', honey: '🍯', peanut: '🥜', other: '📦' };
 
-/* search + categories */
-.bar{padding:8px 10px 4px;background:#f6efe4}
-.bar input{width:100%;padding:11px 14px;border:1.5px solid #dcc9a6;border-radius:12px;background:#fff}
-.cats{display:flex;gap:6px;overflow-x:auto;padding:6px 10px 8px;-webkit-overflow-scrolling:touch}
-.chip{flex:none;border:1.5px solid #dcc9a6;background:#fff;color:#5a4325;border-radius:999px;padding:6px 14px;font-weight:600;font-size:.85rem}
-.chip.on{background:#c8902a;border-color:#c8902a;color:#fff}
+  var DEFAULTS = { width: 576, lang: 'both', method: 'ble', speed: 'fast', gst: 5, prefix: 'B', hidden: ['saree', 'nighty', 'chudidhar', 'blouse'] };
+  var SPEEDS = { turbo: [512, 2], fast: [240, 4], normal: [180, 10], safe: [100, 18] };   // [bytes per write, ms pause]
+  var FONT = "'Noto Sans Tamil','Noto Sans','Nirmala UI','Latha','Tamil Sangam MN',Arial,Helvetica,sans-serif";
 
-/* product grid */
-.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 10px 150px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media(min-width:520px){.grid{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:800px){.grid{grid-template-columns:repeat(5,1fr)}}
-.tile{position:relative;background:#fff;border:1.5px solid #e6d6b8;border-radius:14px;padding:12px 10px 10px;min-height:92px;display:flex;flex-direction:column;justify-content:space-between;user-select:none;touch-action:manipulation;transition:transform .08s}
-.tile:active{transform:scale(.96);background:#fff4dc;border-color:#c8902a}
-.tn{font-weight:700;font-size:.95rem;line-height:1.2;padding-right:22px}
-.tt{font-size:.85rem;color:#7a5a2a;margin-top:2px}
-.tp{font-weight:800;color:#0a7d33;margin-top:6px}
-.edit{position:absolute;top:4px;right:4px;border:none;background:none;font-size:.85rem;opacity:.45;padding:4px}
-.edit.warn{opacity:1}
-.empty{text-align:center;color:#9a8460;padding:26px 10px;grid-column:1/-1}
-.hint{font-size:.74rem;color:#8a7552}
+  /* ---------- tiny helpers ---------- */
+  function $(id) { return document.getElementById(id); }
+  function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function jget(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
-/* bottom dock + cart sheet */
-.dock{position:fixed;left:0;right:0;bottom:0;background:#1a0f00;color:#fff;padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center;z-index:30;box-shadow:0 -4px 18px rgba(0,0,0,.25)}
-.dock-info{flex:1;min-width:0;background:none;border:none;color:#fff;text-align:left;padding:2px 4px}
-.dock-info small{display:block;color:#c9b48a;font-size:.78rem}
-.dock-info b{font-size:1.5rem;color:#e8c068}
-.print{background:#0a9d3f;color:#fff;border:none;border-radius:14px;padding:16px 22px;font-size:1.15rem;font-weight:800;letter-spacing:.5px;min-width:140px}
-.print:disabled{background:#555;color:#999}
-.sheet{position:fixed;left:0;right:0;bottom:0;max-height:82%;background:#fff8f0;border-radius:18px 18px 0 0;z-index:20;transform:translateY(105%);transition:transform .22s ease;display:flex;flex-direction:column;padding-bottom:84px;box-shadow:0 -8px 30px rgba(0,0,0,.3)}
-.sheet.open{transform:none}
-.sh-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 6px;font-weight:800}
-.lines{overflow-y:auto;padding:0 12px;flex:1;-webkit-overflow-scrolling:touch}
-.ln{background:#fff;border:1.5px solid #ecdcc0;border-radius:12px;padding:8px 10px;margin-bottom:8px}
-.ln-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-.ln-name{font-weight:700;line-height:1.25}.ln-name small{color:#7a5a2a;font-weight:500}
-.x{border:none;background:#f3e3e0;color:#b3261e;border-radius:8px;width:30px;height:30px;font-weight:800}
-.ln-row{display:flex;align-items:center;gap:8px;margin-top:6px}
-.step{display:flex;align-items:center;border:1.5px solid #dcc9a6;border-radius:10px;overflow:hidden}
-.step button{width:38px;height:38px;border:none;background:#f6efe4;font-size:1.3rem;font-weight:800;color:#5a4325}
-.step input{width:56px;height:38px;text-align:center;border:none;border-left:1px solid #e6d6b8;border-right:1px solid #e6d6b8;font-weight:700}
-.mul{color:#8a7552}
-.rate{width:84px;height:38px;border:1.5px solid #dcc9a6;border-radius:10px;padding:0 8px;font-weight:700}
-.amt{margin-left:auto;font-weight:800;font-size:1.02rem}
-.sh-foot{padding:6px 14px 4px}
-.final{display:flex;gap:8px;align-items:center}
-.final input{flex:1;padding:10px 12px;border:1.5px solid #c8902a;border-radius:10px;font-weight:700}
-.tax{font-size:.78rem;color:#5a4325;margin-top:6px;line-height:1.45}
-.row{display:flex;gap:8px;margin-top:8px}
-.btn{flex:1;border:none;border-radius:10px;padding:11px;font-weight:700;background:#efe2c8;color:#5a4325}
-.btn.pri{background:#c8902a;color:#fff}.btn.red{background:#f3e3e0;color:#b3261e}
-.btn:disabled{opacity:.45}
+  var S = Object.assign({}, DEFAULTS, jget('qb_settings', {}));
+  function saveSettings() { jset('qb_settings', S); }
 
-/* modals */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:flex-end;justify-content:center}
-.modal.open{display:flex}
-.card{background:#fff8f0;width:100%;max-width:520px;max-height:92%;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
-@media(min-width:600px){.modal{align-items:center}.card{border-radius:18px}}
-.card h3{margin:0 0 10px}
-.fld{margin-bottom:11px}.fld label{display:block;font-size:.8rem;font-weight:700;color:#5a4325;margin-bottom:4px}
-.fld input,.fld select{width:100%;padding:11px 12px;border:1.5px solid #dcc9a6;border-radius:10px;background:#fff}
-.chk{display:flex;align-items:center;gap:10px;margin-bottom:11px}.chk input{width:20px;height:20px}
-.pvimg{display:block;margin:0 auto;width:100%;max-width:420px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3)}
-.pvtxt{background:#fff;border:1px solid #ddd;padding:10px;font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;margin:0}
-.rc{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #ecdcc0}
-.rc-r{text-align:right}.mini{display:block;margin-top:4px;border:none;background:#2a62c8;color:#fff;border-radius:8px;padding:5px 10px;font-weight:700;font-size:.78rem}
-#toast{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-20px);background:#1a0f00;color:#fff;padding:10px 16px;border-radius:12px;z-index:99;opacity:0;pointer-events:none;transition:all .2s;max-width:90%;text-align:center;font-weight:600}
-#toast.show{opacity:1;transform:translateX(-50%)}
-#toast.bad{background:#b3261e}
-</style>
-</head>
-<body>
+  /* ---------- money (all maths in paise = integers, so no rounding surprises) ---------- */
+  function fmtP(p) { return (p / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtR(r) { return Number(r || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtQty(q) { return String(Math.round(q * 1000) / 1000); }
 
-<div class="top">
-  <div class="brand">⚡ VBS Quick Bill</div>
-  <span class="dot" id="net" title="Online"></span>
-  <button class="sync" id="sync"></button>
-  <button class="pill" id="prn">🖨 Connect</button>
-  <button class="ic" id="recentBtn" title="Recent bills">🧾</button>
-  <button class="ic" id="setBtn" title="Settings">⚙️</button>
-</div>
+  /* The total you enter is GST-INCLUSIVE. GST is taken out of it:
+       taxable = total / (1 + gst%),  CGST + SGST = total - taxable   (split equally)
+     taxable + CGST + SGST is always exactly the total, so it can never exceed it. */
+  function splitGst(totalP, gstPct) {
+    var taxable = Math.round(totalP * 100 / (100 + gstPct));
+    var tax = totalP - taxable;
+    var cgst = Math.floor(tax / 2);
+    return { taxable: taxable, cgst: cgst, sgst: tax - cgst };
+  }
 
-<div class="bar"><input id="q" type="search" placeholder="Search product… / தேடுக" autocomplete="off"/></div>
-<div class="cats" id="cats"></div>
+  function computeBill(cart, finalTotalStr, gstPct) {
+    var sum = 0;
+    var lines = cart.map(function (l) {
+      var amt = Math.round((Number(l.qty) || 0) * (Number(l.rate) || 0) * 100);
+      sum += amt;
+      return { l: l, amt: amt };
+    });
+    var total = sum, adj = 0;
+    var ft = parseFloat(finalTotalStr);
+    if (String(finalTotalStr || '').trim() !== '' && isFinite(ft) && ft >= 0) { total = Math.round(ft * 100); adj = total - sum; }
+    var g = splitGst(total, gstPct);
+    return { lines: lines, sum: sum, total: total, adj: adj, taxable: g.taxable, cgst: g.cgst, sgst: g.sgst };
+  }
 
-<div class="main">
-  <div class="grid" id="grid"></div>
-  <div style="text-align:center;margin-top:14px"><button class="chip" id="customBtn">➕ Other item (type name &amp; price)</button></div>
-</div>
+  /* ---------- state ---------- */
+  var products = jget('qb_products', []);
+  var cart = [];
+  var cat = 'all', query = '';
+  var needLogin = false;
+  var payType = 'cash';
 
-<!-- bill sheet -->
-<div class="sheet" id="sheet">
-  <div class="sh-head"><span>🧾 Current bill</span><button class="ic" style="color:#5a4325" id="closeSheet">✕</button></div>
-  <div class="lines" id="lines"></div>
-  <div class="sh-foot">
-    <div class="final"><span style="font-weight:700;white-space:nowrap">Final total ₹</span>
-      <input id="finalTotal" type="number" inputmode="decimal" step="any" min="0" placeholder="optional – GST is taken out of this"/></div>
-    <div class="tax" id="taxInfo"></div>
-    <div class="row">
-      <button class="btn" id="previewBtn">👁 Preview</button>
-      <button class="btn red" id="clearBtn">Clear</button>
-    </div>
-  </div>
-</div>
+  /* ---------- toast ---------- */
+  var toastT = null;
+  function toast(msg, bad) {
+    var t = $('toast'); t.textContent = msg; t.className = 'show' + (bad ? ' bad' : '');
+    clearTimeout(toastT); toastT = setTimeout(function () { t.className = ''; }, bad ? 4500 : 2200);
+  }
 
-<!-- always-visible dock -->
-<div class="dock">
-  <button class="dock-info" id="dockInfo"><small id="sumCount">No items</small><b id="sumTotal">₹0.00</b></button>
-  <button class="print" id="printBtn" disabled>🖨 PRINT</button>
-</div>
+  /* ============================================================
+     PRODUCTS
+     ============================================================ */
+  function slim(p) {
+    return { id: p._id, name: p.name, short: p.shortName || '', ta: p.tamilName || '', price: p.price, cat: p.category || 'other', unit: p.unit || '', img: p.image || '' };
+  }
+  function imgUrl(image) {
+    if (!image) return '';
+    if (/^https?:/i.test(image)) return image.indexOf('/upload/') > 0 ? image.replace('/upload/', '/upload/w_260,h_200,c_fill,q_auto,f_auto/') : image;   // small Cloudinary thumbnail = loads fast
+    return '/uploads/' + image;
+  }
+  function loadProducts() {
+    renderCats(); renderGrid();
+    return fetch(API + '/products').then(function (r) { return r.json(); }).then(function (d) {
+      if (d.success) { products = d.products.map(slim); jset('qb_products', products); renderCats(); renderGrid(); }
+      setNet(true);
+    }).catch(function () { setNet(false); });
+  }
+  function setNet(on) { $('net').className = 'dot ' + (on ? 'on' : 'off'); $('net').title = on ? 'Online' : 'Offline – bills will be saved when internet returns'; }
 
-<!-- preview / reprint -->
-<div class="modal" id="pv"><div class="card">
-  <h3>Bill preview</h3><div id="pvBody"></div>
-  <div class="row"><button class="btn" data-close="pv">Close</button><button class="btn pri" id="pvPrint">🖨 Print</button></div>
-</div></div>
+  function enName(p) { return p.short || p.name; }
+  function isHidden(c) { return (S.hidden || []).indexOf(String(c).toLowerCase()) >= 0; }
+  function visibleProducts() { return products.filter(function (p) { return !isHidden(p.cat); }); }
+  function capital(c) { return c.charAt(0).toUpperCase() + c.slice(1); }
+  function renderCats() {
+    var cats = ['all'];
+    visibleProducts().forEach(function (p) { if (cats.indexOf(p.cat) < 0) cats.push(p.cat); });
+    if (cats.indexOf(cat) < 0) cat = 'all';
+    $('cats').innerHTML = cats.map(function (c) {
+      return '<button class="chip' + (c === cat ? ' on' : '') + '" data-cat="' + esc(c) + '">' + (c === 'all' ? 'All' : esc(capital(c))) + '</button>';
+    }).join('');
+  }
+  function qtyOf(id) { return cart.reduce(function (s, l) { return s + (l.pid === id ? (Number(l.qty) || 0) : 0); }, 0); }
+  function updateBadges() {
+    document.querySelectorAll('#grid .tile').forEach(function (t) {
+      var q = qtyOf(t.dataset.id); t.classList.toggle('in', q > 0); t.querySelector('.qb').textContent = fmtQty(q);
+    });
+  }
+  function renderGrid() {
+    var q = query.trim().toLowerCase();
+    var list = visibleProducts().filter(function (p) {
+      if (cat !== 'all' && p.cat !== cat) return false;
+      if (!q) return true;
+      return (p.name + ' ' + p.short + ' ' + p.ta).toLowerCase().indexOf(q) >= 0;
+    });
+    if (!list.length) { $('grid').innerHTML = '<div class="empty">No products found</div>'; return; }
+    $('grid').innerHTML = list.map(function (p) {
+      var u = imgUrl(p.img);
+      return '<div class="tile" data-id="' + esc(p.id) + '">' +
+        '<div class="ti' + (u ? '' : ' noimg') + '"><span>' + (ICONS[p.cat] || '📦') + '</span>' + (u ? '<img loading="lazy" decoding="async" alt="" src="' + esc(u) + '">' : '') + '</div>' +
+        '<div class="qb">0</div><button class="mn" data-dec="' + esc(p.id) + '" aria-label="Remove one">−</button>' +
+        '<button class="edit' + (p.ta ? '' : ' warn') + '" data-edit="' + esc(p.id) + '" title="Edit bill names">✏️</button>' +
+        '<div class="tb"><div class="tn">' + esc(enName(p)) + '</div>' +
+        (p.ta ? '<div class="tt">' + esc(p.ta) + '</div>' : '') +
+        '<div class="tp">₹' + fmtR(p.price) + '</div></div></div>';
+    }).join('');
+    updateBadges();
+  }
 
-<!-- edit names -->
-<div class="modal" id="ed"><div class="card">
-  <h3>Bill names</h3>
-  <div class="hint" style="margin-bottom:10px">Full name: <b id="edFull"></b></div>
-  <div class="fld"><label>Short English name (printed on bill)</label><input id="edShort" maxlength="30" placeholder="e.g. GN Oil 1L"/></div>
-  <div class="fld"><label>Tamil name (printed on bill)</label><input id="edTa" maxlength="40" placeholder="எ.கா. கடலை எண்ணெய் 1L"/></div>
-  <div class="row"><button class="btn" data-close="ed">Cancel</button><button class="btn pri" id="edSave">Save</button></div>
-</div></div>
+  /* ============================================================
+     CART
+     ============================================================ */
+  function addProduct(p) {
+    var hit = cart.filter(function (l) { return l.pid === p.id && l.rate === p.price; })[0];
+    if (hit) hit.qty = Math.round((hit.qty + 1) * 1000) / 1000;
+    else cart.push({ pid: p.id, en: enName(p), ta: p.ta, rate: p.price, qty: 1 });
+    renderCart();
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+  }
+  function decProduct(id) {
+    for (var i = cart.length - 1; i >= 0; i--) {
+      if (cart[i].pid === id) {
+        cart[i].qty = Math.round((Number(cart[i].qty) - 1) * 1000) / 1000;
+        if (cart[i].qty <= 0) cart.splice(i, 1);
+        break;
+      }
+    }
+    renderCart();
+  }
+  function addCustom() {
+    var name = prompt('Item name (short):'); if (!name) return;
+    var rate = parseFloat(prompt('Price (₹, GST included):')); if (!isFinite(rate) || rate < 0) return;
+    cart.push({ pid: '', en: name.trim(), ta: '', rate: rate, qty: 1 }); renderCart();
+  }
 
-<!-- login -->
-<div class="modal" id="lg"><div class="card">
-  <h3>🔐 Admin login</h3>
-  <div class="hint" style="margin-bottom:10px">Needed only to save bills &amp; names to the server. Printing works without it.</div>
-  <div class="fld"><label>Username</label><input id="lgUser" autocomplete="username"/></div>
-  <div class="fld"><label>Password</label><input id="lgPass" type="password" autocomplete="current-password"/></div>
-  <div class="row"><button class="btn" id="lgSkip">Skip for now</button><button class="btn pri" id="lgBtn">Login</button></div>
-</div></div>
+  function renderCart() {
+    var box = $('lines');
+    if (!cart.length) box.innerHTML = '<div class="empty">Tap a product to add it</div>';
+    else box.innerHTML = cart.map(function (l, i) {
+      return '<div class="ln" data-i="' + i + '">' +
+        '<div class="ln-top"><div class="ln-name">' + esc(l.en) + (l.ta ? ' <small>' + esc(l.ta) + '</small>' : '') + '</div>' +
+        '<button class="x" data-act="del">✕</button></div>' +
+        '<div class="ln-row">' +
+        '<div class="step"><button data-act="dec">−</button><input data-f="qty" type="number" inputmode="decimal" step="any" min="0" value="' + l.qty + '"><button data-act="inc">+</button></div>' +
+        '<div class="mul">×</div><input class="rate" data-f="rate" type="number" inputmode="decimal" step="any" min="0" value="' + l.rate + '">' +
+        '<div class="amt" id="amt' + i + '"></div></div></div>';
+    }).join('');
+    updateTotals();
+  }
+  function updateTotals() {
+    var b = computeBill(cart, $('finalTotal').value, S.gst);
+    b.lines.forEach(function (x, i) { var e = $('amt' + i); if (e) e.textContent = '₹' + fmtP(x.amt); });
+    var n = cart.reduce(function (s, l) { return s + (Number(l.qty) || 0); }, 0);
+    $('sumCount').textContent = cart.length ? (cart.length + (cart.length === 1 ? ' item' : ' items') + ' · qty ' + fmtQty(n)) : 'No items';
+    $('sumTotal').textContent = '₹' + fmtP(b.total);
+    var half = S.gst / 2;
+    $('taxInfo').innerHTML = cart.length
+      ? 'Taxable ₹' + fmtP(b.taxable) + ' &nbsp;|&nbsp; CGST ' + half + '% ₹' + fmtP(b.cgst) + ' &nbsp;|&nbsp; SGST ' + half + '% ₹' + fmtP(b.sgst) +
+        (b.adj ? '<br>' + (b.adj < 0 ? 'Discount ₹' + fmtP(-b.adj) : 'Round-off +₹' + fmtP(b.adj)) + ' applied (items ₹' + fmtP(b.sum) + ')' : '')
+      : '';
+    $('printBtn').disabled = !cart.length;
+    $('previewBtn').disabled = !cart.length;
+    updateBadges();
+  }
+  function setPay(p) { payType = p; document.querySelectorAll('#pay [data-pay]').forEach(function (b) { b.classList.toggle('on', b.dataset.pay === p); }); }
+  function clearCart() { cart = []; $('finalTotal').value = ''; setPay('cash'); renderCart(); }
 
-<!-- recent bills -->
-<div class="modal" id="rc"><div class="card">
-  <h3>Recent bills</h3><div class="hint" id="rcSum" style="margin-bottom:6px"></div>
-  <div id="rcList"></div>
-  <div class="row"><button class="btn" data-close="rc">Close</button></div>
-</div></div>
+  /* Build the bill object (rupees, 2 decimals) */
+  function nextNo() { return (parseInt(lsGet('qb_seq', '0'), 10) || 0) + 1; }
+  function makeBill() {
+    var b = computeBill(cart, $('finalTotal').value, S.gst);
+    var no = nextNo();
+    return {
+      clientId: uid(),
+      billNo: S.prefix + '-' + String(no).padStart(4, '0'),
+      billDate: new Date().toISOString(),
+      items: b.lines.map(function (x) {
+        return { productId: x.l.pid || '', name: x.l.en, tamilName: x.l.ta || '', qty: Number(x.l.qty), rate: Number(x.l.rate), amount: x.amt / 100 };
+      }),
+      paymentType: payType,
+      itemsTotal: b.sum / 100, adjustment: b.adj / 100, gstRate: S.gst,
+      taxable: b.taxable / 100, cgst: b.cgst / 100, sgst: b.sgst / 100, total: b.total / 100,
+      _no: no
+    };
+  }
 
-<!-- settings -->
-<div class="modal" id="st"><div class="card">
-  <h3>⚙️ Settings</h3>
-  <div class="fld"><label>Paper width</label>
-    <select id="sWidth"><option value="576">80 mm (576 dots)</option><option value="512">80 mm – narrow (512)</option><option value="384">58 mm (384 dots)</option></select></div>
-  <div class="fld"><label>Language on bill</label>
-    <select id="sLang"><option value="both">Tamil + English</option><option value="tamil">Tamil only</option><option value="english">English only – FASTEST (printer's own text)</option></select></div>
-  <div class="fld"><label>Print method</label>
-    <select id="sMethod"><option value="ble">Bluetooth (direct from Chrome)</option><option value="rawbt">RawBT app</option></select></div>
-  <div class="fld"><label>Bluetooth speed (lower it if the bill prints garbled)</label>
-    <select id="sSpeed"><option value="fast">Fast</option><option value="normal">Normal</option><option value="safe">Safe / slow</option></select></div>
-  <div class="fld"><label>Total GST % (split equally into CGST + SGST)</label><input id="sGst" type="number" inputmode="decimal" step="any"/></div>
-  <div class="fld"><label>Bill number prefix (use a different letter on each phone)</label><input id="sPrefix" maxlength="6"/></div>
-  <div class="chk"><input type="checkbox" id="sAddr"/><label for="sAddr">Print shop address (makes the bill longer)</label></div>
-  <div class="row"><button class="btn pri" data-close="st">Done</button></div>
-</div></div>
+  /* ============================================================
+     RECEIPT – FAST HYBRID
+     Everything is the printer's own text (instant, tiny) EXCEPT Tamil
+     item names, which are sent as small cropped pictures.
+     ============================================================ */
+  function displayName(it, lang) {
+    if (lang === 'tamil') return it.tamilName || it.name;
+    if (lang === 'english') return it.name;
+    return it.tamilName ? it.tamilName + ' / ' + it.name : it.name;
+  }
+  function dateStr(d) { return pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear(); }
+  function timeStr(d) { var h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad2(h) + ':' + pad2(d.getMinutes()) + ' ' + ap; }
+  function isAscii(s) { return /^[\x20-\x7e]*$/.test(s || ''); }
+  function makeCanvas(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
-<div id="toast"></div>
-<script src="js/quickbill.js?v=1"></script>
-</body>
-</html>
+  /* small picture of one text block, cropped to the text width (less data = faster) */
+  function textStrip(str, W, align) {
+    var Sc = W / 576, M = Math.round(6 * Sc), sz = Math.round(25 * Sc), lh = Math.round(sz * 1.25);
+    var t = makeCanvas(10, 10).getContext('2d'); t.font = 'bold ' + sz + 'px ' + FONT;
+    var maxW = W - 2 * M, words = String(str).split(/\s+/).filter(Boolean), lines = [], cur = '';
+    words.forEach(function (w) {
+      var x = cur ? cur + ' ' + w : w;
+      if (t.measureText(x).width <= maxW) { cur = x; return; }
+      if (cur) { lines.push(cur); cur = ''; }
+      if (t.measureText(w).width <= maxW) { cur = w; return; }
+      var piece = ''; Array.from(w).forEach(function (ch) { if (t.measureText(piece + ch).width > maxW && piece) { lines.push(piece); piece = ch; } else piece += ch; }); cur = piece;
+    });
+    if (cur) lines.push(cur);
+    var need = 0; lines.forEach(function (l) { need = Math.max(need, t.measureText(l).width); });
+    var cw = align === 'center' ? W : Math.min(W, Math.ceil((need + 2 * M) / 8) * 8), ch = lines.length * lh + Math.round(4 * Sc);
+    var c = makeCanvas(cw, ch), ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch); ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+    ctx.font = 'bold ' + sz + 'px ' + FONT; ctx.textBaseline = 'alphabetic'; ctx.lineWidth = Math.max(0.7, Sc * 0.8);
+    lines.forEach(function (l, i) {
+      var x = align === 'center' ? cw / 2 : M; ctx.textAlign = align === 'center' ? 'center' : 'left';
+      var y = (i + 1) * lh - Math.round(sz * 0.22); ctx.fillText(l, x, y); ctx.strokeText(l, x, y);
+    });
+    return c;
+  }
+
+  /* canvas -> ESC/POS raster block (GS v 0), fast typed arrays */
+  function rasterBody(canvas) {
+    var W = canvas.width, H = canvas.height;
+    var data = canvas.getContext('2d').getImageData(0, 0, W, H).data, wb = Math.ceil(W / 8);
+    var parts = [], BAND = 240, total = 0;
+    for (var y0 = 0; y0 < H; y0 += BAND) {
+      var rows = Math.min(BAND, H - y0), body = new Uint8Array(wb * rows), p = 0;
+      for (var y = y0; y < y0 + rows; y++) {
+        for (var xb = 0; xb < wb; xb++) {
+          var byte = 0;
+          for (var bit = 0; bit < 8; bit++) {
+            var x = xb * 8 + bit;
+            if (x < W) { var i = (y * W + x) * 4; if (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2] < 175) byte |= (0x80 >> bit); }
+          }
+          body[p++] = byte;
+        }
+      }
+      var head = Uint8Array.of(0x1d, 0x76, 0x30, 0x00, wb & 255, wb >> 8, rows & 255, rows >> 8);
+      parts.push(head, body); total += head.length + body.length;
+    }
+    var out = new Uint8Array(total), o = 0; parts.forEach(function (a) { out.set(a, o); o += a.length; });
+    return out;
+  }
+
+  function buildReceipt(b, reprint) {
+    var W = S.width, cols = W >= 500 ? 48 : 32, lang = S.lang, half = b.gstRate / 2, d = new Date(b.billDate);
+    var chunks = [], buf = [], preview = [], cur = [];
+    function raw() { for (var i = 0; i < arguments.length; i++) buf.push(arguments[i]); }
+    function txt(s) { for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); buf.push(c >= 32 && c < 127 ? c : 63); } }
+    function ln(s) { txt(s); buf.push(10); cur.push(s); }
+    function flushBuf() { if (buf.length) { chunks.push(Uint8Array.from(buf)); buf = []; } }
+    function flushPrev() { if (cur.length) { preview.push({ t: cur.join('\n') }); cur = []; } }
+    function picture(canvas) { flushBuf(); flushPrev(); chunks.push(rasterBody(canvas)); preview.push({ img: canvas }); }
+    function spaces(n) { return n > 0 ? new Array(n + 1).join(' ') : ''; }
+    function lr(l, r) { var gap = cols - l.length - r.length; return gap >= 1 ? l + spaces(gap) + r : (l.slice(0, Math.max(0, cols - r.length - 1)) + ' ' + r); }
+    function rule() { ln(new Array(cols + 1).join('-')); }
+    function wrapAscii(s, w) {
+      var res = [], c = '';
+      String(s).split(/\s+/).forEach(function (wd) {
+        if (!wd) return;
+        while (wd.length > w) { if (c) { res.push(c); c = ''; } res.push(wd.slice(0, w)); wd = wd.slice(w); }
+        if ((c ? c + ' ' + wd : wd).length <= w) c = c ? c + ' ' + wd : wd; else { res.push(c); c = wd; }
+      });
+      if (c) res.push(c); return res.length ? res : [''];
+    }
+    function center(s, bold, dbl) {
+      raw(0x1b, 0x61, 1, 0x1b, 0x45, bold ? 1 : 0, 0x1d, 0x21, dbl ? 0x11 : 0);
+      wrapAscii(s, dbl ? Math.floor(cols / 2) : cols).forEach(function (l) { ln(l); });
+      raw(0x1d, 0x21, 0, 0x1b, 0x45, 0, 0x1b, 0x61, 0);
+    }
+    function money(n) { return fmtR(n); }
+
+    raw(0x1b, 0x40);
+    center(SHOP.name, true, true);
+    center(SHOP.tag);
+    center(SHOP.addr1); center(SHOP.addr2);
+    center(SHOP.phone); center(SHOP.msme); center(SHOP.fssai); center(SHOP.gstin);
+    rule();
+    ln(lr('Bill: ' + b.billNo, dateStr(d) + ' ' + timeStr(d)));
+    if (b.paymentType) ln('Bill Type : ' + (PAY[b.paymentType] || String(b.paymentType).toUpperCase()));
+    if (reprint) center('*** DUPLICATE COPY ***');
+    rule();
+
+    b.items.forEach(function (it, i) {
+      var nm = displayName(it, lang), label = (i + 1) + '. ' + nm;
+      if (!isAscii(nm)) picture(textStrip(label, W, 'left'));
+      else wrapAscii(label, cols).forEach(function (l) { ln(l); });
+      ln(lr('    ' + fmtQty(it.qty) + ' x ' + money(it.rate), money(it.amount)));
+    });
+    rule();
+    var tq = b.items.reduce(function (s, i) { return s + i.qty; }, 0);
+    ln(lr('Items: ' + b.items.length, 'Qty: ' + fmtQty(tq)));
+    if (b.adjustment) ln(lr(b.adjustment < 0 ? 'Discount' : 'Round off', (b.adjustment < 0 ? '-' : '+') + money(Math.abs(b.adjustment))));
+    ln(lr('Taxable Value', money(b.taxable)));
+    ln(lr('CGST @ ' + half + '%', money(b.cgst)));
+    ln(lr('SGST @ ' + half + '%', money(b.sgst)));
+    rule();
+    raw(0x1b, 0x45, 1, 0x1d, 0x21, 0x01);
+    var tl = lr('TOTAL', 'Rs.' + money(b.total)); ln(tl.length > cols ? 'TOTAL Rs.' + money(b.total) : tl);
+    raw(0x1d, 0x21, 0, 0x1b, 0x45, 0);
+    center('(Inclusive of all taxes)');
+    rule();
+    if (lang !== 'english') picture(textStrip('நன்றி! மீண்டும் வருக!', W, 'center'));
+    center('Thank You! Visit Again!', true, false);
+    raw(0x1b, 0x64, 0x03, 0x1d, 0x56, 0x42, 0x00);
+    flushBuf(); flushPrev();
+
+    var total = 0; chunks.forEach(function (c) { total += c.length; });
+    var bytes = new Uint8Array(total), o = 0; chunks.forEach(function (c) { bytes.set(c, o); o += c.length; });
+    return { bytes: bytes, preview: preview };
+  }
+  function buildPrint(b, reprint) { return buildReceipt(b, reprint); }
+
+  /* ============================================================
+     PRINTING – Bluetooth (Chrome on Android) or RawBT app
+     ============================================================ */
+  var BLE = { device: null, chr: null };
+  var PRINTER_SERVICES = [
+    '000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+    '49535343-fe7d-4ae5-8fa9-9fafd205e455', '0000ff00-0000-1000-8000-00805f9b34fb',
+    '0000fee7-0000-1000-8000-00805f9b34fb', '0000ffe0-0000-1000-8000-00805f9b34fb',
+    '0000ae30-0000-1000-8000-00805f9b34fb', '00001101-0000-1000-8000-00805f9b34fb',
+    '0000fff0-0000-1000-8000-00805f9b34fb', '0000ffe5-0000-1000-8000-00805f9b34fb'
+  ];
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function findWritable(server) {
+    return server.getPrimaryServices().then(function (services) {
+      var chain = Promise.resolve(null);
+      services.forEach(function (s) {
+        chain = chain.then(function (found) {
+          if (found) return found;
+          return s.getCharacteristics().then(function (chars) {
+            for (var i = 0; i < chars.length; i++) if (chars[i].properties.write || chars[i].properties.writeWithoutResponse) return chars[i];
+            return null;
+          });
+        });
+      });
+      return chain;
+    });
+  }
+  function bleConnect(forcePick) {
+    if (!navigator.bluetooth) return Promise.reject(new Error('NO_BLE'));
+    if (forcePick) { try { if (BLE.device && BLE.device.gatt.connected) BLE.device.gatt.disconnect(); } catch (e) {} BLE.device = null; BLE.chr = null; }
+    if (BLE.chr && BLE.device && BLE.device.gatt.connected) return Promise.resolve(BLE.chr);
+    var pick = BLE.device ? Promise.resolve(BLE.device) :      // must run straight from the tap (user gesture)
+      navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: PRINTER_SERVICES }).then(function (dev) {
+        BLE.device = dev; dev.addEventListener('gattserverdisconnected', function () { BLE.chr = null; setPrinter(); });
+        return dev;
+      });
+    return pick.then(function (dev) { return dev.gatt.connect(); }).then(findWritable).then(function (chr) {
+      if (!chr) throw new Error('NO_CHAR');
+      BLE.chr = chr; setPrinter(); return chr;
+    });
+  }
+  function bleWrite(chr, bytes, size, gap) {
+    var i = 0;
+    function next() {
+      if (i >= bytes.length) return Promise.resolve();
+      var part = bytes.slice(i, i + size); i += size;
+      var w = (chr.properties.writeWithoutResponse && chr.writeValueWithoutResponse) ? chr.writeValueWithoutResponse(part) : chr.writeValue(part);
+      return w.then(function () { return sleep(gap); }).then(next);
+    }
+    return next();
+  }
+  function setPrinter() {
+    var ok = BLE.device && BLE.device.gatt && BLE.device.gatt.connected;
+    $('prn').className = 'pill ' + (ok ? 'ok' : '');
+    $('prn').textContent = ok ? '🖨 ' + (BLE.device.name || 'Printer') : '🖨 Connect';
+  }
+
+  /* returns a promise: resolves when the bytes have gone to the printer */
+  function sendBytes(bytes, forcePick) {
+    if (S.method === 'rawbt') return Promise.resolve(sendRawBT(bytes));
+    var sp = SPEEDS[S.speed] || SPEEDS.normal;
+    return bleConnect(forcePick)
+      .then(function (chr) { return bleWrite(chr, bytes, sp[0], sp[1]).catch(function () { return bleConnect(false).then(function (c2) { return bleWrite(c2, bytes, 100, 18); }); }); });
+  }
+  function sendRawBT(bytes) {
+    var bin = '', CH = 8192;
+    for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    var a = document.createElement('a'); a.href = 'rawbt:base64,' + btoa(bin);
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  function printError(e) {
+    BLE.chr = null; setPrinter();
+    if (e && e.name === 'NotFoundError') return toast('No printer selected', true);
+    if (e && e.message === 'NO_BLE') return toast('Bluetooth not supported here. Open in Chrome on Android, or switch to RawBT in ⚙ Settings.', true);
+    if (e && e.message === 'NO_CHAR') return toast('This printer cannot be used from the browser. Switch to RawBT in ⚙ Settings.', true);
+    console.error(e); toast('Could not print: ' + (e && e.message ? e.message : e), true);
+  }
+
+  /* ============================================================
+     SAVE (background) – recent list + offline queue
+     ============================================================ */
+  function commitBill(b) {
+    lsSet('qb_seq', String(b._no)); delete b._no;
+    var recent = jget('qb_recent', []); recent.unshift(b); jset('qb_recent', recent.slice(0, 60));
+    var q = jget('qb_queue', []); q.push(b); jset('qb_queue', q);
+    updateBadge(); sync();
+  }
+  var syncing = false;
+  function pending() { return jget('qb_queue', []).length + jget('qb_delq', []).length; }
+  function sync() {
+    if (syncing) return;
+    var tok = lsGet('vbs_atoken', '');
+    if (!pending()) { updateBadge(); return; }
+    if (!tok) { needLogin = true; updateBadge(); return; }
+    syncing = true;
+    function done() { syncing = false; updateBadge(); }
+    function authFail() { lsDel('vbs_atoken'); needLogin = true; throw new Error('auth'); }
+    function stepDel() {
+      var dq = jget('qb_delq', []);
+      if (!dq.length) return done();
+      fetch(API + '/bills/by-client/' + encodeURIComponent(dq[0]), { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } })
+        .then(function (r) {
+          if (r.status === 401 || r.status === 403) authFail();
+          if (!r.ok) throw new Error('server');
+          dq.shift(); jset('qb_delq', dq); stepDel();
+        }).catch(done);
+    }
+    function step() {
+      var q = jget('qb_queue', []);
+      if (!q.length) return stepDel();
+      fetch(API + '/bills', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok }, body: JSON.stringify(q[0]) })
+        .then(function (r) {
+          if (r.status === 401 || r.status === 403) authFail();
+          if (r.status === 400) { var f = jget('qb_failed', []); f.push(q[0]); jset('qb_failed', f); }   // keep a copy, never lose a bill
+          else if (!r.ok) throw new Error('server');
+          q.shift(); jset('qb_queue', q); setNet(true); step();
+        }).catch(done);
+    }
+    step();
+  }
+  function updateBadge() {
+    var n = pending(), b = $('sync');
+    if (!n) { b.style.display = 'none'; return; }
+    b.style.display = 'inline-block';
+    b.textContent = needLogin ? '⚠ Login to save ' + n : '☁ ' + n + ' waiting';
+  }
+  function refreshSeq() {
+    var tok = lsGet('vbs_atoken', ''); if (!tok) return;
+    fetch(API + '/bills/next-number?prefix=' + encodeURIComponent(S.prefix), { headers: { Authorization: 'Bearer ' + tok } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d.success && d.last > (parseInt(lsGet('qb_seq', '0'), 10) || 0)) lsSet('qb_seq', String(d.last)); })
+      .catch(function () {});
+  }
+
+  /* ============================================================
+     ACTIONS
+     ============================================================ */
+  var printing = false;
+  function printNow() {
+    if (printing || !cart.length) return;
+    var bad = cart.filter(function (l) { return !(Number(l.qty) > 0) || !(Number(l.rate) >= 0); });
+    if (bad.length) return toast('Check quantity / price of: ' + bad[0].en, true);
+    printing = true; $('printBtn').disabled = true; $('printBtn').textContent = 'Printing…';
+    var b = makeBill(), job;
+    try { job = buildPrint(b, false); } catch (e) { printing = false; resetPrintBtn(); return toast('Could not build bill: ' + e.message, true); }
+    sendBytes(job.bytes, false).then(function () {
+      commitBill(b); clearCart(); $('sheet').classList.remove('open'); toast('✅ Printed ' + b.billNo);
+    }).catch(printError).then(function () { printing = false; resetPrintBtn(); });
+  }
+  function resetPrintBtn() { $('printBtn').textContent = '🖨 PRINT'; $('printBtn').disabled = !cart.length; }
+
+  function showPreview(b, reprintFn) {
+    var job = buildPrint(b, !!reprintFn), box = $('pvBody');
+    box.innerHTML = '';
+    var sheet = document.createElement('div'); sheet.className = 'pvsheet';
+    job.preview.forEach(function (p) {
+      if (p.t != null) { var pre = document.createElement('pre'); pre.className = 'pvtxt'; pre.textContent = p.t; sheet.appendChild(pre); }
+      else { var img = new Image(); img.src = p.img.toDataURL('image/png'); img.style.width = (p.img.width / S.width * 100) + '%'; img.className = 'pvimg'; sheet.appendChild(img); }
+    });
+    box.appendChild(sheet);
+    var kb = document.createElement('div'); kb.className = 'hint'; kb.textContent = 'Data sent to printer: ' + (job.bytes.length / 1024).toFixed(1) + ' KB'; box.appendChild(kb);
+    $('pvPrint').onclick = function () {
+      $('pvPrint').disabled = true;
+      sendBytes(job.bytes, false).then(function () {
+        if (!reprintFn) { commitBill(b); clearCart(); $('sheet').classList.remove('open'); }
+        closeModal('pv'); toast('✅ Printed ' + b.billNo);
+      }).catch(printError).then(function () { $('pvPrint').disabled = false; });
+    };
+    openModal('pv');
+  }
+
+  /* ---------- modals ---------- */
+  function openModal(id) { $(id).classList.add('open'); }
+  function closeModal(id) { $(id).classList.remove('open'); }
+
+  /* ---------- edit bill names ---------- */
+  var editing = null;
+  function openEdit(id) {
+    var p = products.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+    editing = p;
+    $('edFull').textContent = p.name; $('edShort').value = p.short; $('edTa').value = p.ta;
+    openModal('ed'); setTimeout(function () { $('edShort').focus(); }, 120);
+  }
+  function saveEdit() {
+    var tok = lsGet('vbs_atoken', '');
+    if (!tok) { closeModal('ed'); openModal('lg'); return toast('Login first to save names', true); }
+    var short = $('edShort').value.trim(), ta = $('edTa').value.trim();
+    $('edSave').disabled = true;
+    fetch(API + '/products/' + editing.id, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok }, body: JSON.stringify({ shortName: short, tamilName: ta }) })
+      .then(function (r) { if (r.status === 401 || r.status === 403) { lsDel('vbs_atoken'); needLogin = true; throw new Error('Login expired – login again'); } return r.json(); })
+      .then(function (d) {
+        if (!d.success) throw new Error(d.message || 'Failed');
+        editing.short = short; editing.ta = ta; jset('qb_products', products);
+        cart.forEach(function (l) { if (l.pid === editing.id) { l.en = enName(editing); l.ta = ta; } });
+        renderGrid(); renderCart(); closeModal('ed'); toast('Saved');
+      })
+      .catch(function (e) { toast(e.message || 'Could not save', true); })
+      .then(function () { $('edSave').disabled = false; });
+  }
+
+  /* ---------- login ---------- */
+  function doLogin() {
+    var u = $('lgUser').value.trim(), p = $('lgPass').value;
+    if (!u || !p) return toast('Enter username and password', true);
+    $('lgBtn').disabled = true;
+    fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success) throw new Error(d.message || 'Login failed');
+        lsSet('vbs_atoken', d.token); needLogin = false; $('lgPass').value = '';
+        closeModal('lg'); toast('Logged in'); refreshSeq(); sync();
+      })
+      .catch(function (e) { toast(e.message, true); })
+      .then(function () { $('lgBtn').disabled = false; });
+  }
+
+  /* ---------- recent bills ---------- */
+  function openRecent() {
+    var recent = jget('qb_recent', []), today = dateStr(new Date()), sum = { cash: 0, upi: 0, card: 0, all: 0 }, cnt = 0;
+    recent.forEach(function (b) {
+      if (dateStr(new Date(b.billDate)) === today) { cnt++; sum.all += b.total; var k = b.paymentType || 'cash'; sum[k] = (sum[k] || 0) + b.total; }
+    });
+    $('rcSum').innerHTML = 'Today on this phone: <b>' + cnt + ' bills · ₹' + fmtR(sum.all) + '</b><br>Cash ₹' + fmtR(sum.cash) + ' · UPI ₹' + fmtR(sum.upi) + ' · Card ₹' + fmtR(sum.card);
+    $('rcList').innerHTML = recent.length ? recent.map(function (b, i) {
+      var d = new Date(b.billDate);
+      return '<div class="rc"><div><b>' + esc(b.billNo) + '</b> <span class="tag">' + esc(PAY[b.paymentType] || 'CASH') + '</span><div class="hint">' + dateStr(d) + ' ' + timeStr(d) + ' · ' + b.items.length + ' items</div></div>' +
+        '<div class="rc-r"><b>₹' + fmtR(b.total) + '</b><span class="rcb"><button class="mini" data-re="' + i + '">Reprint</button><button class="mini red" data-del="' + i + '">🗑 Delete</button></span></div></div>';
+    }).join('') : '<div class="empty">No bills yet</div>';
+    openModal('rc');
+  }
+  function deleteBill(i) {
+    var recent = jget('qb_recent', []), b = recent[i]; if (!b) return;
+    if (!confirm('Delete bill ' + b.billNo + ' (₹' + fmtR(b.total) + ')?\nIt will be removed from history and from your sales records.')) return;
+    recent.splice(i, 1); jset('qb_recent', recent);
+    jset('qb_queue', jget('qb_queue', []).filter(function (x) { return x.clientId !== b.clientId; }));
+    var dq = jget('qb_delq', []); dq.push(b.clientId); jset('qb_delq', dq);    // also removes it from the server (now or when online)
+    updateBadge(); sync(); openRecent(); toast('Deleted ' + b.billNo);
+  }
+
+  /* ---------- settings ---------- */
+  function openSettings() {
+    $('sWidth').value = S.width; $('sLang').value = S.lang; $('sMethod').value = S.method; $('sSpeed').value = S.speed;
+    $('sGst').value = S.gst; $('sPrefix').value = S.prefix;
+    var cats = []; products.forEach(function (p) { if (cats.indexOf(p.cat) < 0) cats.push(p.cat); });
+    $('sCats').innerHTML = cats.length ? cats.map(function (c) {
+      return '<label class="chk2"><input type="checkbox" data-sc="' + esc(c) + '"' + (isHidden(c) ? '' : ' checked') + '> ' + esc(capital(c)) + '</label>';
+    }).join('') : '<span class="hint">Products not loaded yet</span>';
+    openModal('st');
+  }
+  function bindSettings() {
+    $('sWidth').onchange = function () { S.width = parseInt(this.value, 10); saveSettings(); };
+    $('sLang').onchange = function () { S.lang = this.value; saveSettings(); };
+    $('sMethod').onchange = function () { S.method = this.value; saveSettings(); };
+    $('sSpeed').onchange = function () { S.speed = this.value; saveSettings(); };
+    $('sGst').onchange = function () { var v = parseFloat(this.value); if (isFinite(v) && v >= 0 && v < 100) { S.gst = v; saveSettings(); updateTotals(); } else this.value = S.gst; };
+    $('sPrefix').onchange = function () { var v = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6) || 'B'; this.value = v; S.prefix = v; saveSettings(); lsSet('qb_seq', '0'); refreshSeq(); };
+    $('sCats').addEventListener('change', function (e) {
+      var c = e.target.dataset.sc; if (!c) return;
+      var h = (S.hidden || []).filter(function (x) { return x !== c.toLowerCase(); });
+      if (!e.target.checked) h.push(c.toLowerCase());
+      S.hidden = h; saveSettings(); renderCats(); renderGrid();
+    });
+  }
+
+  /* ============================================================
+     WIRING
+     ============================================================ */
+  function init() {
+    bindSettings(); renderCart(); setPrinter(); updateBadge();
+
+    $('cats').addEventListener('click', function (e) { var b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; renderCats(); renderGrid(); });
+    $('q').addEventListener('input', function () { query = this.value; renderGrid(); });
+    $('grid').addEventListener('click', function (e) {
+      var dec = e.target.closest('[data-dec]'); if (dec) { e.stopPropagation(); return decProduct(dec.dataset.dec); }
+      var ed = e.target.closest('[data-edit]'); if (ed) { e.stopPropagation(); return openEdit(ed.dataset.edit); }
+      var t = e.target.closest('.tile'); if (!t) return;
+      var p = products.filter(function (x) { return x.id === t.dataset.id; })[0]; if (p) addProduct(p);
+    });
+
+    $('grid').addEventListener('error', function (e) { if (e.target.tagName === 'IMG') e.target.parentNode.classList.add('noimg'); }, true);
+    $('pay').addEventListener('click', function (e) { var b = e.target.closest('[data-pay]'); if (b) setPay(b.dataset.pay); });
+    $('lines').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-act]'); if (!b) return;
+      var i = parseInt(b.closest('.ln').dataset.i, 10), l = cart[i], a = b.dataset.act;
+      if (a === 'del') cart.splice(i, 1);
+      else if (a === 'inc') l.qty = Math.round((Number(l.qty) + 1) * 1000) / 1000;
+      else if (a === 'dec') { l.qty = Math.round((Number(l.qty) - 1) * 1000) / 1000; if (l.qty <= 0) cart.splice(i, 1); }
+      renderCart();
+    });
+    $('lines').addEventListener('input', function (e) {
+      var f = e.target.dataset.f; if (!f) return;
+      var i = parseInt(e.target.closest('.ln').dataset.i, 10); cart[i][f] = e.target.value === '' ? 0 : parseFloat(e.target.value);
+      updateTotals();
+    });
+    $('finalTotal').addEventListener('input', updateTotals);
+
+    $('dockInfo').onclick = function () { $('sheet').classList.toggle('open'); };
+    $('closeSheet').onclick = function () { $('sheet').classList.remove('open'); };
+    $('printBtn').onclick = printNow;
+    $('previewBtn').onclick = function () { if (cart.length) showPreview(makeBill(), null); };
+    $('clearBtn').onclick = function () { if (cart.length && confirm('Clear this bill?')) clearCart(); };
+    $('customBtn').onclick = addCustom;
+
+    $('prn').onclick = function () { if (S.method === 'rawbt') return toast('Using RawBT – set printer inside the RawBT app'); bleConnect(true).then(function () { toast('Printer connected'); }).catch(printError); };
+    $('sync').onclick = function () { if (needLogin || !lsGet('vbs_atoken', '')) openModal('lg'); else sync(); };
+    $('recentBtn').onclick = openRecent;
+    $('setBtn').onclick = openSettings;
+    $('rcList').addEventListener('click', function (e) {
+      var del = e.target.closest('[data-del]'); if (del) return deleteBill(parseInt(del.dataset.del, 10));
+      var b = e.target.closest('[data-re]'); if (!b) return;
+      var bill = jget('qb_recent', [])[parseInt(b.dataset.re, 10)]; if (bill) { closeModal('rc'); showPreview(bill, true); }
+    });
+    document.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = function () { closeModal(b.dataset.close); }; });
+    $('edSave').onclick = saveEdit; $('lgBtn').onclick = doLogin;
+    $('lgPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+    $('lgSkip').onclick = function () { closeModal('lg'); };
+
+    window.addEventListener('online', function () { setNet(true); sync(); loadProducts(); });
+    window.addEventListener('offline', function () { setNet(false); });
+
+    loadProducts();
+    if (!lsGet('vbs_atoken', '')) { needLogin = true; openModal('lg'); } else { refreshSeq(); sync(); }
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});
+  }
+
+  window.QB = { splitGst: splitGst, computeBill: computeBill };   // exposed for testing
+  if (typeof document !== 'undefined' && document.getElementById('grid')) init();
+})();
