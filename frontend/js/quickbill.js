@@ -18,11 +18,15 @@
     addr1: '108/7C, 5th Cross St, Rajiv Nagar',
     addr2: 'Pallikuppam, Vanagaram, Chennai-600077',
     phone: 'Ph: 9840042290 / 9840357267',
+    msme:  'MSME UDYAM-TN-24-0183360',
+    fssai: 'FSSAI: 22426477000262',
     gstin: 'GSTIN: 33FCHPS4318R1ZW'
   };
+  var PAY = { cash: 'CASH', upi: 'UPI', card: 'CARD' };
+  var ICONS = { saree: '👘', nighty: '🌙', chudidhar: '👗', blouse: '🪡', oil: '🫙', rice: '🌾', ghee: '🧈', honey: '🍯', peanut: '🥜', other: '📦' };
 
-  var DEFAULTS = { width: 576, lang: 'both', method: 'ble', speed: 'normal', addr: false, gst: 5, prefix: 'B' };
-  var SPEEDS = { fast: [240, 4], normal: [180, 10], safe: [100, 18] };   // [bytes per write, ms pause]
+  var DEFAULTS = { width: 576, lang: 'both', method: 'ble', speed: 'fast', gst: 5, prefix: 'B', hidden: ['saree', 'nighty', 'chudidhar', 'blouse'] };
+  var SPEEDS = { turbo: [512, 2], fast: [240, 4], normal: [180, 10], safe: [100, 18] };   // [bytes per write, ms pause]
   var FONT = "'Noto Sans Tamil','Noto Sans','Nirmala UI','Latha','Tamil Sangam MN',Arial,Helvetica,sans-serif";
 
   /* ---------- tiny helpers ---------- */
@@ -73,6 +77,7 @@
   var cart = [];
   var cat = 'all', query = '';
   var needLogin = false;
+  var payType = 'cash';
 
   /* ---------- toast ---------- */
   var toastT = null;
@@ -85,7 +90,12 @@
      PRODUCTS
      ============================================================ */
   function slim(p) {
-    return { id: p._id, name: p.name, short: p.shortName || '', ta: p.tamilName || '', price: p.price, cat: p.category || 'other', unit: p.unit || '' };
+    return { id: p._id, name: p.name, short: p.shortName || '', ta: p.tamilName || '', price: p.price, cat: p.category || 'other', unit: p.unit || '', img: p.image || '' };
+  }
+  function imgUrl(image) {
+    if (!image) return '';
+    if (/^https?:/i.test(image)) return image.indexOf('/upload/') > 0 ? image.replace('/upload/', '/upload/w_260,h_200,c_fill,q_auto,f_auto/') : image;   // small Cloudinary thumbnail = loads fast
+    return '/uploads/' + image;
   }
   function loadProducts() {
     renderCats(); renderGrid();
@@ -97,29 +107,42 @@
   function setNet(on) { $('net').className = 'dot ' + (on ? 'on' : 'off'); $('net').title = on ? 'Online' : 'Offline – bills will be saved when internet returns'; }
 
   function enName(p) { return p.short || p.name; }
+  function isHidden(c) { return (S.hidden || []).indexOf(String(c).toLowerCase()) >= 0; }
+  function visibleProducts() { return products.filter(function (p) { return !isHidden(p.cat); }); }
+  function capital(c) { return c.charAt(0).toUpperCase() + c.slice(1); }
   function renderCats() {
     var cats = ['all'];
-    products.forEach(function (p) { if (cats.indexOf(p.cat) < 0) cats.push(p.cat); });
+    visibleProducts().forEach(function (p) { if (cats.indexOf(p.cat) < 0) cats.push(p.cat); });
+    if (cats.indexOf(cat) < 0) cat = 'all';
     $('cats').innerHTML = cats.map(function (c) {
-      return '<button class="chip' + (c === cat ? ' on' : '') + '" data-cat="' + esc(c) + '">' + (c === 'all' ? 'All' : esc(c.charAt(0).toUpperCase() + c.slice(1))) + '</button>';
+      return '<button class="chip' + (c === cat ? ' on' : '') + '" data-cat="' + esc(c) + '">' + (c === 'all' ? 'All' : esc(capital(c))) + '</button>';
     }).join('');
+  }
+  function qtyOf(id) { return cart.reduce(function (s, l) { return s + (l.pid === id ? (Number(l.qty) || 0) : 0); }, 0); }
+  function updateBadges() {
+    document.querySelectorAll('#grid .tile').forEach(function (t) {
+      var q = qtyOf(t.dataset.id); t.classList.toggle('in', q > 0); t.querySelector('.qb').textContent = fmtQty(q);
+    });
   }
   function renderGrid() {
     var q = query.trim().toLowerCase();
-    var list = products.filter(function (p) {
+    var list = visibleProducts().filter(function (p) {
       if (cat !== 'all' && p.cat !== cat) return false;
       if (!q) return true;
       return (p.name + ' ' + p.short + ' ' + p.ta).toLowerCase().indexOf(q) >= 0;
     });
     if (!list.length) { $('grid').innerHTML = '<div class="empty">No products found</div>'; return; }
     $('grid').innerHTML = list.map(function (p) {
-      var missing = !p.ta;
+      var u = imgUrl(p.img);
       return '<div class="tile" data-id="' + esc(p.id) + '">' +
-        '<button class="edit' + (missing ? ' warn' : '') + '" data-edit="' + esc(p.id) + '" title="Edit bill names">✏️</button>' +
-        '<div class="tn">' + esc(enName(p)) + '</div>' +
+        '<div class="ti' + (u ? '' : ' noimg') + '"><span>' + (ICONS[p.cat] || '📦') + '</span>' + (u ? '<img loading="lazy" decoding="async" alt="" src="' + esc(u) + '">' : '') + '</div>' +
+        '<div class="qb">0</div><button class="mn" data-dec="' + esc(p.id) + '" aria-label="Remove one">−</button>' +
+        '<button class="edit' + (p.ta ? '' : ' warn') + '" data-edit="' + esc(p.id) + '" title="Edit bill names">✏️</button>' +
+        '<div class="tb"><div class="tn">' + esc(enName(p)) + '</div>' +
         (p.ta ? '<div class="tt">' + esc(p.ta) + '</div>' : '') +
-        '<div class="tp">₹' + fmtR(p.price) + '</div></div>';
+        '<div class="tp">₹' + fmtR(p.price) + '</div></div></div>';
     }).join('');
+    updateBadges();
   }
 
   /* ============================================================
@@ -131,6 +154,16 @@
     else cart.push({ pid: p.id, en: enName(p), ta: p.ta, rate: p.price, qty: 1 });
     renderCart();
     if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+  }
+  function decProduct(id) {
+    for (var i = cart.length - 1; i >= 0; i--) {
+      if (cart[i].pid === id) {
+        cart[i].qty = Math.round((Number(cart[i].qty) - 1) * 1000) / 1000;
+        if (cart[i].qty <= 0) cart.splice(i, 1);
+        break;
+      }
+    }
+    renderCart();
   }
   function addCustom() {
     var name = prompt('Item name (short):'); if (!name) return;
@@ -165,8 +198,10 @@
       : '';
     $('printBtn').disabled = !cart.length;
     $('previewBtn').disabled = !cart.length;
+    updateBadges();
   }
-  function clearCart() { cart = []; $('finalTotal').value = ''; renderCart(); }
+  function setPay(p) { payType = p; document.querySelectorAll('#pay [data-pay]').forEach(function (b) { b.classList.toggle('on', b.dataset.pay === p); }); }
+  function clearCart() { cart = []; $('finalTotal').value = ''; setPay('cash'); renderCart(); }
 
   /* Build the bill object (rupees, 2 decimals) */
   function nextNo() { return (parseInt(lsGet('qb_seq', '0'), 10) || 0) + 1; }
@@ -180,6 +215,7 @@
       items: b.lines.map(function (x) {
         return { productId: x.l.pid || '', name: x.l.en, tamilName: x.l.ta || '', qty: Number(x.l.qty), rate: Number(x.l.rate), amount: x.amt / 100 };
       }),
+      paymentType: payType,
       itemsTotal: b.sum / 100, adjustment: b.adj / 100, gstRate: S.gst,
       taxable: b.taxable / 100, cgst: b.cgst / 100, sgst: b.sgst / 100, total: b.total / 100,
       _no: no
@@ -187,7 +223,9 @@
   }
 
   /* ============================================================
-     RECEIPT – picture version (Tamil + English)
+     RECEIPT – FAST HYBRID
+     Everything is the printer's own text (instant, tiny) EXCEPT Tamil
+     item names, which are sent as small cropped pictures.
      ============================================================ */
   function displayName(it, lang) {
     if (lang === 'tamil') return it.tamilName || it.name;
@@ -196,124 +234,39 @@
   }
   function dateStr(d) { return pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear(); }
   function timeStr(d) { var h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad2(h) + ':' + pad2(d.getMinutes()) + ' ' + ap; }
-
+  function isAscii(s) { return /^[\x20-\x7e]*$/.test(s || ''); }
   function makeCanvas(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
-  function renderCanvas(b, W, lang, showAddr, reprint) {
-    var Sc = W / 576, M = Math.round(10 * Sc);
-    function px(n) { return Math.round(n * Sc); }
-    var d = new Date(b.billDate), half = b.gstRate / 2;
-    var showRate = W >= 500;
-    var xNo = M, xName = M + px(34);
-    var xQty = Math.round(W * (showRate ? 0.60 : 0.68)), xRate = Math.round(W * 0.79), xAmt = W - M;
-    var nameW = xQty - px(56) - xName;
-    var totQty = b.items.reduce(function (s, i) { return s + i.qty; }, 0);
-
-    function pass(ctx, draw) {
-      var y = px(6);
-      function font(sz) { ctx.font = 'bold ' + px(sz) + 'px ' + FONT; }
-      function put(t, x, yy, al) {
-        if (!draw) return;
-        ctx.textAlign = al || 'left'; ctx.textBaseline = 'alphabetic';
-        ctx.fillText(t, x, yy); ctx.lineWidth = Math.max(0.7, Sc * 0.8); ctx.strokeText(t, x, yy);
-      }
-      function wrap(str, maxW) {
-        var words = String(str == null ? '' : str).split(/\s+/).filter(Boolean), lines = [], cur = '';
-        words.forEach(function (w) {
-          var t = cur ? cur + ' ' + w : w;
-          if (ctx.measureText(t).width <= maxW) { cur = t; return; }
-          if (cur) { lines.push(cur); cur = ''; }
-          if (ctx.measureText(w).width <= maxW) { cur = w; return; }
-          var piece = ''; Array.from(w).forEach(function (ch) {
-            if (ctx.measureText(piece + ch).width > maxW && piece) { lines.push(piece); piece = ch; } else piece += ch;
-          }); cur = piece;
-        });
-        if (cur) lines.push(cur);
-        return lines.length ? lines : [''];
-      }
-      function line(t, sz, al) {
-        font(sz); var lh = px(sz * 1.22);
-        wrap(t, W - 2 * M).forEach(function (l) { y += lh; put(l, al === 'center' ? W / 2 : al === 'right' ? W - M : M, y - px(sz * 0.2), al || 'left'); });
-      }
-      function pair(l, r, sz) {
-        font(sz); var lh = px(sz * 1.22);
-        y += lh; put(l, M, y - px(sz * 0.2), 'left');
-        if (ctx.measureText(l).width + ctx.measureText(r).width + px(14) > W - 2 * M) y += lh;   // too long for one line (58 mm) -> amount drops to the next line
-        put(r, W - M, y - px(sz * 0.2), 'right');
-      }
-      function dash() {
-        y += px(3);
-        if (draw) { ctx.save(); ctx.setLineDash([px(6), px(4)]); ctx.lineWidth = Math.max(1.5, px(2)); ctx.beginPath(); ctx.moveTo(M, y); ctx.lineTo(W - M, y); ctx.stroke(); ctx.restore(); }
-        y += px(5);
-      }
-
-      /* header (kept short on purpose: less paper = faster print) */
-      line(SHOP.name, 38, 'center');
-      line(SHOP.tag, 21, 'center');
-      if (showAddr) { line(SHOP.addr1, 20, 'center'); line(SHOP.addr2, 20, 'center'); }
-      line(SHOP.phone, 21, 'center');
-      line(SHOP.gstin, 21, 'center');
-      dash();
-      pair('Bill / பில்: ' + b.billNo, dateStr(d) + '  ' + timeStr(d), 22);
-      if (reprint) line('*** DUPLICATE COPY ***', 20, 'center');
-      dash();
-
-      /* table header */
-      font(21); y += px(26);
-      put('No', xNo, y - px(5), 'left'); put('Item / பொருள்', xName, y - px(5), 'left');
-      put('Qty', xQty, y - px(5), 'right');
-      if (showRate) put('Rate', xRate, y - px(5), 'right');
-      put('Amount', xAmt, y - px(5), 'right');
-      dash();
-
-      /* items */
-      b.items.forEach(function (it, i) {
-        font(25); var lh = px(25 * 1.22);
-        wrap(displayName(it, lang), nameW).forEach(function (l, k) {
-          y += lh; put(l, xName, y - px(5), 'left');
-          if (k === 0) {
-            put(String(i + 1), xNo, y - px(5), 'left');
-            put(fmtQty(it.qty), xQty, y - px(5), 'right');
-            if (showRate) put(fmtR(it.rate), xRate, y - px(5), 'right');
-            put(fmtR(it.amount), xAmt, y - px(5), 'right');
-          }
-        });
-        y += px(3);
-      });
-      dash();
-      pair('Items: ' + b.items.length, 'Qty: ' + fmtQty(totQty), 22);
-      if (b.adjustment) pair(b.adjustment < 0 ? 'Discount :' : 'Round off :', (b.adjustment < 0 ? '- ' : '+ ') + fmtR(Math.abs(b.adjustment)), 23);
-
-      /* GST taken out of the total */
-      dash();
-      pair('Taxable Value :', fmtR(b.taxable), 24);
-      pair('CGST @ ' + half + '% :', fmtR(b.cgst), 24);
-      pair('SGST @ ' + half + '% :', fmtR(b.sgst), 24);
-      dash();
-      font(36); y += px(48);
-      put('TOTAL / மொத்தம்', M, y - px(10), 'left');
-      y += 0;
-      font(40); put('₹' + fmtR(b.total), W - M, y - px(10), 'right');
-      line('(Inclusive of all taxes)', 19, 'center');
-      dash();
-      line('நன்றி! மீண்டும் வருக!', 25, 'center');
-      line('Thank You! Visit Again!', 21, 'center');
-      y += px(14);
-      return y;
-    }
-
-    var probe = makeCanvas(W, 10), H = pass(probe.getContext('2d'), false);
-    var c = makeCanvas(W, H), ctx = c.getContext('2d');
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
-    pass(ctx, true);
+  /* small picture of one text block, cropped to the text width (less data = faster) */
+  function textStrip(str, W, align) {
+    var Sc = W / 576, M = Math.round(6 * Sc), sz = Math.round(25 * Sc), lh = Math.round(sz * 1.25);
+    var t = makeCanvas(10, 10).getContext('2d'); t.font = 'bold ' + sz + 'px ' + FONT;
+    var maxW = W - 2 * M, words = String(str).split(/\s+/).filter(Boolean), lines = [], cur = '';
+    words.forEach(function (w) {
+      var x = cur ? cur + ' ' + w : w;
+      if (t.measureText(x).width <= maxW) { cur = x; return; }
+      if (cur) { lines.push(cur); cur = ''; }
+      if (t.measureText(w).width <= maxW) { cur = w; return; }
+      var piece = ''; Array.from(w).forEach(function (ch) { if (t.measureText(piece + ch).width > maxW && piece) { lines.push(piece); piece = ch; } else piece += ch; }); cur = piece;
+    });
+    if (cur) lines.push(cur);
+    var need = 0; lines.forEach(function (l) { need = Math.max(need, t.measureText(l).width); });
+    var cw = align === 'center' ? W : Math.min(W, Math.ceil((need + 2 * M) / 8) * 8), ch = lines.length * lh + Math.round(4 * Sc);
+    var c = makeCanvas(cw, ch), ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch); ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+    ctx.font = 'bold ' + sz + 'px ' + FONT; ctx.textBaseline = 'alphabetic'; ctx.lineWidth = Math.max(0.7, Sc * 0.8);
+    lines.forEach(function (l, i) {
+      var x = align === 'center' ? cw / 2 : M; ctx.textAlign = align === 'center' ? 'center' : 'left';
+      var y = (i + 1) * lh - Math.round(sz * 0.22); ctx.fillText(l, x, y); ctx.strokeText(l, x, y);
+    });
     return c;
   }
 
-  /* canvas -> ESC/POS raster bytes (typed arrays: fast) */
-  function rasterBytes(canvas) {
+  /* canvas -> ESC/POS raster block (GS v 0), fast typed arrays */
+  function rasterBody(canvas) {
     var W = canvas.width, H = canvas.height;
     var data = canvas.getContext('2d').getImageData(0, 0, W, H).data, wb = Math.ceil(W / 8);
-    var parts = [Uint8Array.of(0x1b, 0x40)], BAND = 240, total = 2;
+    var parts = [], BAND = 240, total = 0;
     for (var y0 = 0; y0 < H; y0 += BAND) {
       var rows = Math.min(BAND, H - y0), body = new Uint8Array(wb * rows), p = 0;
       for (var y = y0; y < y0 + rows; y++) {
@@ -321,10 +274,7 @@
           var byte = 0;
           for (var bit = 0; bit < 8; bit++) {
             var x = xb * 8 + bit;
-            if (x < W) {
-              var i = (y * W + x) * 4;
-              if (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2] < 175) byte |= (0x80 >> bit);
-            }
+            if (x < W) { var i = (y * W + x) * 4; if (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2] < 175) byte |= (0x80 >> bit); }
           }
           body[p++] = byte;
         }
@@ -332,42 +282,53 @@
       var head = Uint8Array.of(0x1d, 0x76, 0x30, 0x00, wb & 255, wb >> 8, rows & 255, rows >> 8);
       parts.push(head, body); total += head.length + body.length;
     }
-    var tail = Uint8Array.of(0x1b, 0x64, 0x03, 0x1d, 0x56, 0x42, 0x00);   // feed 3 lines + partial cut
-    parts.push(tail); total += tail.length;
-    var out = new Uint8Array(total), o = 0;
-    parts.forEach(function (a) { out.set(a, o); o += a.length; });
+    var out = new Uint8Array(total), o = 0; parts.forEach(function (a) { out.set(a, o); o += a.length; });
     return out;
   }
 
-  /* ============================================================
-     RECEIPT – native text version (English only = FASTEST)
-     The printer prints its own built-in font, so almost no data is sent.
-     ============================================================ */
-  function isAscii(s) { return /^[\x20-\x7e]*$/.test(s || ''); }
-  function buildText(b, cols, showAddr, reprint) {
-    var out = [], plain = [], half = b.gstRate / 2, d = new Date(b.billDate);
-    function raw() { for (var i = 0; i < arguments.length; i++) out.push(arguments[i]); }
-    function txt(s) { for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); out.push(c >= 32 && c < 127 ? c : 63); } }
-    function ln(s) { txt(s); out.push(10); plain.push(s); }
+  function buildReceipt(b, reprint) {
+    var W = S.width, cols = W >= 500 ? 48 : 32, lang = S.lang, half = b.gstRate / 2, d = new Date(b.billDate);
+    var chunks = [], buf = [], preview = [], cur = [];
+    function raw() { for (var i = 0; i < arguments.length; i++) buf.push(arguments[i]); }
+    function txt(s) { for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); buf.push(c >= 32 && c < 127 ? c : 63); } }
+    function ln(s) { txt(s); buf.push(10); cur.push(s); }
+    function flushBuf() { if (buf.length) { chunks.push(Uint8Array.from(buf)); buf = []; } }
+    function flushPrev() { if (cur.length) { preview.push({ t: cur.join('\n') }); cur = []; } }
+    function picture(canvas) { flushBuf(); flushPrev(); chunks.push(rasterBody(canvas)); preview.push({ img: canvas }); }
     function spaces(n) { return n > 0 ? new Array(n + 1).join(' ') : ''; }
     function lr(l, r) { var gap = cols - l.length - r.length; return gap >= 1 ? l + spaces(gap) + r : (l.slice(0, Math.max(0, cols - r.length - 1)) + ' ' + r); }
     function rule() { ln(new Array(cols + 1).join('-')); }
-    function center(s, bold, dbl) { raw(0x1b, 0x61, 1, 0x1b, 0x45, bold ? 1 : 0, 0x1d, 0x21, dbl ? 0x11 : 0); ln(s); raw(0x1d, 0x21, 0, 0x1b, 0x45, 0, 0x1b, 0x61, 0); }
-    function wrapAscii(s, w) { var res = [], cur = ''; String(s).split(/\s+/).forEach(function (wd) { if (!wd) return; while (wd.length > w) { if (cur) { res.push(cur); cur = ''; } res.push(wd.slice(0, w)); wd = wd.slice(w); } if ((cur ? cur + ' ' + wd : wd).length <= w) cur = cur ? cur + ' ' + wd : wd; else { res.push(cur); cur = wd; } }); if (cur) res.push(cur); return res.length ? res : ['']; }
+    function wrapAscii(s, w) {
+      var res = [], c = '';
+      String(s).split(/\s+/).forEach(function (wd) {
+        if (!wd) return;
+        while (wd.length > w) { if (c) { res.push(c); c = ''; } res.push(wd.slice(0, w)); wd = wd.slice(w); }
+        if ((c ? c + ' ' + wd : wd).length <= w) c = c ? c + ' ' + wd : wd; else { res.push(c); c = wd; }
+      });
+      if (c) res.push(c); return res.length ? res : [''];
+    }
+    function center(s, bold, dbl) {
+      raw(0x1b, 0x61, 1, 0x1b, 0x45, bold ? 1 : 0, 0x1d, 0x21, dbl ? 0x11 : 0);
+      wrapAscii(s, dbl ? Math.floor(cols / 2) : cols).forEach(function (l) { ln(l); });
+      raw(0x1d, 0x21, 0, 0x1b, 0x45, 0, 0x1b, 0x61, 0);
+    }
     function money(n) { return fmtR(n); }
 
     raw(0x1b, 0x40);
-    center(SHOP.name, true, cols >= 40);
-    center(SHOP.tag, false, false);
-    if (showAddr) { center(SHOP.addr1); center(SHOP.addr2); }
-    center(SHOP.phone); center(SHOP.gstin);
+    center(SHOP.name, true, true);
+    center(SHOP.tag);
+    center(SHOP.addr1); center(SHOP.addr2);
+    center(SHOP.phone); center(SHOP.msme); center(SHOP.fssai); center(SHOP.gstin);
     rule();
     ln(lr('Bill: ' + b.billNo, dateStr(d) + ' ' + timeStr(d)));
+    if (b.paymentType) ln('Bill Type : ' + (PAY[b.paymentType] || String(b.paymentType).toUpperCase()));
     if (reprint) center('*** DUPLICATE COPY ***');
     rule();
+
     b.items.forEach(function (it, i) {
-      var lines = wrapAscii((i + 1) + '. ' + it.name, cols);
-      lines.forEach(function (l) { ln(l); });
+      var nm = displayName(it, lang), label = (i + 1) + '. ' + nm;
+      if (!isAscii(nm)) picture(textStrip(label, W, 'left'));
+      else wrapAscii(label, cols).forEach(function (l) { ln(l); });
       ln(lr('    ' + fmtQty(it.qty) + ' x ' + money(it.rate), money(it.amount)));
     });
     rule();
@@ -378,28 +339,21 @@
     ln(lr('CGST @ ' + half + '%', money(b.cgst)));
     ln(lr('SGST @ ' + half + '%', money(b.sgst)));
     rule();
-    raw(0x1b, 0x45, 1, 0x1d, 0x21, 0x01);                      // bold, double height
+    raw(0x1b, 0x45, 1, 0x1d, 0x21, 0x01);
     var tl = lr('TOTAL', 'Rs.' + money(b.total)); ln(tl.length > cols ? 'TOTAL Rs.' + money(b.total) : tl);
     raw(0x1d, 0x21, 0, 0x1b, 0x45, 0);
     center('(Inclusive of all taxes)');
     rule();
+    if (lang !== 'english') picture(textStrip('நன்றி! மீண்டும் வருக!', W, 'center'));
     center('Thank You! Visit Again!', true, false);
     raw(0x1b, 0x64, 0x03, 0x1d, 0x56, 0x42, 0x00);
-    return { bytes: Uint8Array.from(out), plain: plain.join('\n') };
-  }
+    flushBuf(); flushPrev();
 
-  /* choose how to print this bill */
-  function useTextMode(b) {
-    return S.lang === 'english' && b.items.every(function (i) { return isAscii(i.name); });
+    var total = 0; chunks.forEach(function (c) { total += c.length; });
+    var bytes = new Uint8Array(total), o = 0; chunks.forEach(function (c) { bytes.set(c, o); o += c.length; });
+    return { bytes: bytes, preview: preview };
   }
-  function buildPrint(b, reprint) {
-    if (useTextMode(b)) {
-      var t = buildText(b, S.width >= 500 ? 48 : 32, S.addr, reprint);
-      return { bytes: t.bytes, text: t.plain };
-    }
-    var c = renderCanvas(b, S.width, S.lang, S.addr, reprint);
-    return { bytes: rasterBytes(c), canvas: c };
-  }
+  function buildPrint(b, reprint) { return buildReceipt(b, reprint); }
 
   /* ============================================================
      PRINTING – Bluetooth (Chrome on Android) or RawBT app
@@ -490,27 +444,40 @@
     updateBadge(); sync();
   }
   var syncing = false;
+  function pending() { return jget('qb_queue', []).length + jget('qb_delq', []).length; }
   function sync() {
     if (syncing) return;
     var tok = lsGet('vbs_atoken', '');
-    if (!jget('qb_queue', []).length) { updateBadge(); return; }
+    if (!pending()) { updateBadge(); return; }
     if (!tok) { needLogin = true; updateBadge(); return; }
     syncing = true;
-    (function step() {
+    function done() { syncing = false; updateBadge(); }
+    function authFail() { lsDel('vbs_atoken'); needLogin = true; throw new Error('auth'); }
+    function stepDel() {
+      var dq = jget('qb_delq', []);
+      if (!dq.length) return done();
+      fetch(API + '/bills/by-client/' + encodeURIComponent(dq[0]), { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } })
+        .then(function (r) {
+          if (r.status === 401 || r.status === 403) authFail();
+          if (!r.ok) throw new Error('server');
+          dq.shift(); jset('qb_delq', dq); stepDel();
+        }).catch(done);
+    }
+    function step() {
       var q = jget('qb_queue', []);
-      if (!q.length) { syncing = false; updateBadge(); return; }
+      if (!q.length) return stepDel();
       fetch(API + '/bills', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok }, body: JSON.stringify(q[0]) })
         .then(function (r) {
-          if (r.status === 401 || r.status === 403) { lsDel('vbs_atoken'); needLogin = true; throw new Error('auth'); }
+          if (r.status === 401 || r.status === 403) authFail();
           if (r.status === 400) { var f = jget('qb_failed', []); f.push(q[0]); jset('qb_failed', f); }   // keep a copy, never lose a bill
           else if (!r.ok) throw new Error('server');
           q.shift(); jset('qb_queue', q); setNet(true); step();
-        })
-        .catch(function () { syncing = false; updateBadge(); });
-    })();
+        }).catch(done);
+    }
+    step();
   }
   function updateBadge() {
-    var n = jget('qb_queue', []).length, b = $('sync');
+    var n = pending(), b = $('sync');
     if (!n) { b.style.display = 'none'; return; }
     b.style.display = 'inline-block';
     b.textContent = needLogin ? '⚠ Login to save ' + n : '☁ ' + n + ' waiting';
@@ -542,8 +509,14 @@
 
   function showPreview(b, reprintFn) {
     var job = buildPrint(b, !!reprintFn), box = $('pvBody');
-    if (job.canvas) { var img = new Image(); img.src = job.canvas.toDataURL('image/png'); img.className = 'pvimg'; box.innerHTML = ''; box.appendChild(img); }
-    else box.innerHTML = '<pre class="pvtxt">' + esc(job.text) + '</pre><div class="hint">English-only fast mode (printer\'s own text)</div>';
+    box.innerHTML = '';
+    var sheet = document.createElement('div'); sheet.className = 'pvsheet';
+    job.preview.forEach(function (p) {
+      if (p.t != null) { var pre = document.createElement('pre'); pre.className = 'pvtxt'; pre.textContent = p.t; sheet.appendChild(pre); }
+      else { var img = new Image(); img.src = p.img.toDataURL('image/png'); img.style.width = (p.img.width / S.width * 100) + '%'; img.className = 'pvimg'; sheet.appendChild(img); }
+    });
+    box.appendChild(sheet);
+    var kb = document.createElement('div'); kb.className = 'hint'; kb.textContent = 'Data sent to printer: ' + (job.bytes.length / 1024).toFixed(1) + ' KB'; box.appendChild(kb);
     $('pvPrint').onclick = function () {
       $('pvPrint').disabled = true;
       sendBytes(job.bytes, false).then(function () {
@@ -601,21 +574,35 @@
 
   /* ---------- recent bills ---------- */
   function openRecent() {
-    var recent = jget('qb_recent', []), today = dateStr(new Date()), sumToday = 0, cnt = 0;
-    recent.forEach(function (b) { if (dateStr(new Date(b.billDate)) === today) { sumToday += b.total; cnt++; } });
-    $('rcSum').textContent = 'Today on this phone: ' + cnt + ' bills · ₹' + fmtR(sumToday);
+    var recent = jget('qb_recent', []), today = dateStr(new Date()), sum = { cash: 0, upi: 0, card: 0, all: 0 }, cnt = 0;
+    recent.forEach(function (b) {
+      if (dateStr(new Date(b.billDate)) === today) { cnt++; sum.all += b.total; var k = b.paymentType || 'cash'; sum[k] = (sum[k] || 0) + b.total; }
+    });
+    $('rcSum').innerHTML = 'Today on this phone: <b>' + cnt + ' bills · ₹' + fmtR(sum.all) + '</b><br>Cash ₹' + fmtR(sum.cash) + ' · UPI ₹' + fmtR(sum.upi) + ' · Card ₹' + fmtR(sum.card);
     $('rcList').innerHTML = recent.length ? recent.map(function (b, i) {
       var d = new Date(b.billDate);
-      return '<div class="rc"><div><b>' + esc(b.billNo) + '</b><div class="hint">' + dateStr(d) + ' ' + timeStr(d) + ' · ' + b.items.length + ' items</div></div>' +
-        '<div class="rc-r"><b>₹' + fmtR(b.total) + '</b><button class="mini" data-re="' + i + '">Reprint</button></div></div>';
+      return '<div class="rc"><div><b>' + esc(b.billNo) + '</b> <span class="tag">' + esc(PAY[b.paymentType] || 'CASH') + '</span><div class="hint">' + dateStr(d) + ' ' + timeStr(d) + ' · ' + b.items.length + ' items</div></div>' +
+        '<div class="rc-r"><b>₹' + fmtR(b.total) + '</b><span class="rcb"><button class="mini" data-re="' + i + '">Reprint</button><button class="mini red" data-del="' + i + '">🗑 Delete</button></span></div></div>';
     }).join('') : '<div class="empty">No bills yet</div>';
     openModal('rc');
+  }
+  function deleteBill(i) {
+    var recent = jget('qb_recent', []), b = recent[i]; if (!b) return;
+    if (!confirm('Delete bill ' + b.billNo + ' (₹' + fmtR(b.total) + ')?\nIt will be removed from history and from your sales records.')) return;
+    recent.splice(i, 1); jset('qb_recent', recent);
+    jset('qb_queue', jget('qb_queue', []).filter(function (x) { return x.clientId !== b.clientId; }));
+    var dq = jget('qb_delq', []); dq.push(b.clientId); jset('qb_delq', dq);    // also removes it from the server (now or when online)
+    updateBadge(); sync(); openRecent(); toast('Deleted ' + b.billNo);
   }
 
   /* ---------- settings ---------- */
   function openSettings() {
     $('sWidth').value = S.width; $('sLang').value = S.lang; $('sMethod').value = S.method; $('sSpeed').value = S.speed;
-    $('sAddr').checked = !!S.addr; $('sGst').value = S.gst; $('sPrefix').value = S.prefix;
+    $('sGst').value = S.gst; $('sPrefix').value = S.prefix;
+    var cats = []; products.forEach(function (p) { if (cats.indexOf(p.cat) < 0) cats.push(p.cat); });
+    $('sCats').innerHTML = cats.length ? cats.map(function (c) {
+      return '<label class="chk2"><input type="checkbox" data-sc="' + esc(c) + '"' + (isHidden(c) ? '' : ' checked') + '> ' + esc(capital(c)) + '</label>';
+    }).join('') : '<span class="hint">Products not loaded yet</span>';
     openModal('st');
   }
   function bindSettings() {
@@ -623,9 +610,14 @@
     $('sLang').onchange = function () { S.lang = this.value; saveSettings(); };
     $('sMethod').onchange = function () { S.method = this.value; saveSettings(); };
     $('sSpeed').onchange = function () { S.speed = this.value; saveSettings(); };
-    $('sAddr').onchange = function () { S.addr = this.checked; saveSettings(); };
     $('sGst').onchange = function () { var v = parseFloat(this.value); if (isFinite(v) && v >= 0 && v < 100) { S.gst = v; saveSettings(); updateTotals(); } else this.value = S.gst; };
     $('sPrefix').onchange = function () { var v = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6) || 'B'; this.value = v; S.prefix = v; saveSettings(); lsSet('qb_seq', '0'); refreshSeq(); };
+    $('sCats').addEventListener('change', function (e) {
+      var c = e.target.dataset.sc; if (!c) return;
+      var h = (S.hidden || []).filter(function (x) { return x !== c.toLowerCase(); });
+      if (!e.target.checked) h.push(c.toLowerCase());
+      S.hidden = h; saveSettings(); renderCats(); renderGrid();
+    });
   }
 
   /* ============================================================
@@ -637,11 +629,14 @@
     $('cats').addEventListener('click', function (e) { var b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; renderCats(); renderGrid(); });
     $('q').addEventListener('input', function () { query = this.value; renderGrid(); });
     $('grid').addEventListener('click', function (e) {
+      var dec = e.target.closest('[data-dec]'); if (dec) { e.stopPropagation(); return decProduct(dec.dataset.dec); }
       var ed = e.target.closest('[data-edit]'); if (ed) { e.stopPropagation(); return openEdit(ed.dataset.edit); }
       var t = e.target.closest('.tile'); if (!t) return;
       var p = products.filter(function (x) { return x.id === t.dataset.id; })[0]; if (p) addProduct(p);
     });
 
+    $('grid').addEventListener('error', function (e) { if (e.target.tagName === 'IMG') e.target.parentNode.classList.add('noimg'); }, true);
+    $('pay').addEventListener('click', function (e) { var b = e.target.closest('[data-pay]'); if (b) setPay(b.dataset.pay); });
     $('lines').addEventListener('click', function (e) {
       var b = e.target.closest('[data-act]'); if (!b) return;
       var i = parseInt(b.closest('.ln').dataset.i, 10), l = cart[i], a = b.dataset.act;
@@ -669,6 +664,7 @@
     $('recentBtn').onclick = openRecent;
     $('setBtn').onclick = openSettings;
     $('rcList').addEventListener('click', function (e) {
+      var del = e.target.closest('[data-del]'); if (del) return deleteBill(parseInt(del.dataset.del, 10));
       var b = e.target.closest('[data-re]'); if (!b) return;
       var bill = jget('qb_recent', [])[parseInt(b.dataset.re, 10)]; if (bill) { closeModal('rc'); showPreview(bill, true); }
     });
