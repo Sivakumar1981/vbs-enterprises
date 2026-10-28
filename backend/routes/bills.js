@@ -54,6 +54,7 @@ router.post('/', auth, async (req, res) => {
         productId: i.productId || '', name: i.name, tamilName: i.tamilName || '',
         qty: Number(i.qty), rate: Number(i.rate), amount: Number(i.amount)
       })),
+      paymentType: ['cash', 'upi', 'card'].includes(b.paymentType) ? b.paymentType : 'cash',
       itemsTotal: r2(b.itemsTotal), adjustment: r2(b.adjustment || 0),
       gstRate: Number(b.gstRate) || 5,
       taxable: r2(b.taxable), cgst: r2(b.cgst), sgst: r2(b.sgst), total
@@ -63,6 +64,14 @@ router.post('/', auth, async (req, res) => {
     if (err.code === 11000) return res.json({ success: true, duplicate: true });
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+// Delete by the phone's own id (used by "Delete" in Recent bills). Safe if it was never saved.
+router.delete('/by-client/:clientId', auth, async (req, res) => {
+  try {
+    const r = await Bill.deleteOne({ clientId: req.params.clientId });
+    res.json({ success: true, deleted: r.deletedCount || 0 });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
 // Delete a bill (admin)
