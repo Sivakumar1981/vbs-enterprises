@@ -291,6 +291,7 @@ tr:hover td{background:var(--warm)}
       <button class="sn" data-tab="gallery">📸 Weekend Events</button>
       <button class="sn" data-tab="quote">📝 Quotation</button>
       <button class="sn" data-tab="invoice">🧾 Tax Invoice</button>
+      <button class="sn" onclick="location.href='/quickbill'">⚡ Quick Bill (Printer)</button>
       <button class="sn" data-tab="orders">🧾 Orders</button>
       <button class="sn" data-tab="customers">👥 Customers</button>
       <button class="sn" data-tab="tally">📊 Tally / Reports</button>
@@ -1040,7 +1041,7 @@ document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Ent
 if(token)showApp();
 
 /* ── TABS ── */
-document.querySelectorAll('.sn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+document.querySelectorAll('.sn[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 function showTab(t){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.sn').forEach(x=>x.classList.remove('active'));
@@ -3576,5 +3577,7 @@ function toast(icon,msg){
 }
 </script>
 <script src="js/thermal-print.js?v=3"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="js/tally-quickbills.js?v=1"></script>
 </body>
 </html>
