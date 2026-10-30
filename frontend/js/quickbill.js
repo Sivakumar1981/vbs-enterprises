@@ -573,26 +573,46 @@
   }
 
   /* ---------- recent bills ---------- */
-  function openRecent() {
-    var recent = jget('qb_recent', []), today = dateStr(new Date()), sum = { cash: 0, upi: 0, card: 0, all: 0 }, cnt = 0;
-    recent.forEach(function (b) {
+  var hist = [], histLive = false;
+  function mergeHistory(serverBills) {
+    var delq = jget('qb_delq', []), seen = {}, out = [];
+    jget('qb_queue', []).forEach(function (b) { seen[b.clientId] = 1; out.push(b); });          // printed here, not saved yet
+    serverBills.forEach(function (b) { if (!seen[b.clientId] && delq.indexOf(b.clientId) < 0) { seen[b.clientId] = 1; out.push(b); } });
+    out.sort(function (a, b) { return new Date(b.billDate) - new Date(a.billDate); });
+    return out;
+  }
+  function renderHistory(list, live) {
+    hist = list; histLive = live;
+    var today = dateStr(new Date()), sum = { cash: 0, upi: 0, card: 0, all: 0 }, cnt = 0;
+    list.forEach(function (b) {
       if (dateStr(new Date(b.billDate)) === today) { cnt++; sum.all += b.total; var k = b.paymentType || 'cash'; sum[k] = (sum[k] || 0) + b.total; }
     });
-    $('rcSum').innerHTML = 'Today on this phone: <b>' + cnt + ' bills · ₹' + fmtR(sum.all) + '</b><br>Cash ₹' + fmtR(sum.cash) + ' · UPI ₹' + fmtR(sum.upi) + ' · Card ₹' + fmtR(sum.card);
-    $('rcList').innerHTML = recent.length ? recent.map(function (b, i) {
+    $('rcSum').innerHTML = (live ? '☁ <b>All devices</b> (common database)' : '📱 <b>This phone only</b> – login &amp; go online to see all devices') +
+      '<br>Today: <b>' + cnt + ' bills · ₹' + fmtR(sum.all) + '</b><br>Cash ₹' + fmtR(sum.cash) + ' · UPI ₹' + fmtR(sum.upi) + ' · Card ₹' + fmtR(sum.card);
+    $('rcList').innerHTML = list.length ? list.slice(0, 150).map(function (b, i) {
       var d = new Date(b.billDate);
       return '<div class="rc"><div><b>' + esc(b.billNo) + '</b> <span class="tag">' + esc(PAY[b.paymentType] || 'CASH') + '</span><div class="hint">' + dateStr(d) + ' ' + timeStr(d) + ' · ' + b.items.length + ' items</div></div>' +
         '<div class="rc-r"><b>₹' + fmtR(b.total) + '</b><span class="rcb"><button class="mini" data-re="' + i + '">Reprint</button><button class="mini red" data-del="' + i + '">🗑 Delete</button></span></div></div>';
     }).join('') : '<div class="empty">No bills yet</div>';
+  }
+  function openRecent() {
+    renderHistory(jget('qb_recent', []), false);
     openModal('rc');
+    var tok = lsGet('vbs_atoken', ''); if (!tok) { needLogin = true; return; }
+    fetch(API + '/bills?limit=300', { headers: { Authorization: 'Bearer ' + tok } })
+      .then(function (r) { if (r.status === 401 || r.status === 403) { lsDel('vbs_atoken'); needLogin = true; updateBadge(); throw new Error('auth'); } return r.json(); })
+      .then(function (d) {
+        if (!d.success) return;
+        var m = mergeHistory(d.bills); jset('qb_recent', m.slice(0, 300)); renderHistory(m, true); setNet(true);
+      }).catch(function () {});
   }
   function deleteBill(i) {
-    var recent = jget('qb_recent', []), b = recent[i]; if (!b) return;
-    if (!confirm('Delete bill ' + b.billNo + ' (₹' + fmtR(b.total) + ')?\nIt will be removed from history and from your sales records.')) return;
-    recent.splice(i, 1); jset('qb_recent', recent);
+    var b = hist[i]; if (!b) return;
+    if (!confirm('Delete bill ' + b.billNo + ' (₹' + fmtR(b.total) + ')?\nIt will be removed from history and from your sales records on ALL devices.')) return;
+    hist.splice(i, 1); jset('qb_recent', hist.slice(0, 300));
     jset('qb_queue', jget('qb_queue', []).filter(function (x) { return x.clientId !== b.clientId; }));
-    var dq = jget('qb_delq', []); dq.push(b.clientId); jset('qb_delq', dq);    // also removes it from the server (now or when online)
-    updateBadge(); sync(); openRecent(); toast('Deleted ' + b.billNo);
+    var dq = jget('qb_delq', []); dq.push(b.clientId); jset('qb_delq', dq);    // removes it from the common database (now or when online)
+    updateBadge(); sync(); renderHistory(hist, histLive); toast('Deleted ' + b.billNo);
   }
 
   /* ---------- settings ---------- */
@@ -666,13 +686,14 @@
     $('rcList').addEventListener('click', function (e) {
       var del = e.target.closest('[data-del]'); if (del) return deleteBill(parseInt(del.dataset.del, 10));
       var b = e.target.closest('[data-re]'); if (!b) return;
-      var bill = jget('qb_recent', [])[parseInt(b.dataset.re, 10)]; if (bill) { closeModal('rc'); showPreview(bill, true); }
+      var bill = hist[parseInt(b.dataset.re, 10)]; if (bill) { closeModal('rc'); showPreview(bill, true); }
     });
     document.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = function () { closeModal(b.dataset.close); }; });
     $('edSave').onclick = saveEdit; $('lgBtn').onclick = doLogin;
     $('lgPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
     $('lgSkip').onclick = function () { closeModal('lg'); };
 
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { refreshSeq(); sync(); } });
     window.addEventListener('online', function () { setNet(true); sync(); loadProducts(); });
     window.addEventListener('offline', function () { setNet(false); });
 
