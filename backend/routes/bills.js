@@ -26,7 +26,8 @@ router.get('/', auth, async (req, res) => {
       if (req.query.from) q.billDate.$gte = new Date(req.query.from + 'T00:00:00');
       if (req.query.to)   q.billDate.$lte = new Date(req.query.to + 'T23:59:59.999');
     }
-    const bills = await Bill.find(q).sort({ billDate: -1 }).limit(2000);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 2000, 1), 5000);
+    const bills = await Bill.find(q).sort({ billDate: -1 }).limit(limit);
     res.json({ success: true, bills });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
