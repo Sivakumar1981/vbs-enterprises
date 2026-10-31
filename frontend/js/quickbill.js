@@ -25,7 +25,7 @@
   var PAY = { cash: 'CASH', upi: 'UPI', card: 'CARD' };
   var ICONS = { saree: '👘', nighty: '🌙', chudidhar: '👗', blouse: '🪡', oil: '🫙', rice: '🌾', ghee: '🧈', honey: '🍯', peanut: '🥜', other: '📦' };
 
-  var DEFAULTS = { width: 576, lang: 'both', method: 'ble', speed: 'fast', gst: 5, prefix: 'B', hidden: ['saree', 'nighty', 'chudidhar', 'blouse'] };
+  var DEFAULTS = { width: 576, lang: 'both', method: 'ble', speed: 'fast', gst: 5, prefix: 'B', awake: true, hidden: ['saree', 'nighty', 'chudidhar', 'blouse'] };
   var SPEEDS = { turbo: [512, 2], fast: [240, 4], normal: [180, 10], safe: [100, 18] };   // [bytes per write, ms pause]
   var FONT = "'Noto Sans Tamil','Noto Sans','Nirmala UI','Latha','Tamil Sangam MN',Arial,Helvetica,sans-serif";
 
@@ -153,6 +153,7 @@
     if (hit) hit.qty = Math.round((hit.qty + 1) * 1000) / 1000;
     else cart.push({ pid: p.id, en: enName(p), ta: p.ta, rate: p.price, qty: 1 });
     renderCart();
+    if (S.method === 'ble' && BLE.device && !isConnected() && !BLE.wait) scheduleReconnect(0);
     if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
   }
   function decProduct(id) {
@@ -358,7 +359,7 @@
   /* ============================================================
      PRINTING – Bluetooth (Chrome on Android) or RawBT app
      ============================================================ */
-  var BLE = { device: null, chr: null };
+  var BLE = { device: null, chr: null, wait: false };
   var PRINTER_SERVICES = [
     '000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
     '49535343-fe7d-4ae5-8fa9-9fafd205e455', '0000ff00-0000-1000-8000-00805f9b34fb',
@@ -383,18 +384,52 @@
       return chain;
     });
   }
+  function withTimeout(promise, ms, tag) {
+    return new Promise(function (res, rej) {
+      var t = setTimeout(function () { rej(new Error(tag)); }, ms);
+      promise.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
+    });
+  }
+  function isConnected() { return !!(BLE.chr && BLE.device && BLE.device.gatt && BLE.device.gatt.connected); }
+
+  /* remember the printer + reconnect by itself whenever Chrome drops the link (screen off, sleep, out of range) */
+  var reTimer = null, RETRY = [700, 2500, 6000, 12000];
+  function hookDevice(dev) {
+    if (dev.__qb) return; dev.__qb = true;
+    lsSet('qb_printer_id', dev.id || '');
+    dev.addEventListener('gattserverdisconnected', function () { BLE.chr = null; setPrinter(); scheduleReconnect(0); });
+  }
+  function scheduleReconnect(n) {
+    clearTimeout(reTimer);
+    if (S.method !== 'ble' || !BLE.device || n >= RETRY.length || document.hidden) { BLE.wait = false; setPrinter(); return; }
+    BLE.wait = true; setPrinter();
+    reTimer = setTimeout(function () {
+      if (isConnected()) { BLE.wait = false; setPrinter(); return; }
+      bleConnect(false).then(function () { BLE.wait = false; setPrinter(); }).catch(function () { scheduleReconnect(n + 1); });
+    }, RETRY[n]);
+  }
+  function restorePrinter() {          // after the page/app was closed & reopened (only if this Chrome allows it)
+    if (S.method !== 'ble' || !navigator.bluetooth || !navigator.bluetooth.getDevices) return;
+    navigator.bluetooth.getDevices().then(function (list) {
+      var id = lsGet('qb_printer_id', '');
+      var d = list.filter(function (x) { return x.id === id; })[0] || (list.length === 1 ? list[0] : null);
+      if (!d) return; BLE.device = d; hookDevice(d); scheduleReconnect(0);
+    }).catch(function () {});
+  }
+
   function bleConnect(forcePick) {
     if (!navigator.bluetooth) return Promise.reject(new Error('NO_BLE'));
     if (forcePick) { try { if (BLE.device && BLE.device.gatt.connected) BLE.device.gatt.disconnect(); } catch (e) {} BLE.device = null; BLE.chr = null; }
-    if (BLE.chr && BLE.device && BLE.device.gatt.connected) return Promise.resolve(BLE.chr);
-    var pick = BLE.device ? Promise.resolve(BLE.device) :      // must run straight from the tap (user gesture)
+    if (isConnected()) return Promise.resolve(BLE.chr);
+    var pick = BLE.device ? Promise.resolve(BLE.device) :      // choosing a printer must run straight from a tap (user gesture)
       navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: PRINTER_SERVICES }).then(function (dev) {
-        BLE.device = dev; dev.addEventListener('gattserverdisconnected', function () { BLE.chr = null; setPrinter(); });
-        return dev;
+        BLE.device = dev; hookDevice(dev); return dev;
       });
-    return pick.then(function (dev) { return dev.gatt.connect(); }).then(findWritable).then(function (chr) {
+    return pick.then(function (dev) {
+      return withTimeout(dev.gatt.connect(), 10000, 'TIMEOUT').catch(function (e) { try { dev.gatt.disconnect(); } catch (x) {} throw e; });
+    }).then(findWritable).then(function (chr) {
       if (!chr) throw new Error('NO_CHAR');
-      BLE.chr = chr; setPrinter(); return chr;
+      BLE.chr = chr; BLE.wait = false; setPrinter(); return chr;
     });
   }
   function bleWrite(chr, bytes, size, gap) {
@@ -409,8 +444,8 @@
   }
   function setPrinter() {
     var ok = BLE.device && BLE.device.gatt && BLE.device.gatt.connected;
-    $('prn').className = 'pill ' + (ok ? 'ok' : '');
-    $('prn').textContent = ok ? '🖨 ' + (BLE.device.name || 'Printer') : '🖨 Connect';
+    $('prn').className = 'pill ' + (ok ? 'ok' : (BLE.wait ? 'wait' : ''));
+    $('prn').textContent = ok ? '🖨 ' + (BLE.device.name || 'Printer') : (BLE.wait ? '🖨 Reconnecting…' : (BLE.device ? '🖨 Tap to reconnect' : '🖨 Connect'));
   }
 
   /* returns a promise: resolves when the bytes have gone to the printer */
@@ -430,6 +465,7 @@
     BLE.chr = null; setPrinter();
     if (e && e.name === 'NotFoundError') return toast('No printer selected', true);
     if (e && e.message === 'NO_BLE') return toast('Bluetooth not supported here. Open in Chrome on Android, or switch to RawBT in ⚙ Settings.', true);
+    if (e && e.message === 'TIMEOUT') return toast('Printer not responding. Check it is switched ON and close to the phone, then tap PRINT again.', true);
     if (e && e.message === 'NO_CHAR') return toast('This printer cannot be used from the browser. Switch to RawBT in ⚙ Settings.', true);
     console.error(e); toast('Could not print: ' + (e && e.message ? e.message : e), true);
   }
@@ -493,6 +529,14 @@
   /* ============================================================
      ACTIONS
      ============================================================ */
+  /* keep the screen awake while Quick Bill is open, so Bluetooth is not cut when the phone sleeps */
+  var wake = null;
+  function keepAwake() {
+    if (!S.awake || !navigator.wakeLock || wake || document.hidden) return;
+    navigator.wakeLock.request('screen').then(function (l) { wake = l; l.addEventListener('release', function () { wake = null; }); }).catch(function () {});
+  }
+  function releaseAwake() { if (wake) { try { wake.release(); } catch (e) {} wake = null; } }
+
   var printing = false;
   function printNow() {
     if (printing || !cart.length) return;
@@ -591,8 +635,8 @@
       '<br>Today: <b>' + cnt + ' bills · ₹' + fmtR(sum.all) + '</b><br>Cash ₹' + fmtR(sum.cash) + ' · UPI ₹' + fmtR(sum.upi) + ' · Card ₹' + fmtR(sum.card);
     $('rcList').innerHTML = list.length ? list.slice(0, 150).map(function (b, i) {
       var d = new Date(b.billDate);
-      return '<div class="rc"><div><b>' + esc(b.billNo) + '</b> <span class="tag">' + esc(PAY[b.paymentType] || 'CASH') + '</span><div class="hint">' + dateStr(d) + ' ' + timeStr(d) + ' · ' + b.items.length + ' items</div></div>' +
-        '<div class="rc-r"><b>₹' + fmtR(b.total) + '</b><span class="rcb"><button class="mini" data-re="' + i + '">Reprint</button><button class="mini red" data-del="' + i + '">🗑 Delete</button></span></div></div>';
+      return '<div class="rc"><div class="rc-l" data-view="' + i + '"><b>' + esc(b.billNo) + '</b> <span class="tag">' + esc(PAY[b.paymentType] || 'CASH') + '</span><div class="hint">' + dateStr(d) + ' ' + timeStr(d) + ' · ' + b.items.length + ' items · tap to view</div></div>' +
+        '<div class="rc-r"><b>₹' + fmtR(b.total) + '</b><span class="rcb"><button class="mini grn" data-view="' + i + '">👁 View</button><button class="mini" data-re="' + i + '">Reprint</button><button class="mini red" data-del="' + i + '">🗑 Delete</button></span></div></div>';
     }).join('') : '<div class="empty">No bills yet</div>';
   }
   function openRecent() {
@@ -606,6 +650,44 @@
         var m = mergeHistory(d.bills); jset('qb_recent', m.slice(0, 300)); renderHistory(m, true); setNet(true);
       }).catch(function () {});
   }
+  /* ---------- view one bill (for writing in the manual note / quick checking) ---------- */
+  var viewIdx = -1;
+  function billText(b) {
+    var d = new Date(b.billDate), half = b.gstRate / 2, L = [];
+    L.push(b.billNo + '  ' + dateStr(d) + ' ' + timeStr(d) + '  ' + (PAY[b.paymentType] || 'CASH'));
+    b.items.forEach(function (i, n) { L.push((n + 1) + '. ' + (i.name || '') + (i.tamilName ? ' (' + i.tamilName + ')' : '') + '  ' + fmtQty(i.qty) + ' x ' + fmtR(i.rate) + ' = ' + fmtR(i.amount)); });
+    if (b.adjustment) L.push((b.adjustment < 0 ? 'Discount -' : 'Round off +') + fmtR(Math.abs(b.adjustment)));
+    L.push('Taxable ' + fmtR(b.taxable) + ' | CGST ' + half + '% ' + fmtR(b.cgst) + ' | SGST ' + half + '% ' + fmtR(b.sgst));
+    L.push('TOTAL Rs.' + fmtR(b.total));
+    return L.join('\n');
+  }
+  function viewBill(i) {
+    var b = hist[i]; if (!b) return; viewIdx = i;
+    var d = new Date(b.billDate), half = b.gstRate / 2, qty = 0;
+    var rows = b.items.map(function (it, n) {
+      qty += Number(it.qty) || 0;
+      return '<tr><td class="vn">' + (n + 1) + '</td><td><b>' + esc(it.name) + '</b>' + (it.tamilName ? '<div class="hint">' + esc(it.tamilName) + '</div>' : '') +
+        '<div class="hint">' + fmtQty(it.qty) + ' × ₹' + fmtR(it.rate) + '</div></td><td class="vr"><b>₹' + fmtR(it.amount) + '</b></td></tr>';
+    }).join('');
+    $('vwBody').innerHTML =
+      '<div class="vh"><b style="font-size:1.15rem">' + esc(b.billNo) + '</b> <span class="tag">' + esc(PAY[b.paymentType] || 'CASH') + '</span>' +
+      '<div class="hint">' + dateStr(d) + ' · ' + timeStr(d) + '</div></div>' +
+      '<table class="vt">' + rows + '</table>' +
+      '<div class="vs"><div><span>Items / Qty</span><span>' + b.items.length + ' / ' + fmtQty(qty) + '</span></div>' +
+      (b.adjustment ? '<div><span>' + (b.adjustment < 0 ? 'Discount' : 'Round off') + '</span><span>' + (b.adjustment < 0 ? '−' : '+') + '₹' + fmtR(Math.abs(b.adjustment)) + '</span></div>' : '') +
+      '<div><span>Taxable value</span><span>₹' + fmtR(b.taxable) + '</span></div>' +
+      '<div><span>CGST ' + half + '%</span><span>₹' + fmtR(b.cgst) + '</span></div>' +
+      '<div><span>SGST ' + half + '%</span><span>₹' + fmtR(b.sgst) + '</span></div>' +
+      '<div class="vtot"><span>TOTAL</span><span>₹' + fmtR(b.total) + '</span></div></div>';
+    openModal('vw');
+  }
+  function copyBill() {
+    var b = hist[viewIdx]; if (!b) return; var t = billText(b);
+    function ok() { toast('Copied – paste it in any note'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok).catch(function () { toast('Could not copy', true); });
+    else { var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) { toast('Could not copy', true); } document.body.removeChild(ta); }
+  }
+
   function deleteBill(i) {
     var b = hist[i]; if (!b) return;
     if (!confirm('Delete bill ' + b.billNo + ' (₹' + fmtR(b.total) + ')?\nIt will be removed from history and from your sales records on ALL devices.')) return;
@@ -618,7 +700,7 @@
   /* ---------- settings ---------- */
   function openSettings() {
     $('sWidth').value = S.width; $('sLang').value = S.lang; $('sMethod').value = S.method; $('sSpeed').value = S.speed;
-    $('sGst').value = S.gst; $('sPrefix').value = S.prefix;
+    $('sGst').value = S.gst; $('sPrefix').value = S.prefix; $('sAwake').checked = !!S.awake;
     var cats = []; products.forEach(function (p) { if (cats.indexOf(p.cat) < 0) cats.push(p.cat); });
     $('sCats').innerHTML = cats.length ? cats.map(function (c) {
       return '<label class="chk2"><input type="checkbox" data-sc="' + esc(c) + '"' + (isHidden(c) ? '' : ' checked') + '> ' + esc(capital(c)) + '</label>';
@@ -630,6 +712,7 @@
     $('sLang').onchange = function () { S.lang = this.value; saveSettings(); };
     $('sMethod').onchange = function () { S.method = this.value; saveSettings(); };
     $('sSpeed').onchange = function () { S.speed = this.value; saveSettings(); };
+    $('sAwake').onchange = function () { S.awake = this.checked; saveSettings(); if (S.awake) keepAwake(); else releaseAwake(); };
     $('sGst').onchange = function () { var v = parseFloat(this.value); if (isFinite(v) && v >= 0 && v < 100) { S.gst = v; saveSettings(); updateTotals(); } else this.value = S.gst; };
     $('sPrefix').onchange = function () { var v = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6) || 'B'; this.value = v; S.prefix = v; saveSettings(); lsSet('qb_seq', '0'); refreshSeq(); };
     $('sCats').addEventListener('change', function (e) {
@@ -679,24 +762,41 @@
     $('clearBtn').onclick = function () { if (cart.length && confirm('Clear this bill?')) clearCart(); };
     $('customBtn').onclick = addCustom;
 
-    $('prn').onclick = function () { if (S.method === 'rawbt') return toast('Using RawBT – set printer inside the RawBT app'); bleConnect(true).then(function () { toast('Printer connected'); }).catch(printError); };
+    $('prn').onclick = function () {
+      if (S.method === 'rawbt') return toast('Using RawBT – set printer inside the RawBT app');
+      if (isConnected()) return toast('Printer is connected ✔');
+      if (BLE.device) {                       // known printer: reconnect quietly first
+        BLE.wait = true; setPrinter();
+        return bleConnect(false).then(function () { toast('Printer reconnected'); })
+          .catch(function () { BLE.wait = false; BLE.device = null; setPrinter(); toast('Could not reach printer. Switch it on, then tap again to choose it.', true); });
+      }
+      bleConnect(true).then(function () { toast('Printer connected'); }).catch(printError);
+    };
     $('sync').onclick = function () { if (needLogin || !lsGet('vbs_atoken', '')) openModal('lg'); else sync(); };
     $('recentBtn').onclick = openRecent;
     $('setBtn').onclick = openSettings;
     $('rcList').addEventListener('click', function (e) {
+      var vw = e.target.closest('[data-view]'); if (vw && !e.target.closest('[data-del],[data-re]')) return viewBill(parseInt(vw.dataset.view, 10));
       var del = e.target.closest('[data-del]'); if (del) return deleteBill(parseInt(del.dataset.del, 10));
       var b = e.target.closest('[data-re]'); if (!b) return;
       var bill = hist[parseInt(b.dataset.re, 10)]; if (bill) { closeModal('rc'); showPreview(bill, true); }
     });
     document.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = function () { closeModal(b.dataset.close); }; });
+    $('vwCopy').onclick = copyBill;
+    $('vwReprint').onclick = function () { var b = hist[viewIdx]; if (b) { closeModal('vw'); closeModal('rc'); showPreview(b, true); } };
+    $('vwDel').onclick = function () { var i = viewIdx; closeModal('vw'); deleteBill(i); };
     $('edSave').onclick = saveEdit; $('lgBtn').onclick = doLogin;
     $('lgPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
     $('lgSkip').onclick = function () { closeModal('lg'); };
 
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) { refreshSeq(); sync(); } });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) { refreshSeq(); sync(); keepAwake(); if (S.method === 'ble' && BLE.device && !isConnected()) scheduleReconnect(0); }
+    });
+    document.addEventListener('pointerdown', function () { if (!wake) keepAwake(); }, { passive: true });
     window.addEventListener('online', function () { setNet(true); sync(); loadProducts(); });
     window.addEventListener('offline', function () { setNet(false); });
 
+    keepAwake(); restorePrinter();
     loadProducts();
     if (!lsGet('vbs_atoken', '')) { needLogin = true; openModal('lg'); } else { refreshSeq(); sync(); }
 
