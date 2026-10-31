@@ -21,6 +21,7 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
 .dot.on{background:#3ddc84}.dot.off{background:#ff6b5e}
 .pill{border:1px solid #6b5230;background:#2a1a05;color:#e8c068;border-radius:999px;padding:6px 11px;font-size:.8rem;font-weight:600}
 .pill.ok{background:#0a7d33;border-color:#0a7d33;color:#fff}
+.pill.wait{background:#c8902a;border-color:#c8902a;color:#1a0f00}
 .sync{display:none;background:#c8902a;color:#1a0f00;border:none;border-radius:999px;padding:6px 11px;font-size:.78rem;font-weight:700}
 .ic{background:none;border:none;color:#e8c068;font-size:1.25rem;padding:4px 6px}
 
@@ -103,7 +104,11 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
 .rc{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #ecdcc0}
 .rc-r{text-align:right}.tag{font-size:.7rem;background:#efe2c8;color:#5a4325;border-radius:6px;padding:1px 6px;font-weight:700}
 .rcb{display:flex;gap:6px;justify-content:flex-end}
-.mini.red{background:#d93025}
+.mini.red{background:#d93025}.mini.grn{background:#0a7d33}
+.rc-l{flex:1;cursor:pointer;padding-right:8px}
+.rcb{flex-wrap:wrap}
+.vh{margin-bottom:8px}.vt{width:100%;border-collapse:collapse}.vt td{padding:8px 4px;border-bottom:1px solid #ecdcc0;vertical-align:top}.vn{width:26px;color:#8a7552;font-weight:700}.vr{text-align:right;white-space:nowrap}
+.vs{margin-top:8px}.vs div{display:flex;justify-content:space-between;padding:4px 2px;font-size:.92rem}.vtot{border-top:2px solid #1a0f00;margin-top:4px;padding-top:8px!important;font-size:1.25rem!important;font-weight:800}
 .chk2{display:inline-flex;align-items:center;gap:6px;margin:0 12px 8px 0;font-weight:600}.chk2 input{width:18px;height:18px}
 .mini{display:block;margin-top:4px;border:none;background:#2a62c8;color:#fff;border-radius:8px;padding:5px 10px;font-weight:700;font-size:.78rem}
 #toast{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-20px);background:#1a0f00;color:#fff;padding:10px 16px;border-radius:12px;z-index:99;opacity:0;pointer-events:none;transition:all .2s;max-width:90%;text-align:center;font-weight:600}
@@ -187,6 +192,13 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
   <div class="row"><button class="btn" data-close="rc">Close</button></div>
 </div></div>
 
+<!-- view one bill -->
+<div class="modal" id="vw"><div class="card">
+  <h3>Bill details</h3><div id="vwBody"></div>
+  <div class="row"><button class="btn" id="vwCopy">📋 Copy</button><button class="btn pri" id="vwReprint">🖨 Reprint</button></div>
+  <div class="row"><button class="btn red" id="vwDel">🗑 Delete</button><button class="btn" data-close="vw">Close</button></div>
+</div></div>
+
 <!-- settings -->
 <div class="modal" id="st"><div class="card">
   <h3>⚙️ Settings</h3>
@@ -200,11 +212,12 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
     <select id="sSpeed"><option value="turbo">Turbo (try first; may garble on some printers)</option><option value="fast">Fast</option><option value="normal">Normal</option><option value="safe">Safe / slow</option></select></div>
   <div class="fld"><label>Total GST % (split equally into CGST + SGST)</label><input id="sGst" type="number" inputmode="decimal" step="any"/></div>
   <div class="fld"><label>Bill number prefix (use a different letter on each phone)</label><input id="sPrefix" maxlength="6"/></div>
+  <div class="chk"><input type="checkbox" id="sAwake"/><label for="sAwake">Keep screen on while Quick Bill is open (keeps the printer connected)</label></div>
   <div class="fld"><label>Show these product groups in Quick Bill (tick = show)</label><div id="sCats"></div></div>
   <div class="row"><button class="btn pri" data-close="st">Done</button></div>
 </div></div>
 
 <div id="toast"></div>
-<script src="js/quickbill.js?v=3"></script>
+<script src="js/quickbill.js?v=4"></script>
 </body>
 </html>
