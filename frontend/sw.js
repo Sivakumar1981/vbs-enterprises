@@ -1,8 +1,8 @@
 /* VBS Quick Bill – opens instantly and keeps working offline.
    Only the billing screen is cached. API calls always go to the network.
-   Change CACHE name (v3 -> v4) whenever you update quickbill.html / quickbill.js. */
-const CACHE = 'vbs-quickbill-v3';
-const SHELL = ['/quickbill', '/quickbill.html', '/js/quickbill.js?v=3', '/manifest.json', '/images/VBS_logo.png'];
+   Change CACHE name (v4 -> v5) whenever you update quickbill.html / quickbill.js. */
+const CACHE = 'vbs-quickbill-v4';
+const SHELL = ['/quickbill', '/quickbill.html', '/js/quickbill.js?v=4', '/manifest.json', '/images/VBS_logo.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));
