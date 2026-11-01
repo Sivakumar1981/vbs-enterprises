@@ -781,6 +781,7 @@
       var b = e.target.closest('[data-re]'); if (!b) return;
       var bill = hist[parseInt(b.dataset.re, 10)]; if (bill) { closeModal('rc'); showPreview(bill, true); }
     });
+    document.querySelectorAll('.modal').forEach(function (m) { m.addEventListener('click', function (e) { if (e.target === m && m.id !== 'lg') closeModal(m.id); }); });   // tap outside = close
     document.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = function () { closeModal(b.dataset.close); }; });
     $('vwCopy').onclick = copyBill;
     $('vwReprint').onclick = function () { var b = hist[viewIdx]; if (b) { closeModal('vw'); closeModal('rc'); showPreview(b, true); } };
