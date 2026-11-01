@@ -92,7 +92,12 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
 /* modals */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:flex-end;justify-content:center}
 .modal.open{display:flex}
-.card{background:#fff8f0;width:100%;max-width:520px;max-height:92%;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.card{background:#fff8f0;width:100%;max-width:520px;max-height:90%;display:flex;flex-direction:column;overflow:hidden;border-radius:18px 18px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex:none;margin-bottom:8px}
+.mh h3{margin:0}
+.mx{flex:none;border:none;background:#efe2c8;color:#5a4325;width:40px;height:40px;border-radius:50%;font-size:1.15rem;font-weight:800}
+.mb{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px}
+.card>.row{flex:none}
 @media(min-width:600px){.modal{align-items:center}.card{border-radius:18px}}
 .card h3{margin:0 0 10px}
 .fld{margin-bottom:11px}.fld label{display:block;font-size:.8rem;font-weight:700;color:#5a4325;margin-bottom:4px}
@@ -163,16 +168,16 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
 
 <!-- preview / reprint -->
 <div class="modal" id="pv"><div class="card">
-  <h3>Bill preview</h3><div id="pvBody"></div>
+  <div class="mh"><h3>Bill preview</h3><button class="mx" data-close="pv" aria-label="Close">✕</button></div><div class="mb" id="pvBody"></div>
   <div class="row"><button class="btn" data-close="pv">Close</button><button class="btn pri" id="pvPrint">🖨 Print</button></div>
 </div></div>
 
 <!-- edit names -->
 <div class="modal" id="ed"><div class="card">
-  <h3>Bill names</h3>
-  <div class="hint" style="margin-bottom:10px">Full name: <b id="edFull"></b></div>
+  <div class="mh"><h3>Bill names</h3><button class="mx" data-close="ed" aria-label="Close">✕</button></div>
+  <div class="mb"><div class="hint" style="margin-bottom:10px">Full name: <b id="edFull"></b></div>
   <div class="fld"><label>Short English name (printed on bill)</label><input id="edShort" maxlength="30" placeholder="e.g. GN Oil 1L"/></div>
-  <div class="fld"><label>Tamil name (printed on bill)</label><input id="edTa" maxlength="40" placeholder="எ.கா. கடலை எண்ணெய் 1L"/></div>
+  <div class="fld"><label>Tamil name (printed on bill)</label><input id="edTa" maxlength="40" placeholder="எ.கா. கடலை எண்ணெய் 1L"/></div></div>
   <div class="row"><button class="btn" data-close="ed">Cancel</button><button class="btn pri" id="edSave">Save</button></div>
 </div></div>
 
@@ -187,21 +192,23 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
 
 <!-- recent bills -->
 <div class="modal" id="rc"><div class="card">
-  <h3>Recent bills</h3><div class="hint" id="rcSum" style="margin-bottom:6px"></div>
-  <div id="rcList"></div>
+  <div class="mh"><h3>Recent bills</h3><button class="mx" data-close="rc" aria-label="Close">✕</button></div>
+  <div class="mb"><div class="hint" id="rcSum" style="margin-bottom:6px"></div>
+  <div id="rcList"></div></div>
   <div class="row"><button class="btn" data-close="rc">Close</button></div>
 </div></div>
 
 <!-- view one bill -->
 <div class="modal" id="vw"><div class="card">
-  <h3>Bill details</h3><div id="vwBody"></div>
+  <div class="mh"><h3>Bill details</h3><button class="mx" data-close="vw" aria-label="Close">✕</button></div><div class="mb" id="vwBody"></div>
   <div class="row"><button class="btn" id="vwCopy">📋 Copy</button><button class="btn pri" id="vwReprint">🖨 Reprint</button></div>
   <div class="row"><button class="btn red" id="vwDel">🗑 Delete</button><button class="btn" data-close="vw">Close</button></div>
 </div></div>
 
 <!-- settings -->
 <div class="modal" id="st"><div class="card">
-  <h3>⚙️ Settings</h3>
+  <div class="mh"><h3>⚙️ Settings</h3><button class="mx" data-close="st" aria-label="Close">✕</button></div>
+  <div class="mb">
   <div class="fld"><label>Paper width</label>
     <select id="sWidth"><option value="576">80 mm (576 dots)</option><option value="512">80 mm – narrow (512)</option><option value="384">58 mm (384 dots)</option></select></div>
   <div class="fld"><label>Language on bill</label>
@@ -213,11 +220,11 @@ input,select{font-family:inherit;font-size:16px}  /* 16px stops zoom-on-focus */
   <div class="fld"><label>Total GST % (split equally into CGST + SGST)</label><input id="sGst" type="number" inputmode="decimal" step="any"/></div>
   <div class="fld"><label>Bill number prefix (use a different letter on each phone)</label><input id="sPrefix" maxlength="6"/></div>
   <div class="chk"><input type="checkbox" id="sAwake"/><label for="sAwake">Keep screen on while Quick Bill is open (keeps the printer connected)</label></div>
-  <div class="fld"><label>Show these product groups in Quick Bill (tick = show)</label><div id="sCats"></div></div>
+  <div class="fld"><label>Show these product groups in Quick Bill (tick = show)</label><div id="sCats"></div></div></div>
   <div class="row"><button class="btn pri" data-close="st">Done</button></div>
 </div></div>
 
 <div id="toast"></div>
-<script src="js/quickbill.js?v=4"></script>
+<script src="js/quickbill.js?v=5"></script>
 </body>
 </html>
